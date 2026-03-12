@@ -43,9 +43,9 @@ public class AuthService {
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
-        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setFullName(request.getFullName());
-        user.setPhoneNumber(request.getPhoneNumber());
+        user.setPhone(request.getPhoneNumber());
         user.setRole(request.getRole());
         user.setCreatedAt(LocalDateTime.now());
         
@@ -61,7 +61,7 @@ public class AuthService {
         
         return new AuthResponse(
             jwt,
-            savedUser.getUserId(),
+            savedUser.getId(),
             savedUser.getUsername(),
             savedUser.getEmail(),
             savedUser.getRole()
