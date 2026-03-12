@@ -31,6 +31,71 @@ Tuần 4: Tích hợp mở rộng + Test + Fix Bug + Báo cáo
 
 ---
 
+## � Mô Tả Chi Tiết 4 User Roles
+
+### 1️⃣ BUYER (Người Mua)
+**Quyền hạn:**
+- Xem danh sách xe đạp công khai
+- Tìm kiếm & lọc xe theo hãng, danh mục, giá, tình trạng, khung
+- Xem chi tiết listing (tăng viewCount)
+- Tạo order để mua xe (đặt mua / đặt cọc)
+- Thanh toán qua Stripe
+- Chat với Seller
+- Xem lịch sử đơn hàng của mình
+- Đánh giá Seller sau khi đơn hoàn thành
+- Quản lý Wishlist (yêu thích xe)
+- Xem profile cá nhân & chỉnh sửa thông tin
+
+**Endpoints:** `/api/buyer/**`, `/api/listings/**` (GET), `/api/orders/**`, `/api/conversations/**`, `/api/reviews/**`, `/api/wishlists/**`
+
+---
+
+### 2️⃣ SELLER (Người Bán)
+**Quyền hạn:**
+- Đăng tin bán xe (tạo listing)
+- Sửa / ẩn / xóa tin đăng của mình
+- Upload ảnh cho listing
+- Xem danh sách đơn hàng từ Buyers
+- Xác nhận / từ chối đơn hàng
+- Chat với Buyers
+- Nhận thanh toán (Stripe)
+- Xem lịch sử giao dịch
+- Xem profile cá nhân & điểm uy tín
+- Xem danh sách reviews từ Buyers
+
+**Endpoints:** `/api/seller/**`, `/api/listings/**` (POST/PUT/DELETE), `/api/orders/**`, `/api/conversations/**`, `/api/reviews/**`
+
+---
+
+### 3️⃣ INSPECTOR (Người Kiểm Định)
+**Quyền hạn:**
+- Xem danh sách xe cần kiểm định (status = REQUESTED)
+- Tạo báo cáo kiểm định (điểm từng hạng mục: khung, phanh, truyền động, bánh, yên/tay lái)
+- Upload báo cáo PDF
+- Cập nhật trạng thái kiểm định (REQUESTED → COMPLETED)
+- Xem chi tiết listing & thông tin xe
+- Xem profile cá nhân
+
+**Endpoints:** `/api/inspector/**`, `/api/inspections/**`
+
+---
+
+### 4️⃣ ADMIN (Quản Trị Viên)
+**Quyền hạn:**
+- **Quản lý Users:** xem danh sách, kích hoạt / vô hiệu hoá tài khoản, xem chi tiết
+- **Duyệt Listings:** xem danh sách xe PENDING_APPROVAL, duyệt / từ chối kèm lý do
+- **Quản lý Danh mục & Thương hiệu:** CRUD categories, CRUD brands
+- **Quản lý Giao dịch:** xem tất cả orders, cập nhật trạng thái
+- **Xử lý Tranh chấp:** xem danh sách disputes, giải quyết kèm kết quả
+- **Quản lý Kiểm định:** xem danh sách inspection requests
+- **Xem Thống kê:** tổng user, tổng xe, giao dịch tháng, doanh thu, biểu đồ
+- **Quản lý Service Fees:** xem doanh thu từ phí dịch vụ
+- **Quản lý Notifications:** xem tất cả thông báo hệ thống
+
+**Endpoints:** `/api/admin/**` (toàn bộ)
+
+---
+
 ## 🔷 THÀNH VIÊN A — Nhóm Trưởng + Backend
 
 > **Phụ trách:** Xương sống backend - Auth, Listing, Search, Quản lý User
@@ -55,9 +120,12 @@ Tuần 4: Tích hợp mở rộng + Test + Fix Bug + Báo cáo
 ### Phase 3 — Tuần 3 (User & Quản lý)
 - [ ] **Profile cá nhân** (`GET/PUT /api/users/me`)
 - [ ] **Xem profile người bán** (`GET /api/users/{id}/profile`) — gồm điểm uy tín
-- [ ] **Quản lý User** (Admin): `GET /api/admin/users`, `PATCH /api/admin/users/{id}/activate`
+- [ ] **Quản lý User** (Admin): `GET /api/admin/users`, `GET /api/admin/users/{id}`, `PATCH /api/admin/users/{id}/activate`, `DELETE /api/admin/users/{id}`
 - [ ] **Quản lý danh mục & thương hiệu** (`CRUD /api/admin/categories`, `/api/admin/brands`)
-- [ ] **Wishlist**: `POST /api/wishlists/{listingId}`, `DELETE`, `GET /api/wishlists`
+- [ ] **Wishlist**: `POST /api/wishlists/{listingId}`, `DELETE /api/wishlists/{listingId}`, `GET /api/wishlists`
+- [ ] **Seller Listings Management**: `GET /api/seller/listings` (danh sách tin của seller), `GET /api/seller/listings/{id}/stats` (thống kê views, likes)
+- [ ] **Buyer Orders**: `GET /api/buyer/orders`, `GET /api/buyer/orders/{id}`, `PATCH /api/buyer/orders/{id}/cancel`
+- [ ] **Seller Orders**: `GET /api/seller/orders`, `GET /api/seller/orders/{id}`, `PATCH /api/seller/orders/{id}/confirm`
 - [ ] Viết Unit Test cho các service chính
 
 ### Phase 4 — Tuần 4
@@ -87,18 +155,26 @@ Tuần 4: Tích hợp mở rộng + Test + Fix Bug + Báo cáo
 ### Phase 3 — Tuần 3 (Tích hợp mở rộng)
 - [ ] **Stripe** — Tạo Payment Intent (`POST /api/payments/create-intent`)
 - [ ] **Stripe** — Xác nhận thanh toán (`POST /api/payments/confirm`)
+- [ ] **Stripe** — Lịch sử thanh toán (`GET /api/payments/history`)
 - [ ] **GHN** — Tính phí vận chuyển (`POST /api/shipping/calculate-fee`)
 - [ ] **GHN** — Tạo đơn giao hàng (`POST /api/shipping/create-order`)
 - [ ] **GHN** — Tra cứu trạng thái đơn (`GET /api/shipping/{orderCode}/status`)
 - [ ] **Gemini Chatbot** — Nhận câu hỏi, gọi API Gemini, trả về câu trả lời (`POST /api/chatbot/ask`)
 - [ ] **Review (Đánh giá)** — `POST /api/reviews` sau khi đơn COMPLETED; tự cập nhật `reputationScore` cho Seller
-- [ ] **Kiểm định** — `POST /api/inspections`, `PUT /api/inspections/{id}/report` — Inspector upload báo cáo
-- [ ] **Tranh chấp** — `POST /api/disputes`, `PATCH /api/disputes/{id}/resolve` — Admin xử lý
+- [ ] **Review (Đánh giá)** — `GET /api/reviews/seller/{sellerId}` xem reviews của seller, `GET /api/reviews/listing/{listingId}` xem reviews của listing
+- [ ] **Kiểm định** — `POST /api/inspections/request` (Seller yêu cầu), `GET /api/inspector/inspections` (danh sách cho Inspector)
+- [ ] **Kiểm định** — `PUT /api/inspector/inspections/{id}/report` — Inspector upload báo cáo, `GET /api/inspections/{id}` xem chi tiết
+- [ ] **Tranh chấp** — `POST /api/disputes` (Buyer/Seller tạo), `GET /api/admin/disputes` (Admin xem danh sách), `GET /api/disputes/{id}` (xem chi tiết)
+- [ ] **Tranh chấp** — `PATCH /api/admin/disputes/{id}/resolve` — Admin xử lý
 - [ ] **Hệ thống Thông báo** — Tự động tạo `Notification` khi: đơn mới, tin nhắn mới, duyệt tin
+- [ ] **Hệ thống Thông báo** — `GET /api/notifications`, `PATCH /api/notifications/{id}/read`, `PATCH /api/notifications/read-all`
 - [ ] **Service Fee** — `GET /api/admin/service-fees` — Admin xem doanh thu
 
 ### Phase 4 — Tuần 4
-- [ ] Thống kê: `GET /api/admin/stats` (tổng user, tổng xe, giao dịch tháng, doanh thu)
+- [ ] **Thống kê Admin**: `GET /api/admin/stats` (tổng user, tổng xe, giao dịch tháng, doanh thu)
+- [ ] **Thống kê Admin**: `GET /api/admin/stats/revenue` (doanh thu theo tháng), `GET /api/admin/stats/listings` (xe đăng theo tuần)
+- [ ] **Quản lý Inspections**: `GET /api/admin/inspections` (danh sách tất cả kiểm định)
+- [ ] **Notifications cho Admin**: `GET /api/admin/notifications/system` (thông báo hệ thống)
 - [ ] Viết Unit Test cho Payment, Shipping service
 - [ ] Fix bug tích hợp
 
