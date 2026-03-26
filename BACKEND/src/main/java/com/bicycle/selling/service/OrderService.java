@@ -4,7 +4,6 @@ import com.bicycle.selling.dto.CreateOrderRequest;
 import com.bicycle.selling.model.*;
 import com.bicycle.selling.model.enums.ListingStatus;
 import com.bicycle.selling.model.enums.OrderStatus;
-import com.bicycle.selling.model.enums.PaymentMethod;
 import com.bicycle.selling.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -12,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -37,14 +35,25 @@ public class OrderService {
         User buyer = userRepository.findById(buyer_id)
                 .orElseThrow(() -> new RuntimeException("Buyer not found"));
 
-        BicycleListing listing = listingRepository.findById(request.getListingId())
+        BicycleListing listing = listingRepository.findByIdForUpdate(request.getListingId())
                 .orElseThrow(() -> new RuntimeException("Listing not found"));
 
+        // Check listing
+        if(listing.getSeller().getId().equals(buyer_id)) {
+            throw new RuntimeException("Buyer cannot purchase their own listing");
+        }
         if (listing.getStatus() != ListingStatus.APPROVED) {
             throw new RuntimeException("Listing is not available for purchase");
         }
+        
+        // Check trong order co ton tai listing id chua thanh toan hay da mua
+        Order existingOrder = orderRepository.findByListingId(listing.getId());
+        if (existingOrder != null && existingOrder.getStatus() != OrderStatus.CANCELLED) {
+            throw new RuntimeException("Listing is already reserved or sold");
+        }
 
-        BigDecimal agreedPrice = listing.getPrice();
+        
+        BigDecimal agreedPrice = request.getAgreedPrice() != null ? request.getAgreedPrice() : listing.getPrice();
 
         BigDecimal deposit = agreedPrice.multiply(BigDecimal.valueOf(0.2));
 
@@ -57,7 +66,29 @@ public class OrderService {
                 .note(request.getNote())
                 .shippingAddress(request.getShippingAddress())
                 .build();
+        // Set trạng ngay trong transaction để tránh race condition
+        listing.setStatus(ListingStatus.RESERVED);
+        
+        return orderRepository.save(order);
+    }
 
+    public Order getOrderById(Long orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+    }
+
+    public Order setOrderStatus(Long orderId, OrderStatus status) {
+        Order order = getOrderById(orderId);
+        order.setStatus(status);
+        return orderRepository.save(order);
+    }
+
+    public Order setConfirmOrder(Long orderId) {
+        Order order = getOrderById(orderId);
+        if(order.getStatus() != OrderStatus.DEPOSIT_PAID) {
+            throw new RuntimeException("Order must be in DEPOSIT_PAID status to confirm");
+        }
+        order.setStatus(OrderStatus.CONFIRMED);
         return orderRepository.save(order);
     }
 }
