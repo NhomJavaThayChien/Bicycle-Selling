@@ -74,4 +74,17 @@ public class ChatController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    // mark messages as read
+    @PostMapping("/conversations/{conversationId}/read")
+    public ResponseEntity<?> markMessagesAsRead(
+            @AuthenticationPrincipal UserDetailsImpl user,
+            @PathVariable Long conversationId) {
+        try {
+            chatService.markMessagesAsRead(conversationId, user.getId());
+            return ResponseEntity.ok(Map.of("message", "Messages marked as read"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }

@@ -64,4 +64,16 @@ public class ChatService {
                 message.isBotMessage(),
                 message.isRead())).toList();
     }
+
+    @Transactional
+    public void markMessagesAsRead(Long conversationId, Long userId) {
+        List<Message> messages = messageRepository.findByConversationId(conversationId);
+
+        messages.stream()
+                .filter(message -> !message.getSender().getId().equals(userId) && !message.isRead())
+                .forEach(message -> {
+                    message.setRead(true);
+                    messageRepository.save(message);
+                });
+    }
 }
