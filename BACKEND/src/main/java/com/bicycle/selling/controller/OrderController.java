@@ -11,6 +11,8 @@ import com.bicycle.selling.model.Order;
 import com.bicycle.selling.model.enums.OrderStatus;
 import com.bicycle.selling.service.OrderService;
 
+import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -31,7 +33,7 @@ public class OrderController {
                     order.getListing().getId(),
                     order.getAgreedPrice(),
                     order.getStatus().name());
-    
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -50,7 +52,7 @@ public class OrderController {
                     order.getListing().getId(),
                     order.getAgreedPrice(),
                     order.getStatus().name());
-    
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -77,5 +79,11 @@ public class OrderController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getOrdersByUserId(@AuthenticationPrincipal UserDetailsImpl user) {
+        List<OrderResponse> orders = orderService.getOrderByUserId(user.getId());
+        return ResponseEntity.ok(orders);
     }
 }

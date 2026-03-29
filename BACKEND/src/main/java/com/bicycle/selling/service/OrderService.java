@@ -1,6 +1,7 @@
 package com.bicycle.selling.service;
 
 import com.bicycle.selling.dto.CreateOrderRequest;
+import com.bicycle.selling.dto.OrderResponse;
 import com.bicycle.selling.model.*;
 import com.bicycle.selling.model.enums.ListingStatus;
 import com.bicycle.selling.model.enums.OrderStatus;
@@ -12,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Service
@@ -39,20 +42,19 @@ public class OrderService {
                 .orElseThrow(() -> new RuntimeException("Listing not found"));
 
         // Check listing
-        if(listing.getSeller().getId().equals(buyer_id)) {
+        if (listing.getSeller().getId().equals(buyer_id)) {
             throw new RuntimeException("Buyer cannot purchase their own listing");
         }
         if (listing.getStatus() != ListingStatus.APPROVED) {
             throw new RuntimeException("Listing is not available for purchase");
         }
-        
+
         // Check trong order co ton tai listing id chua thanh toan hay da mua
         Order existingOrder = orderRepository.findByListingId(listing.getId());
         if (existingOrder != null && existingOrder.getStatus() != OrderStatus.CANCELLED) {
             throw new RuntimeException("Listing is already reserved or sold");
         }
 
-        
         BigDecimal agreedPrice = request.getAgreedPrice() != null ? request.getAgreedPrice() : listing.getPrice();
 
         BigDecimal deposit = agreedPrice.multiply(BigDecimal.valueOf(0.2));
@@ -68,7 +70,7 @@ public class OrderService {
                 .build();
         // Set trạng ngay trong transaction để tránh race condition
         listing.setStatus(ListingStatus.RESERVED);
-        
+
         return orderRepository.save(order);
     }
 
@@ -85,10 +87,24 @@ public class OrderService {
 
     public Order setConfirmOrder(Long orderId) {
         Order order = getOrderById(orderId);
-        if(order.getStatus() != OrderStatus.DEPOSIT_PAID) {
+        if (order.getStatus() != OrderStatus.DEPOSIT_PAID) {
             throw new RuntimeException("Order must be in DEPOSIT_PAID status to confirm");
         }
         order.setStatus(OrderStatus.CONFIRMED);
         return orderRepository.save(order);
+    }
+
+    public List<OrderResponse> getOrderByUserId(Long userId) {
+        List<Order> orders = orderRepository.findByBuyerId(userId);
+        if (orders.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return orders.stream().map(order -> new OrderResponse(
+                order.getId(),
+                order.getBuyer().getId(),
+                order.getListing().getId(),
+                order.getAgreedPrice(),
+                order.getStatus().name()
+        )).toList();
     }
 }
