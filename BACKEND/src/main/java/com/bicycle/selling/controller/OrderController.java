@@ -12,6 +12,7 @@ import com.bicycle.selling.model.enums.OrderStatus;
 import com.bicycle.selling.service.OrderService;
 
 import java.util.List;
+import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
 
@@ -36,7 +37,7 @@ public class OrderController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -55,7 +56,7 @@ public class OrderController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -64,9 +65,9 @@ public class OrderController {
             @PathVariable Long orderId) {
         try {
             orderService.setOrderStatus(orderId, OrderStatus.CANCELLED);
-            return ResponseEntity.ok("Order cancelled successfully");
+            return ResponseEntity.ok(Map.of("message", "Order cancelled successfully"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -75,15 +76,19 @@ public class OrderController {
             @PathVariable Long orderId) {
         try {
             orderService.setConfirmOrder(orderId);
-            return ResponseEntity.ok("Order confirmed successfully");
+            return ResponseEntity.ok(Map.of("message", "Order confirmed successfully"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
     @GetMapping
     public ResponseEntity<?> getOrdersByUserId(@AuthenticationPrincipal UserDetailsImpl user) {
-        List<OrderResponse> orders = orderService.getOrderByUserId(user.getId());
-        return ResponseEntity.ok(orders);
+        try {
+            List<OrderResponse> orders = orderService.getOrderByUserId(user.getId());
+            return ResponseEntity.ok(orders);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 }
