@@ -95,16 +95,10 @@ public class OrderService {
     }
 
     public List<OrderResponse> getOrderByUserId(Long userId) {
-        List<Order> orders = orderRepository.findByBuyerId(userId);
+        List<OrderResponse> orders = orderRepository.findByBuyerId(userId);
         if (orders.isEmpty()) {
             return Collections.emptyList();
         }
-        return orders.stream().map(order -> new OrderResponse(
-                order.getId(),
-                order.getBuyer().getId(),
-                order.getListing().getId(),
-                order.getAgreedPrice(),
-                order.getStatus().name()
-        )).toList();
+        return orders;
     }
 }

@@ -1,5 +1,6 @@
 package com.bicycle.selling.service;
 
+import com.bicycle.selling.dto.PaymentResponse;
 import com.bicycle.selling.infrastructure.StripeService;
 import com.bicycle.selling.model.Order;
 import com.bicycle.selling.model.Payment;
@@ -14,6 +15,7 @@ import com.stripe.model.PaymentIntent;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class PaymentService {
@@ -78,5 +80,18 @@ public class PaymentService {
         orderRepository.save(order);
 
         return checkoutSession;
+    }
+
+    public List<PaymentResponse> getPaymentsByUserId(Long userId) {
+        List<Payment> payments = paymentRepository.findByOrderBuyerId(userId);
+        return payments.stream().map(payment -> new PaymentResponse(
+                payment.getId(),
+                payment.getAmount(),
+                payment.getCurrency(),
+                payment.getStatus().name(),
+                payment.getOrder().getId().toString(),
+                payment.getPaidAt() != null ? payment.getPaidAt().toString() : null,
+                payment.getUpdatedAt() != null ? payment.getUpdatedAt().toString() : null
+        )).toList();
     }
 }
