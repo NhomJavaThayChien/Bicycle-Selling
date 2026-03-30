@@ -120,4 +120,13 @@ public class User {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private List<Notification> notifications = new ArrayList<>();
+
+    // add total review for avg rating calculation
+    @Column(name = "total_reviews")
+    @Builder.Default
+    private Integer totalReviews = 0;
+
+    // add version to prevent race condition when update rating
+    @Version
+    private Long version;
 }
