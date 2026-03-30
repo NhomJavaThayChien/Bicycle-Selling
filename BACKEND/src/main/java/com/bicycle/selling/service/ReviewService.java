@@ -6,7 +6,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.bicycle.selling.controller.CreateReviewResponse;
 import com.bicycle.selling.dto.CreateReviewRequest;
+import com.bicycle.selling.dto.ReviewResponse;
 import com.bicycle.selling.model.Order;
 import com.bicycle.selling.model.Review;
 import com.bicycle.selling.model.User;
@@ -15,7 +17,6 @@ import com.bicycle.selling.repository.OrderRepository;
 import com.bicycle.selling.repository.ReviewRepository;
 import com.bicycle.selling.repository.UserRepository;
 
-import jakarta.persistence.OptimisticLockException;
 import lombok.AllArgsConstructor;
 
 @Service
@@ -25,26 +26,8 @@ public class ReviewService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
 
-    // Retry to handle OptimisticLockException
     @Transactional
-    public Review createReviewWithRetry(Long reviewerId, Long orderId, CreateReviewRequest request) {
-        int retries = 3;
-        while (retries > 0) {
-            try {
-                return createReview(reviewerId, orderId, request);
-            } catch (OptimisticLockException e) {
-                retries--;
-                if (retries == 0) {
-                    throw new RuntimeException(
-                            "Could not update seller rating due to concurrent reviews. Please try again.");
-                }
-            }
-        }
-        throw new RuntimeException("Unexpected error");
-    }
-
-    @Transactional
-    public Review createReview(Long reviewerId, Long orderId, CreateReviewRequest request) {
+    public CreateReviewResponse createReview(Long reviewerId, Long orderId, CreateReviewRequest request) {
 
         // 1. Find order
         Order order = orderRepository.findById(orderId)
@@ -66,7 +49,8 @@ public class ReviewService {
         }
 
         User reviewer = order.getBuyer();
-        User seller = order.getListing().getSeller();
+        User seller = userRepository.findByIdForUpdate(order.getListing().getSeller().getId())
+                .orElseThrow(() -> new RuntimeException("Seller not found"));
 
         // 5. Prevent self-review
         if (reviewer.getId().equals(seller.getId())) {
@@ -88,16 +72,41 @@ public class ReviewService {
 
         // 7. Update seller rating
         final double currentAvg = seller.getReputationScore();
-        final long currentCount = seller.getTotalReviews();
+        long currentCount = seller.getTotalReviews() != null ? seller.getTotalReviews() : 0;
+        System.out.println("Current Avg: " + currentAvg + ", Current Count: " + currentCount);
         final double newAvg = (currentAvg * currentCount + request.getRating()) / (currentCount + 1);
         seller.setReputationScore(newAvg);
         seller.setTotalReviews(seller.getTotalReviews() + 1);
         userRepository.save(seller);
 
-        return saved;
+        CreateReviewResponse reslut = new CreateReviewResponse(saved.getId(), saved.getRating(), saved.getComment());
+        return reslut;
     }
 
-    public List<Review> getReviewsBySellerId(Long sellerId, Integer page, Integer size) {
-        return reviewRepository.findBySellerId(sellerId, PageRequest.of(page, size)).getContent();
+    @Transactional(readOnly = true)
+    public List<ReviewResponse> getReviewsBySellerId(Long sellerId, Integer page, Integer size) {
+        return reviewRepository
+                .findBySellerId(sellerId, PageRequest.of(page, size))
+                .getContent()
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    private ReviewResponse mapToResponse(Review review) {
+        ReviewResponse res = new ReviewResponse();
+
+        res.setId(review.getId());
+        res.setRating(review.getRating());
+        res.setComment(review.getComment());
+        res.setSellerId(review.getSeller().getId());
+        ReviewResponse.ReviewerInfo reviewer = new ReviewResponse.ReviewerInfo();
+        reviewer.setId(review.getReviewer().getId());
+        reviewer.setUsername(review.getReviewer().getUsername());
+        reviewer.setAvatarUrl(review.getReviewer().getAvatarUrl());
+
+        res.setReviewer(reviewer);
+
+        return res;
     }
 }
