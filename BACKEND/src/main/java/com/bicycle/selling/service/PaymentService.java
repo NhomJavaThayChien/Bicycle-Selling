@@ -13,25 +13,19 @@ import org.springframework.stereotype.Service;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 
+import lombok.RequiredArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class PaymentService {
 
     private final StripeService stripeService;
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
-
-    public PaymentService(StripeService stripeService,
-                          PaymentRepository paymentRepository,
-                          OrderRepository orderRepository) {
-        this.stripeService = stripeService;
-        this.paymentRepository = paymentRepository;
-        this.orderRepository = orderRepository;
-    }
-
     
     public String PaymentDeposit(Long orderId, String currency) throws StripeException {
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new IllegalArgumentException("Order not found"));
