@@ -3,7 +3,9 @@ package com.bicycle.selling.model;
 import com.bicycle.selling.model.enums.UserRole;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -120,4 +122,11 @@ public class User {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private List<Notification> notifications = new ArrayList<>();
+
+    // add total review for avg rating calculation
+    @Column(name = "total_reviews")
+    @Builder.Default
+    @NotNull
+    @Min(0)
+    private Integer totalReviews = 0;
 }
