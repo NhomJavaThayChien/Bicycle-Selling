@@ -1,4 +1,4 @@
-package com.bicycle.selling.controller;
+package com.bicycle.selling.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

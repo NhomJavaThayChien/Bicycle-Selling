@@ -34,7 +34,6 @@ public class OrderService {
 
     @Transactional
     public Order createOrder(CreateOrderRequest request, Long buyer_id) {
-
         User buyer = userRepository.findById(buyer_id)
                 .orElseThrow(() -> new RuntimeException("Buyer not found"));
 
@@ -79,9 +78,20 @@ public class OrderService {
                 .orElseThrow(() -> new RuntimeException("Order not found"));
     }
 
-    public Order setOrderStatus(Long orderId, OrderStatus status) {
-        Order order = getOrderById(orderId);
-        order.setStatus(status);
+    public Order cancelOrder(Long orderId) {
+        Order order = getOrderById(orderId); 
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            throw new RuntimeException("Order already cancelled");
+        }
+        if (order.getStatus() == OrderStatus.COMPLETED) {
+            throw new RuntimeException("Cannot cancel completed order");
+        }
+        if (order.getDepositAmount() != null && order.getDepositAmount().compareTo(BigDecimal.ZERO) > 0) {
+            // gọi PaymentService refundDeposit(order)
+        }
+
+        // Set status
+        order.setStatus(OrderStatus.CANCELLED);
         return orderRepository.save(order);
     }
 

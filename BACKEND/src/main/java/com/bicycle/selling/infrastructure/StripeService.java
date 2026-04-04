@@ -3,7 +3,7 @@ package com.bicycle.selling.infrastructure;
 import java.math.BigDecimal;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
@@ -14,7 +14,7 @@ import com.stripe.param.checkout.SessionCreateParams;
 
 import jakarta.annotation.PostConstruct;
 
-@Service
+@Component
 public class StripeService {
 
         @Value("${stripe.api.key}")

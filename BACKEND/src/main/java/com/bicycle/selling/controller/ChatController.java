@@ -23,68 +23,46 @@ public class ChatController {
 
     // send message
     @PostMapping("/messages")
-    public ResponseEntity<?> sendMessage(
+    public ResponseEntity<Map<String, String>> sendMessage(
             @AuthenticationPrincipal UserDetailsImpl user,
             @RequestBody SendMessageRequest request) {
-        try {
-            chatService.sendMessage(
-                    user.getId(),
-                    request.getConversationId(),
-                    request.getContent());
+        chatService.sendMessage(
+                user.getId(),
+                request.getConversationId(),
+                request.getContent());
 
-            return ResponseEntity.ok(Map.of("message", "Message sent successfully"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        return ResponseEntity.ok(Map.of("message", "Message sent successfully"));
     }
 
     // get messages by conversation
     @GetMapping("/conversations/{conversationId}/messages")
-    public ResponseEntity<?> getMessages(
+    public List<ChatResponse> getMessages(
             @PathVariable Long conversationId) {
-        
-        try {
-            List<ChatResponse> messages = chatService.getMessagesByConversation(conversationId);
-            return ResponseEntity.ok(messages);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        return chatService.getMessagesByConversation(conversationId);
     }
 
     // delete message by id
     @DeleteMapping("/messages/{messageId}")
-    public ResponseEntity<?> deleteMessage(
+    public ResponseEntity<Map<String, String>> deleteMessage(
             @PathVariable Long messageId) {
-        try {
-            chatService.deleteMessage(messageId);
-            return ResponseEntity.ok(Map.of("message", "Message deleted successfully"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        chatService.deleteMessage(messageId);
+        return ResponseEntity.ok(Map.of("message", "Message deleted successfully"));
     }
 
     // delete all messages by user id
     @DeleteMapping("/messages/user/{userId}")
-    public ResponseEntity<?> deleteMessagesByUserId(
+    public ResponseEntity<Map<String, String>> deleteMessagesByUserId(
             @PathVariable Long userId) {
-        try {
-            chatService.deleteAllMessagesByUserId(userId);
-            return ResponseEntity.ok(Map.of("message", "Messages deleted successfully"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        chatService.deleteAllMessagesByUserId(userId);
+        return ResponseEntity.ok(Map.of("message", "Messages deleted successfully"));
     }
 
     // mark messages as read
     @PostMapping("/conversations/{conversationId}/read")
-    public ResponseEntity<?> markMessagesAsRead(
+    public ResponseEntity<Map<String, String>> markMessagesAsRead(
             @AuthenticationPrincipal UserDetailsImpl user,
             @PathVariable Long conversationId) {
-        try {
-            chatService.markMessagesAsRead(conversationId, user.getId());
-            return ResponseEntity.ok(Map.of("message", "Messages marked as read"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        chatService.markMessagesAsRead(conversationId, user.getId());
+        return ResponseEntity.ok(Map.of("message", "Messages marked as read"));
     }
 }

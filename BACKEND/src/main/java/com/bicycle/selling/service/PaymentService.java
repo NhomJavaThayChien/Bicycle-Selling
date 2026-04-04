@@ -27,65 +27,66 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
     
-    public String PaymentDeposit(Long orderId, String currency) throws StripeException {
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new IllegalArgumentException("Order not found"));
-        BigDecimal depositAmount = order.getDepositAmount();
-
-        if (depositAmount == null || depositAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Invalid deposit amount");
-        }
-
-        if (order.getStatus() != OrderStatus.PENDING) {
-            throw new IllegalStateException("Order is not in a valid state for deposit");
-        }
-
-        PaymentIntent paymentIntent = stripeService.createPaymentIntent(
-                depositAmount,
-                currency,
-                "Deposit for order " + order.getId()
-        );
-
-        String checkoutSession = stripeService.createCheckoutSession(depositAmount, currency);
-
-        Payment depositPayment = Payment.builder()
-                .order(order)
-                .amount(depositAmount)
-                .currency("VND")
-                .method(PaymentMethod.STRIPE)
-                .status(PaymentStatus.SUCCESS) // Stripe confirm -> success
-                .isDeposit(true)
-                .stripePaymentIntentId(paymentIntent.getId())
-                .stripeMetadata(paymentIntent.toJson())
-                .paidAt(LocalDateTime.now())
-                .build();
-
-        
+    public String PaymentDeposit(Long orderId, String currency) {
         try {
-            System.out.println("Saving payment record for order " + orderId);
+            Order order = orderRepository.findById(orderId).orElseThrow(() -> new IllegalArgumentException("Order not found"));
+            BigDecimal depositAmount = order.getDepositAmount();
+    
+            if (depositAmount == null || depositAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException("Invalid deposit amount");
+            }
+    
+            if (order.getStatus() != OrderStatus.PENDING) {
+                throw new IllegalStateException("Order is not in a valid state for deposit");
+            }
+    
+            PaymentIntent paymentIntent = stripeService.createPaymentIntent(
+                    depositAmount,
+                    currency,
+                    "Deposit for order " + order.getId()
+            );
+    
+            String checkoutSession = stripeService.createCheckoutSession(depositAmount, currency);
+    
+            Payment depositPayment = Payment.builder()
+                    .order(order)
+                    .amount(depositAmount)
+                    .currency("VND")
+                    .method(PaymentMethod.STRIPE)
+                    .status(PaymentStatus.SUCCESS) // Stripe confirm -> success
+                    .isDeposit(true)
+                    .stripePaymentIntentId(paymentIntent.getId())
+                    .stripeMetadata(paymentIntent.toJson())
+                    .paidAt(LocalDateTime.now())
+                    .build();
+    
             paymentRepository.save(depositPayment);
+            order.setStatus(OrderStatus.DEPOSIT_PAID);
+            orderRepository.save(order);
+    
+            return checkoutSession;
+        } catch (StripeException e) {
+            throw new RuntimeException("Stripe error: " + e.getMessage());
         } catch (Exception e) {
-            // Log lỗi chi tiết để debug
-            System.err.println("Error saving payment: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Failed to save payment record");
+            throw new RuntimeException("Error processing payment: " + e.getMessage());
         }
-
-        order.setStatus(OrderStatus.DEPOSIT_PAID);
-        orderRepository.save(order);
-
-        return checkoutSession;
     }
 
     public List<PaymentResponse> getPaymentsByUserId(Long userId) {
-        List<Payment> payments = paymentRepository.findByOrderBuyerId(userId);
-        return payments.stream().map(payment -> new PaymentResponse(
-                payment.getId(),
-                payment.getAmount(),
-                payment.getCurrency(),
-                payment.getStatus().name(),
-                payment.getOrder().getId().toString(),
-                payment.getPaidAt() != null ? payment.getPaidAt().toString() : null,
-                payment.getUpdatedAt() != null ? payment.getUpdatedAt().toString() : null
-        )).toList();
+        try {
+            List<Payment> payments = paymentRepository.findByOrderBuyerId(userId);
+            return payments.stream().map(payment -> new PaymentResponse(
+                    payment.getId(),
+                    payment.getAmount(),
+                    payment.getCurrency(),
+                    payment.getStatus().name(),
+                    payment.getOrder().getId().toString(),
+                    payment.getPaidAt() != null ? payment.getPaidAt().toString() : null,
+                    payment.getUpdatedAt() != null ? payment.getUpdatedAt().toString() : null
+            )).toList();
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Error retrieving payments: " + e.getMessage());
+        }
     }
 }

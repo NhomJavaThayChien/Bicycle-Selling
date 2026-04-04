@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 import com.bicycle.selling.dto.CreateOrderRequest;
 import com.bicycle.selling.dto.OrderResponse;
 import com.bicycle.selling.model.Order;
-import com.bicycle.selling.model.enums.OrderStatus;
 import com.bicycle.selling.service.OrderService;
 
 import java.util.List;
@@ -23,72 +22,50 @@ public class OrderController {
     final OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<?> createOrder(
+    public OrderResponse createOrder(
             @RequestBody CreateOrderRequest request,
             @AuthenticationPrincipal UserDetailsImpl user) {
-        try {
-            Order order = orderService.createOrder(request, user.getId());
-            OrderResponse response = new OrderResponse(
-                    order.getId(),
-                    order.getBuyer().getId(),
-                    order.getListing().getId(),
-                    order.getAgreedPrice(),
-                    order.getStatus().name());
+        Order order = orderService.createOrder(request, user.getId());
+        OrderResponse response = new OrderResponse(
+                order.getId(),
+                order.getBuyer().getId(),
+                order.getListing().getId(),
+                order.getAgreedPrice(),
+                order.getStatus().name());
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        return response;
     }
 
     @GetMapping("/{orderId}")
-    public ResponseEntity<?> getOrderDetails(
+    public OrderResponse getOrderDetails(
             @PathVariable Long orderId,
             @AuthenticationPrincipal UserDetailsImpl user) {
-        try {
-            Order order = orderService.getOrderById(orderId);
-            OrderResponse response = new OrderResponse(
-                    order.getId(),
-                    order.getBuyer().getId(),
-                    order.getListing().getId(),
-                    order.getAgreedPrice(),
-                    order.getStatus().name());
+        Order order = orderService.getOrderById(orderId);
+        OrderResponse response = new OrderResponse(
+                order.getId(),
+                order.getBuyer().getId(),
+                order.getListing().getId(),
+                order.getAgreedPrice(),
+                order.getStatus().name());
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        return response;
     }
 
     @PutMapping("/{orderId}/cancel")
-    public ResponseEntity<?> cancelOrder(
-            @PathVariable Long orderId) {
-        try {
-            orderService.setOrderStatus(orderId, OrderStatus.CANCELLED);
-            return ResponseEntity.ok(Map.of("message", "Order cancelled successfully"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+    public ResponseEntity<Map<String, String>> cancelOrder(@PathVariable Long orderId) {
+        orderService.cancelOrder(orderId);
+        return ResponseEntity.ok(Map.of("message", "Order cancelled successfully"));
     }
 
     @PutMapping("/{orderId}/confirm")
-    public ResponseEntity<?> confirmOrder(
+    public ResponseEntity<Map<String, String>> confirmOrder(
             @PathVariable Long orderId) {
-        try {
-            orderService.setConfirmOrder(orderId);
-            return ResponseEntity.ok(Map.of("message", "Order confirmed successfully"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        orderService.setConfirmOrder(orderId);
+        return ResponseEntity.ok(Map.of("message", "Order confirmed successfully"));
     }
 
     @GetMapping
-    public ResponseEntity<?> getOrdersByUserId(@AuthenticationPrincipal UserDetailsImpl user) {
-        try {
-            List<OrderResponse> orders = orderService.getOrderByUserId(user.getId());
-            return ResponseEntity.ok(orders);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+    public List<OrderResponse> getOrdersByUserId(@AuthenticationPrincipal UserDetailsImpl user) {
+        return orderService.getOrderByUserId(user.getId());
     }
 }
