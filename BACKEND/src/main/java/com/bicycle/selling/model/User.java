@@ -68,7 +68,7 @@ public class User {
     private boolean isActive = true;
 
     // Điểm uy tín (tính trung bình từ các review)
-    @Column(name = "reputation_score", columnDefinition = "DECIMAL(3,2) DEFAULT 0.0")
+    @Column(name = "reputation_score", columnDefinition = "DECIMAL(3,2)")
     @Builder.Default
     private Double reputationScore = 0.0;
 
