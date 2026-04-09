@@ -45,4 +45,13 @@ public class WishlistController {
         wishlistService.removeFromWishlist(listingId);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/{listingId}/check")
+    @PreAuthorize("hasAnyRole('BUYER', 'ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "Kiểm tra listing có trong wishlist chưa")
+    public ResponseEntity<java.util.Map<String, Boolean>> checkWishlist(@PathVariable Long listingId) {
+        boolean isWishlisted = wishlistService.checkWishlist(listingId);
+        return ResponseEntity.ok(java.util.Map.of("isWishlisted", isWishlisted));
+    }
 }

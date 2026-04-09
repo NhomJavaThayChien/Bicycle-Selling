@@ -133,4 +133,10 @@ public class WishlistService {
 
         return (UserDetailsImpl) principal;
     }
+
+    @Transactional(readOnly = true)
+    public boolean checkWishlist(Long listingId) {
+        UserDetailsImpl currentUser = getCurrentUser();
+        return wishlistRepository.existsByUserIdAndListingId(currentUser.getId(), listingId);
+    }
 }
