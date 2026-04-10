@@ -106,7 +106,7 @@ public class WishlistService {
                 .additionalAccessories(listing.getAccessories())
                 .reasonForSelling(listing.getReasonForSelling())
                 .viewCount(listing.getViewCount())
-                .likeCount(0)
+                .likeCount((int) wishlistRepository.countByListingId(listing.getId()))
                 .sellerId(seller.getId())
                 .sellerUsername(seller.getUsername())
                 .sellerFullName(seller.getFullName())

@@ -16,6 +16,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -79,14 +80,49 @@ public class OrderService {
                 .orElseThrow(() -> new RuntimeException("Order not found"));
     }
 
-    public Order setOrderStatus(Long orderId, OrderStatus status) {
+    /**
+     * Bug fix #2/#3: Buyer huỷ đơn hàng.
+     * - Chỉ buyer của đơn mới được huỷ (ownership check)
+     * - Chỉ được huỷ khi status = PENDING (chưa đặt cọc)
+     * - Rollback listing.status về APPROVED để người khác có thể đặt mua lại
+     */
+    @Transactional
+    public Order cancelOrder(Long orderId, Long requesterId) {
         Order order = getOrderById(orderId);
-        order.setStatus(status);
+
+        // Bug fix #2: Kiểm tra ownership — chỉ buyer của đơn mới được huỷ
+        if (!Objects.equals(order.getBuyer().getId(), requesterId)) {
+            throw new RuntimeException("Access denied: you are not the buyer of this order");
+        }
+
+        // Chỉ cho phép huỷ khi PENDING (chưa đặt cọc)
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new RuntimeException("Cannot cancel order in status: " + order.getStatus()
+                    + ". Only PENDING orders can be cancelled");
+        }
+
+        // Bug fix #3: Rollback listing status về APPROVED
+        BicycleListing listing = order.getListing();
+        listing.setStatus(ListingStatus.APPROVED);
+        listingRepository.save(listing);
+
+        order.setStatus(OrderStatus.CANCELLED);
         return orderRepository.save(order);
     }
 
-    public Order setConfirmOrder(Long orderId) {
+    /**
+     * Bug fix #6: Chỉ seller của listing mới được confirm đơn.
+     */
+    @Transactional
+    public Order setConfirmOrder(Long orderId, Long requesterId) {
         Order order = getOrderById(orderId);
+
+        // Kiểm tra caller là seller của listing trong đơn này
+        Long sellerId = order.getListing().getSeller().getId();
+        if (!Objects.equals(sellerId, requesterId)) {
+            throw new RuntimeException("Access denied: only the seller of this listing can confirm the order");
+        }
+
         if (order.getStatus() != OrderStatus.DEPOSIT_PAID) {
             throw new RuntimeException("Order must be in DEPOSIT_PAID status to confirm");
         }

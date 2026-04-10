@@ -31,6 +31,7 @@ import com.bicycle.selling.repository.BrandRepository;
 import com.bicycle.selling.repository.CategoryRepository;
 import com.bicycle.selling.repository.ListingImageRepository;
 import com.bicycle.selling.repository.UserRepository;
+import com.bicycle.selling.repository.WishlistRepository;
 import com.bicycle.selling.security.UserDetailsImpl;
 
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,7 @@ public class ListingService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final ListingImageRepository imageRepository;
+    private final WishlistRepository wishlistRepository;
     
     @Transactional
     public ListingResponse createListing(ListingRequest request) {
@@ -97,8 +99,10 @@ public class ListingService {
         BicycleListing listing = listingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Listing not found"));
         
-        // Check ownership
-        if (!listing.getSeller().getId().equals(currentUser.getId())) {
+        // Check ownership — ADMIN được phép update bất kỳ listing nào
+        boolean isAdmin = currentUser.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (!isAdmin && !listing.getSeller().getId().equals(currentUser.getId())) {
             throw new UnauthorizedAccessException("You don't have permission to update this listing");
         }
         
@@ -148,8 +152,10 @@ public class ListingService {
         BicycleListing listing = listingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Listing not found"));
         
-        // Check ownership
-        if (!listing.getSeller().getId().equals(currentUser.getId())) {
+        // Check ownership — ADMIN được phép xoá bất kỳ listing nào
+        boolean isAdmin = currentUser.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (!isAdmin && !listing.getSeller().getId().equals(currentUser.getId())) {
             throw new UnauthorizedAccessException("You don't have permission to delete this listing");
         }
         
@@ -271,7 +277,7 @@ public class ListingService {
                 .additionalAccessories(listing.getAccessories())
                 .reasonForSelling(listing.getReasonForSelling())
                 .viewCount(listing.getViewCount())
-                .likeCount(0) // TODO: implement wishlist count
+                .likeCount((int) wishlistRepository.countByListingId(listing.getId()))
                 .sellerId(seller.getId())
                 .sellerUsername(seller.getUsername())
                 .sellerFullName(seller.getFullName())

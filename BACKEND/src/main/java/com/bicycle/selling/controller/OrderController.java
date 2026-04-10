@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 import com.bicycle.selling.dto.CreateOrderRequest;
 import com.bicycle.selling.dto.OrderResponse;
 import com.bicycle.selling.model.Order;
-import com.bicycle.selling.model.enums.OrderStatus;
 import com.bicycle.selling.service.OrderService;
 
 import java.util.List;
@@ -47,6 +46,17 @@ public class OrderController {
             @AuthenticationPrincipal UserDetailsImpl user) {
         try {
             Order order = orderService.getOrderById(orderId);
+
+            // Bug fix #2: Ownership check — chỉ buyer của đơn hoặc seller của listing mới xem được
+            Long buyerId = order.getBuyer().getId();
+            Long sellerId = order.getListing().getSeller().getId();
+            boolean isAdmin = user.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+            if (!isAdmin && !user.getId().equals(buyerId) && !user.getId().equals(sellerId)) {
+                return ResponseEntity.status(403).body(Map.of("error", "Access denied: you are not involved in this order"));
+            }
+
             OrderResponse response = new OrderResponse(
                     order.getId(),
                     order.getBuyer().getId(),
@@ -62,9 +72,11 @@ public class OrderController {
 
     @PutMapping("/{orderId}/cancel")
     public ResponseEntity<?> cancelOrder(
-            @PathVariable Long orderId) {
+            @PathVariable Long orderId,
+            @AuthenticationPrincipal UserDetailsImpl user) {
         try {
-            orderService.setOrderStatus(orderId, OrderStatus.CANCELLED);
+            // Bug fix #2 + #3: dùng cancelOrder() với ownership check + listing rollback
+            orderService.cancelOrder(orderId, user.getId());
             return ResponseEntity.ok(Map.of("message", "Order cancelled successfully"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -73,9 +85,11 @@ public class OrderController {
 
     @PutMapping("/{orderId}/confirm")
     public ResponseEntity<?> confirmOrder(
-            @PathVariable Long orderId) {
+            @PathVariable Long orderId,
+            @AuthenticationPrincipal UserDetailsImpl user) {
         try {
-            orderService.setConfirmOrder(orderId);
+            // Bug fix #6: chỉ seller của listing mới confirm được
+            orderService.setConfirmOrder(orderId, user.getId());
             return ResponseEntity.ok(Map.of("message", "Order confirmed successfully"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
