@@ -101,31 +101,31 @@ Tuần 4: Tích hợp mở rộng + Test + Fix Bug + Báo cáo
 > **Phụ trách:** Xương sống backend - Auth, Listing, Search, Quản lý User
 
 ### Phase 1 — Tuần 1 (Setup & Auth)
-- [ ] Tạo và cấu hình project Spring Boot, kết nối Neon PostgreSQL
-- [ ] Cấu hình Spring Security + JWT
-- [ ] Viết API **Đăng ký** (`POST /api/auth/register`)
-- [ ] Viết API **Đăng nhập** (`POST /api/auth/login`) — trả về JWT Token
-- [ ] Viết **Authorization Filter** phân quyền theo `UserRole` (BUYER, SELLER, INSPECTOR, ADMIN)
-- [ ] Cấu hình CORS cho Frontend có thể gọi API
-- [ ] Cấu hình Swagger UI (`/swagger-ui.html`)
+- [x] Tạo và cấu hình project Spring Boot, kết nối Neon PostgreSQL
+- [x] Cấu hình Spring Security + JWT
+- [x] Viết API **Đăng ký** (`POST /api/auth/register`)
+- [x] Viết API **Đăng nhập** (`POST /api/auth/login`) — trả về JWT Token
+- [x] Viết **Authorization Filter** phân quyền theo `UserRole` (BUYER, SELLER, INSPECTOR, ADMIN)
+- [x] Cấu hình CORS cho Frontend có thể gọi API
+- [x] Cấu hình Swagger UI (`/swagger-ui.html`)
 
 ### Phase 2 — Tuần 2 (Listing API)
-- [ ] **API đăng tin** (`POST /api/listings`) — Seller
-- [ ] **API sửa / ẩn / xóa tin** (`PUT/PATCH/DELETE /api/listings/{id}`) — Seller
-- [ ] **API duyệt / từ chối tin** (`PATCH /api/admin/listings/{id}/approve`) — Admin
-- [ ] **API tìm kiếm & lọc xe** (`GET /api/listings?brand=&category=&priceMin=&priceMax=&condition=&frameSize=`) — Public
-- [ ] **API xem chi tiết** (`GET /api/listings/{id}`) — Public, tăng `viewCount`
-- [ ] **Upload ảnh** (`POST /api/listings/{id}/images`) — lưu URL vào `listing_images`
+- [x] **API đăng tin** (`POST /api/listings`) — Seller
+- [x] **API sửa / ẩn / xóa tin** (`PUT/PATCH/DELETE /api/listings/{id}`) — Seller
+- [x] **API duyệt / từ chối tin** (`PATCH /api/admin/listings/{id}/approve`) — Admin
+- [x] **API tìm kiếm & lọc xe** (`GET /api/listings?brand=&category=&priceMin=&priceMax=&condition=&frameSize=`) — Public
+- [x] **API xem chi tiết** (`GET /api/listings/{id}`) — Public, tăng `viewCount`
+- [x] **Upload ảnh** (`POST /api/listings/{id}/images`) — lưu URL vào `listing_images`
 
 ### Phase 3 — Tuần 3 (User & Quản lý)
-- [ ] **Profile cá nhân** (`GET/PUT /api/users/me`)
-- [ ] **Xem profile người bán** (`GET /api/users/{id}/profile`) — gồm điểm uy tín
-- [ ] **Quản lý User** (Admin): `GET /api/admin/users`, `GET /api/admin/users/{id}`, `PATCH /api/admin/users/{id}/activate`, `DELETE /api/admin/users/{id}`
-- [ ] **Quản lý danh mục & thương hiệu** (`CRUD /api/admin/categories`, `/api/admin/brands`)
-- [ ] **Wishlist**: `POST /api/wishlists/{listingId}`, `DELETE /api/wishlists/{listingId}`, `GET /api/wishlists`
-- [ ] **Seller Listings Management**: `GET /api/seller/listings` (danh sách tin của seller), `GET /api/seller/listings/{id}/stats` (thống kê views, likes)
-- [ ] **Buyer Orders**: `GET /api/buyer/orders`, `GET /api/buyer/orders/{id}`, `PATCH /api/buyer/orders/{id}/cancel`
-- [ ] **Seller Orders**: `GET /api/seller/orders`, `GET /api/seller/orders/{id}`, `PATCH /api/seller/orders/{id}/confirm`
+- [x] **Profile cá nhân** (`GET/PUT /api/users/me`)
+- [x] **Xem profile người bán** (`GET /api/users/{id}/profile`) — gồm điểm uy tín
+- [x] **Quản lý User** (Admin): `GET /api/admin/users`, `GET /api/admin/users/{id}`, `PATCH /api/admin/users/{id}/activate`, `DELETE /api/admin/users/{id}`
+- [x] **Quản lý danh mục & thương hiệu** (`CRUD /api/admin/categories`, `/api/admin/brands`)
+- [x] **Wishlist**: `POST /api/wishlists/{listingId}`, `DELETE /api/wishlists/{listingId}`, `GET /api/wishlists`
+- [x] **Seller Listings Management**: `GET /api/seller/listings` (danh sách tin của seller), `GET /api/seller/listings/{id}/stats` (thống kê views, likes)
+- [x] **Buyer Orders**: `GET /api/buyer/orders`, `GET /api/buyer/orders/{id}`, `PATCH /api/buyer/orders/{id}/cancel`
+- [x] **Seller Orders**: `GET /api/seller/orders`, `GET /api/seller/orders/{id}`, `PATCH /api/seller/orders/{id}/confirm`
 - [ ] Viết Unit Test cho các service chính
 
 ### Phase 4 — Tuần 4
