@@ -14,6 +14,9 @@ import java.util.List;
 import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -96,11 +99,57 @@ public class OrderController {
         }
     }
 
-    @GetMapping
+    @GetMapping("/buyer")
+    @PreAuthorize("hasAnyRole('BUYER', 'ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "Danh sách đơn mua", description = "Buyer xem các đơn hàng của mình")
     public ResponseEntity<?> getOrdersByUserId(@AuthenticationPrincipal UserDetailsImpl user) {
         try {
             List<OrderResponse> orders = orderService.getOrderByUserId(user.getId());
             return ResponseEntity.ok(orders);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/seller")
+    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "Danh sách đơn bán", description = "Seller xem các đơn hàng cho các xe của mình")
+    public ResponseEntity<?> getSellerOrders(@AuthenticationPrincipal UserDetailsImpl user) {
+        try {
+            List<OrderResponse> orders = orderService.getOrdersBySellerId(user.getId());
+            return ResponseEntity.ok(orders);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{orderId}/complete")
+    @PreAuthorize("hasAnyRole('BUYER', 'ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "Buyer hoàn tất đơn hàng", description = "Đánh dấu đã giao dịch thành công (COMPLETED)")
+    public ResponseEntity<?> completeOrder(
+            @PathVariable Long orderId,
+            @AuthenticationPrincipal UserDetailsImpl user) {
+        try {
+            orderService.completeOrder(orderId, user.getId());
+            return ResponseEntity.ok(Map.of("message", "Order completed successfully. You can now leave a review!"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/seller/{orderId}/reject")
+    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "Seller từ chối đơn hàng", description = "Trạng thái xe trở về APPROVED")
+    public ResponseEntity<?> rejectOrder(
+            @PathVariable Long orderId,
+            @AuthenticationPrincipal UserDetailsImpl user) {
+        try {
+            orderService.rejectOrder(orderId, user.getId());
+            return ResponseEntity.ok(Map.of("message", "Order rejected successfully, listing is back to APPROVED"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

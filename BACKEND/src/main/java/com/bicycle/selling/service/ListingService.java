@@ -210,6 +210,27 @@ public class ListingService {
                 .collect(Collectors.toList());
     }
     
+    @Transactional(readOnly = true)
+    public java.util.Map<String, Object> getListingStats(Long id) {
+        UserDetailsImpl currentUser = getCurrentUser();
+        BicycleListing listing = listingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Listing not found"));
+        
+        // Kiểm tra quyền (phải là seller của listing hoặc ADMIN)
+        boolean isAdmin = currentUser.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                
+        if (!isAdmin && !listing.getSeller().getId().equals(currentUser.getId())) {
+            throw new UnauthorizedAccessException("You don't have permission to view stats for this listing");
+        }
+        
+        java.util.Map<String, Object> stats = new java.util.HashMap<>();
+        stats.put("viewCount", listing.getViewCount());
+        stats.put("likeCount", wishlistRepository.countByListingId(listing.getId()));
+        
+        return stats;
+    }
+    
     @Transactional
     public ListingResponse approveListing(Long id) {
         BicycleListing listing = listingRepository.findById(id)

@@ -53,29 +53,10 @@ public class ImageService {
         
         List<String> uploadedUrls = new ArrayList<>();
         
-        // Create upload directory if not exists
-        Path uploadPath = Paths.get(uploadDir);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-        
         boolean isFirstImage = existingImages.isEmpty();
         
         for (MultipartFile file : files) {
-            // Validate file
-            validateFile(file);
-            
-            // Generate unique filename
-            String originalFilename = file.getOriginalFilename();
-            String extension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
-            String filename = UUID.randomUUID().toString() + "." + extension;
-            
-            // Save file
-            Path filePath = uploadPath.resolve(filename);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-            
-            // Create image URL (in production, this would be CDN URL)
-            String imageUrl = "/uploads/images/" + filename;
+            String imageUrl = saveFileToDisk(file);
             
             // Save to database
             ListingImage image = new ListingImage();
@@ -89,6 +70,33 @@ public class ImageService {
         }
         
         return uploadedUrls;
+    }
+    
+    public String uploadAvatar(MultipartFile file) throws IOException {
+        return saveFileToDisk(file);
+    }
+    
+    private String saveFileToDisk(MultipartFile file) throws IOException {
+        // Validate file
+        validateFile(file);
+        
+        // Generate unique filename
+        String originalFilename = file.getOriginalFilename();
+        String extension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
+        String filename = UUID.randomUUID().toString() + "." + extension;
+        
+        // Create upload directory if not exists
+        Path uploadPath = Paths.get(uploadDir);
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+        
+        // Save file
+        Path filePath = uploadPath.resolve(filename);
+        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+        
+        // Create image URL
+        return "/uploads/images/" + filename;
     }
     
     @Transactional

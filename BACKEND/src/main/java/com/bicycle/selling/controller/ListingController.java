@@ -113,6 +113,14 @@ public class ListingController {
         return ResponseEntity.ok(listings);
     }
     
+    @GetMapping("/seller/listings/{id}/stats")
+    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "Thống kê tin đăng", description = "Xem lượt xem tóm tắt của tin đăng")
+    public ResponseEntity<java.util.Map<String, Object>> getListingStats(@PathVariable Long id) {
+        return ResponseEntity.ok(listingService.getListingStats(id));
+    }
+    
     @PostMapping("/seller/listings/{id}/images")
     @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
     @SecurityRequirement(name = "Bearer Authentication")

@@ -137,4 +137,61 @@ public class OrderService {
         }
         return orders;
     }
+
+    public List<OrderResponse> getOrdersBySellerId(Long sellerId) {
+        List<OrderResponse> orders = orderRepository.findByListingSellerId(sellerId);
+        if (orders.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return orders;
+    }
+
+    @Transactional
+    public Order completeOrder(Long orderId, Long requesterId) {
+        Order order = getOrderById(orderId);
+
+        // Ownership: Chỉ buyer được complete
+        if (!Objects.equals(order.getBuyer().getId(), requesterId)) {
+            throw new RuntimeException("Access denied: you are not the buyer of this order");
+        }
+
+        // Logic check: có thể chuyển từ CONFIRMED -> COMPLETED
+        if (order.getStatus() != OrderStatus.CONFIRMED && order.getStatus() != OrderStatus.DEPOSIT_PAID) {
+            throw new RuntimeException("Order cannot be completed from status: " + order.getStatus());
+        }
+
+        order.setStatus(OrderStatus.COMPLETED);
+        
+        // Update listing status sang SOLD
+        BicycleListing listing = order.getListing();
+        listing.setStatus(ListingStatus.SOLD);
+        listingRepository.save(listing);
+
+        return orderRepository.save(order);
+    }
+
+    @Transactional
+    public Order rejectOrder(Long orderId, Long requesterId) {
+        Order order = getOrderById(orderId);
+
+        // Ownership: Chỉ seller của listing mới được reject
+        Long sellerId = order.getListing().getSeller().getId();
+        if (!Objects.equals(sellerId, requesterId)) {
+            throw new RuntimeException("Access denied: only the seller of this listing can reject the order");
+        }
+
+        if (order.getStatus() == OrderStatus.COMPLETED || order.getStatus() == OrderStatus.CANCELLED) {
+            throw new RuntimeException("Cannot reject order in status: " + order.getStatus());
+        }
+
+        // Status đơn thành CANCELLED
+        order.setStatus(OrderStatus.CANCELLED);
+
+        // Rollback listing status về APPROVED
+        BicycleListing listing = order.getListing();
+        listing.setStatus(ListingStatus.APPROVED);
+        listingRepository.save(listing);
+
+        return orderRepository.save(order);
+    }
 }
