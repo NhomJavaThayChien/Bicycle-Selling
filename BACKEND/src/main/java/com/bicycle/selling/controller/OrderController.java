@@ -10,6 +10,9 @@ import com.bicycle.selling.dto.OrderResponse;
 import com.bicycle.selling.model.Order;
 import com.bicycle.selling.service.OrderService;
 
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+
 import java.util.List;
 import java.util.Map;
 
@@ -19,35 +22,30 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 @RestController
-@RequestMapping("/api/orders")
 @RequiredArgsConstructor
+@RequestMapping("/api/orders")
 public class OrderController {
     final OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<?> createOrder(
+    public OrderResponse createOrder(
             @RequestBody CreateOrderRequest request,
             @AuthenticationPrincipal UserDetailsImpl user) {
-        try {
-            Order order = orderService.createOrder(request, user.getId());
-            OrderResponse response = new OrderResponse(
-                    order.getId(),
-                    order.getBuyer().getId(),
-                    order.getListing().getId(),
-                    order.getAgreedPrice(),
-                    order.getStatus().name());
+        Order order = orderService.createOrder(request, user.getId());
+        OrderResponse response = new OrderResponse(
+                order.getId(),
+                order.getBuyer().getId(),
+                order.getListing().getId(),
+                order.getAgreedPrice(),
+                order.getStatus().name());
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        return response;
     }
 
     @GetMapping("/{orderId}")
-    public ResponseEntity<?> getOrderDetails(
+    public OrderResponse getOrderDetails(
             @PathVariable Long orderId,
             @AuthenticationPrincipal UserDetailsImpl user) {
-        try {
             Order order = orderService.getOrderById(orderId);
 
             // Bug fix #2: Ownership check — chỉ buyer của đơn hoặc seller của listing mới xem được
@@ -57,7 +55,7 @@ public class OrderController {
                     .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
             if (!isAdmin && !user.getId().equals(buyerId) && !user.getId().equals(sellerId)) {
-                return ResponseEntity.status(403).body(Map.of("error", "Access denied: you are not involved in this order"));
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
             }
 
             OrderResponse response = new OrderResponse(
@@ -67,10 +65,7 @@ public class OrderController {
                     order.getAgreedPrice(),
                     order.getStatus().name());
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        return response;
     }
 
     @PutMapping("/{orderId}/cancel")

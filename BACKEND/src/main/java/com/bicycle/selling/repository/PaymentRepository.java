@@ -15,11 +15,19 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
-    Payment findByOrderId(Long orderId);
+    Optional<Payment> findByOrderId(Long orderId);
+    
     List<Payment> findByOrder_Buyer_Id(Long userId);
+
     Optional<Payment> findByStripePaymentIntentId(String stripePaymentIntentId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT l FROM BicycleListing l WHERE l.id = :id")
-    Payment findByIdForUpdate(@Param("id") Long id);
+    Optional<Payment> findByIdForUpdate(@Param("id") Long id);
+
     List<Payment> findByOrderBuyerId(Long userId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Payment p WHERE p.order.id = :orderId")
+    Optional<Payment> findByOrderIdForUpdate(Long orderId);
 }

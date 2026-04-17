@@ -6,8 +6,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.bicycle.selling.controller.CreateReviewResponse;
 import com.bicycle.selling.dto.CreateReviewRequest;
+import com.bicycle.selling.dto.CreateReviewResponse;
 import com.bicycle.selling.dto.ReviewResponse;
 import com.bicycle.selling.model.Order;
 import com.bicycle.selling.model.Review;

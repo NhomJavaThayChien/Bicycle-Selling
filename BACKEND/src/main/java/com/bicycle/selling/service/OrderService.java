@@ -35,7 +35,6 @@ public class OrderService {
 
     @Transactional
     public Order createOrder(CreateOrderRequest request, Long buyer_id) {
-
         User buyer = userRepository.findById(buyer_id)
                 .orElseThrow(() -> new RuntimeException("Buyer not found"));
 
@@ -69,10 +68,12 @@ public class OrderService {
                 .note(request.getNote())
                 .shippingAddress(request.getShippingAddress())
                 .build();
-        // Set trạng ngay trong transaction để tránh race condition
-        listing.setStatus(ListingStatus.RESERVED);
 
-        return orderRepository.save(order);
+        listing.setStatus(ListingStatus.RESERVED);
+        
+        Order savedOrder = orderRepository.save(order);
+
+        return savedOrder;
     }
 
     public Order getOrderById(Long orderId) {
@@ -117,16 +118,18 @@ public class OrderService {
     public Order setConfirmOrder(Long orderId, Long requesterId) {
         Order order = getOrderById(orderId);
 
+        if (order.getStatus() != OrderStatus.DEPOSIT_PAID && order.getStatus() != OrderStatus.FULL_PAID) {
+            throw new RuntimeException("Order must be in DEPOSIT_PAID or FULL_PAID status to confirm");
+        }
+
         // Kiểm tra caller là seller của listing trong đơn này
         Long sellerId = order.getListing().getSeller().getId();
+
         if (!Objects.equals(sellerId, requesterId)) {
             throw new RuntimeException("Access denied: only the seller of this listing can confirm the order");
         }
-
-        if (order.getStatus() != OrderStatus.DEPOSIT_PAID) {
-            throw new RuntimeException("Order must be in DEPOSIT_PAID status to confirm");
-        }
         order.setStatus(OrderStatus.CONFIRMED);
+        
         return orderRepository.save(order);
     }
 

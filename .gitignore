@@ -2,3 +2,4 @@ jira-mcp-server
 /.vscode
 /.vscode/settings.json
 BACKEND/processing/
+/logs

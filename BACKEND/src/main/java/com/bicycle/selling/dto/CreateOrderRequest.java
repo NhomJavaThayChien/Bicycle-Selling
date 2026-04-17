@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 
 @Data
 public class CreateOrderRequest {
+    // Order info
     private Long listingId;
     private BigDecimal agreedPrice;
     private BigDecimal depositAmount;
