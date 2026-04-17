@@ -7,6 +7,7 @@ import LoginPage from '../pages/LoginPage';
 import ProfilePage from '../pages/ProfilePage';
 import RegisterPage from '../pages/RegisterPage';
 import WishlistPage from '../pages/WishlistPage';
+import ProtectedRoute from './ProtectedRoute';
 
 function AppRoutes() {
   return (
@@ -17,9 +18,30 @@ function AppRoutes() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/bikes" element={<BikeListPage />} />
         <Route path="/bikes/:id" element={<BikeDetailPage />} />
-        <Route path="/create" element={<CreateBikePage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/wishlist" element={<WishlistPage />} />
+        <Route
+          path="/create"
+          element={
+            <ProtectedRoute>
+              <CreateBikePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/wishlist"
+          element={
+            <ProtectedRoute>
+              <WishlistPage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

@@ -16,6 +16,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -80,29 +81,55 @@ public class OrderService {
                 .orElseThrow(() -> new RuntimeException("Order not found"));
     }
 
-    public Order cancelOrder(Long orderId) {
-        Order order = getOrderById(orderId); 
-        if (order.getStatus() == OrderStatus.CANCELLED) {
-            throw new RuntimeException("Order already cancelled");
-        }
-        if (order.getStatus() == OrderStatus.COMPLETED) {
-            throw new RuntimeException("Cannot cancel completed order");
-        }
-        if (order.getDepositAmount() != null && order.getDepositAmount().compareTo(BigDecimal.ZERO) > 0) {
-            // gọi PaymentService refundDeposit(order)
+    /**
+     * Bug fix #2/#3: Buyer huỷ đơn hàng.
+     * - Chỉ buyer của đơn mới được huỷ (ownership check)
+     * - Chỉ được huỷ khi status = PENDING (chưa đặt cọc)
+     * - Rollback listing.status về APPROVED để người khác có thể đặt mua lại
+     */
+    @Transactional
+    public Order cancelOrder(Long orderId, Long requesterId) {
+        Order order = getOrderById(orderId);
+
+        // Bug fix #2: Kiểm tra ownership — chỉ buyer của đơn mới được huỷ
+        if (!Objects.equals(order.getBuyer().getId(), requesterId)) {
+            throw new RuntimeException("Access denied: you are not the buyer of this order");
         }
 
-        // Set status
+        // Chỉ cho phép huỷ khi PENDING (chưa đặt cọc)
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new RuntimeException("Cannot cancel order in status: " + order.getStatus()
+                    + ". Only PENDING orders can be cancelled");
+        }
+
+        // Bug fix #3: Rollback listing status về APPROVED
+        BicycleListing listing = order.getListing();
+        listing.setStatus(ListingStatus.APPROVED);
+        listingRepository.save(listing);
+
         order.setStatus(OrderStatus.CANCELLED);
         return orderRepository.save(order);
     }
 
-    public Order setConfirmOrder(Long orderId) {
+    /**
+     * Bug fix #6: Chỉ seller của listing mới được confirm đơn.
+     */
+    @Transactional
+    public Order setConfirmOrder(Long orderId, Long requesterId) {
         Order order = getOrderById(orderId);
+
         if (order.getStatus() != OrderStatus.DEPOSIT_PAID && order.getStatus() != OrderStatus.FULL_PAID) {
             throw new RuntimeException("Order must be in DEPOSIT_PAID or FULL_PAID status to confirm");
         }
+
+        // Kiểm tra caller là seller của listing trong đơn này
+        Long sellerId = order.getListing().getSeller().getId();
+
+        if (!Objects.equals(sellerId, requesterId)) {
+            throw new RuntimeException("Access denied: only the seller of this listing can confirm the order");
+        }
         order.setStatus(OrderStatus.CONFIRMED);
+        
         return orderRepository.save(order);
     }
 
@@ -112,5 +139,62 @@ public class OrderService {
             return Collections.emptyList();
         }
         return orders;
+    }
+
+    public List<OrderResponse> getOrdersBySellerId(Long sellerId) {
+        List<OrderResponse> orders = orderRepository.findByListingSellerId(sellerId);
+        if (orders.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return orders;
+    }
+
+    @Transactional
+    public Order completeOrder(Long orderId, Long requesterId) {
+        Order order = getOrderById(orderId);
+
+        // Ownership: Chỉ buyer được complete
+        if (!Objects.equals(order.getBuyer().getId(), requesterId)) {
+            throw new RuntimeException("Access denied: you are not the buyer of this order");
+        }
+
+        // Logic check: có thể chuyển từ CONFIRMED -> COMPLETED
+        if (order.getStatus() != OrderStatus.CONFIRMED && order.getStatus() != OrderStatus.DEPOSIT_PAID) {
+            throw new RuntimeException("Order cannot be completed from status: " + order.getStatus());
+        }
+
+        order.setStatus(OrderStatus.COMPLETED);
+        
+        // Update listing status sang SOLD
+        BicycleListing listing = order.getListing();
+        listing.setStatus(ListingStatus.SOLD);
+        listingRepository.save(listing);
+
+        return orderRepository.save(order);
+    }
+
+    @Transactional
+    public Order rejectOrder(Long orderId, Long requesterId) {
+        Order order = getOrderById(orderId);
+
+        // Ownership: Chỉ seller của listing mới được reject
+        Long sellerId = order.getListing().getSeller().getId();
+        if (!Objects.equals(sellerId, requesterId)) {
+            throw new RuntimeException("Access denied: only the seller of this listing can reject the order");
+        }
+
+        if (order.getStatus() == OrderStatus.COMPLETED || order.getStatus() == OrderStatus.CANCELLED) {
+            throw new RuntimeException("Cannot reject order in status: " + order.getStatus());
+        }
+
+        // Status đơn thành CANCELLED
+        order.setStatus(OrderStatus.CANCELLED);
+
+        // Rollback listing status về APPROVED
+        BicycleListing listing = order.getListing();
+        listing.setStatus(ListingStatus.APPROVED);
+        listingRepository.save(listing);
+
+        return orderRepository.save(order);
     }
 }
