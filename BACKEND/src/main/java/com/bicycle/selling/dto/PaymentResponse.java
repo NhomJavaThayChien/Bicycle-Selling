@@ -12,6 +12,7 @@ public class PaymentResponse {
     private BigDecimal amount;
     private String currency;
     private String status;
+    private String method;
     private String orderId;
     private String createdAt;
     private String updatedAt;

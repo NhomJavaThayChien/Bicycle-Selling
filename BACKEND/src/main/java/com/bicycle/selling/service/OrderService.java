@@ -67,10 +67,12 @@ public class OrderService {
                 .note(request.getNote())
                 .shippingAddress(request.getShippingAddress())
                 .build();
-        // Set trạng ngay trong transaction để tránh race condition
-        listing.setStatus(ListingStatus.RESERVED);
 
-        return orderRepository.save(order);
+        listing.setStatus(ListingStatus.RESERVED);
+        
+        Order savedOrder = orderRepository.save(order);
+
+        return savedOrder;
     }
 
     public Order getOrderById(Long orderId) {
@@ -97,8 +99,8 @@ public class OrderService {
 
     public Order setConfirmOrder(Long orderId) {
         Order order = getOrderById(orderId);
-        if (order.getStatus() != OrderStatus.DEPOSIT_PAID) {
-            throw new RuntimeException("Order must be in DEPOSIT_PAID status to confirm");
+        if (order.getStatus() != OrderStatus.DEPOSIT_PAID && order.getStatus() != OrderStatus.FULL_PAID) {
+            throw new RuntimeException("Order must be in DEPOSIT_PAID or FULL_PAID status to confirm");
         }
         order.setStatus(OrderStatus.CONFIRMED);
         return orderRepository.save(order);

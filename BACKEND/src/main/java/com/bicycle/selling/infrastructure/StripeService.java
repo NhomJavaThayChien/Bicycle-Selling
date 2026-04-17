@@ -42,17 +42,23 @@ public class StripeService {
                 return PaymentIntent.create(params);
         }
 
-        public String createCheckoutSession(BigDecimal amount, String currency) throws StripeException {
+        public Session createCheckoutSession(BigDecimal amount, String currency, Long orderId, boolean isDeposit) throws StripeException {
                 long unitAmount = convertAmount(amount, currency);
 
                 SessionCreateParams params = SessionCreateParams.builder()
                                 .setMode(SessionCreateParams.Mode.PAYMENT)
                                 .setSuccessUrl(successUrl)
                                 .setCancelUrl(cancelUrl)
+                                .setPaymentIntentData(
+                                        SessionCreateParams.PaymentIntentData.builder()
+                                                .putMetadata("orderId", orderId.toString())
+                                                .putMetadata("isDeposit", String.valueOf(isDeposit))
+                                                .build()
+                                )
                                 .addLineItem(buildLineItem(unitAmount))
                                 .build();
 
-                return Session.create(params).getUrl();
+                return Session.create(params);
         }
         
         private SessionCreateParams.LineItem buildLineItem(long unitAmount) {
@@ -73,4 +79,6 @@ public class StripeService {
                 }
                 return amount.multiply(new BigDecimal(100)).longValue();
         }
+
+        
 }

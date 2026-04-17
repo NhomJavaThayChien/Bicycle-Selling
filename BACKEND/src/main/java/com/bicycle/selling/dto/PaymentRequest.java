@@ -5,6 +5,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class PaymentDepositResponse {
-    private String checkoutSession;
+public class PaymentRequest {
+    public Long orderId;
+    public String currency;
 }

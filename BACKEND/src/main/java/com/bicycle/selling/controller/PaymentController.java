@@ -1,8 +1,8 @@
 package com.bicycle.selling.controller;
 
-import com.bicycle.selling.dto.PaymentDepositRequest;
-import com.bicycle.selling.dto.PaymentDepositResponse;
+import com.bicycle.selling.dto.PaymentRequest;
 import com.bicycle.selling.dto.PaymentResponse;
+import com.bicycle.selling.dto.PaymentStripeResponse;
 import com.bicycle.selling.security.UserDetailsImpl;
 
 import java.util.List;
@@ -25,12 +25,31 @@ public class PaymentController {
     final PaymentService paymentService;
 
     @PostMapping("/deposit")
-    public PaymentDepositResponse createDepositPayment(@RequestBody PaymentDepositRequest request) {
+    public PaymentStripeResponse createDepositPayment(@RequestBody PaymentRequest request) {
         if (request.currency == null) {
             request.currency = "vnd";
         }
         String checkoutSession = paymentService.PaymentDeposit(request.orderId, request.currency);
-        PaymentDepositResponse response = new PaymentDepositResponse(checkoutSession);
+        PaymentStripeResponse response = new PaymentStripeResponse(checkoutSession);
+        return response;
+    }
+
+    @PostMapping("/full-paid")
+    public PaymentStripeResponse createFullPayment(@RequestBody PaymentRequest request) {
+        if (request.currency == null) {
+            request.currency = "vnd";
+        }
+        String checkoutSession = paymentService.fullPayment(request.orderId, request.currency);
+        PaymentStripeResponse response = new PaymentStripeResponse(checkoutSession);
+        return response;
+    }
+
+    @PostMapping("/cash")
+    public PaymentResponse createCashPayment(@RequestBody PaymentRequest request) {
+        if (request.currency == null) {
+            request.currency = "vnd";
+        }
+        PaymentResponse response = paymentService.createCashPayment(request.orderId, request.currency);
         return response;
     }
 

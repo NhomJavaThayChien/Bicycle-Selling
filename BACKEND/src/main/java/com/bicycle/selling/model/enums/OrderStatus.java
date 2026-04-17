@@ -3,6 +3,7 @@ package com.bicycle.selling.model.enums;
 public enum OrderStatus {
     PENDING,            // Đang chờ xác nhận
     DEPOSIT_PAID,       // Đã đặt cọc
+    FULL_PAID,
     CONFIRMED,          // Người bán đã xác nhận
     SHIPPING,           // Đang giao hàng
     COMPLETED,          // Hoàn thành
