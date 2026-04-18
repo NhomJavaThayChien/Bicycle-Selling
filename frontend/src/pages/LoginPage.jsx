@@ -37,42 +37,48 @@ function LoginPage() {
   };
 
   return (
-    <section className="auth-page">
-      <div className="auth-card">
-        <div className="section-heading">
-          <p className="eyebrow">Welcome back</p>
-          <h1>Login</h1>
-          <p>Continue where you left off and manage your bike marketplace activity.</p>
+    <section className="auth-page auth-page-simple">
+      <div className="auth-card auth-card-simple">
+        <div className="simple-auth-header">
+          <p className="simple-auth-kicker">Bicycle Selling</p>
+          <h1>Đăng nhập</h1>
+          <p>Vui lòng nhập tài khoản để tiếp tục.</p>
         </div>
-        <form className="auth-form" onSubmit={handleSubmit}>
-        <label htmlFor="usernameOrEmail">Username hoặc Email</label>
-        <input
-          id="usernameOrEmail"
-          name="usernameOrEmail"
-          type="text"
-          value={formData.usernameOrEmail}
-          onChange={handleChange}
-          required
-        />
 
-        <label htmlFor="password">Password</label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-        />
+        <form className="auth-form simple-auth-form" onSubmit={handleSubmit}>
+          <label htmlFor="usernameOrEmail">Username hoặc email</label>
+          <input
+            id="usernameOrEmail"
+            name="usernameOrEmail"
+            type="text"
+            value={formData.usernameOrEmail}
+            onChange={handleChange}
+            placeholder="Nhập username hoặc email"
+            autoComplete="username"
+            required
+          />
 
-        {error && <p className="form-error">{error}</p>}
+          <label htmlFor="password">Mật khẩu</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            value={formData.password}
+            onChange={handleChange}
+            placeholder="Nhập mật khẩu"
+            autoComplete="current-password"
+            required
+          />
 
-        <button type="submit" className="primary-button full-width" disabled={isSubmitting}>
-          {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
-        </button>
+          {error && <p className="form-error">{error}</p>}
+
+          <button type="submit" className="primary-button full-width" disabled={isSubmitting}>
+            {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
+          </button>
         </form>
-        <p className="auth-footnote">
-          Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
+
+        <p className="auth-footnote simple-auth-footer">
+          Chưa có tài khoản? <Link to="/register">Đăng ký</Link>
         </p>
       </div>
     </section>
