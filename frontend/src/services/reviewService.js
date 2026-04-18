@@ -1,4 +1,12 @@
-import API from './api';
+import api from "./api";
 
-export const getReviewsByBikeId = (bikeId) => API.get(`/reviews/bike/${bikeId}`);
-export const createReview = (data) => API.post('/reviews', data);
+export const createReview = (orderId, data) =>
+	api.post(`/reviews/orders/${orderId}`, data);
+
+export const getReviewsBySeller = (sellerId, params = {}) =>
+	api.get(`/reviews/sellers/${sellerId}`, {
+		params: {
+			page: params.page ?? 0,
+			size: params.size ?? 10,
+		},
+	});
