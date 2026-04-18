@@ -1,13 +1,14 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import BikeDetailPage from '../pages/BikeDetailPage';
-import BikeListPage from '../pages/BikeListPage';
-import CreateBikePage from '../pages/CreateBikePage';
-import HomePage from '../pages/HomePage';
-import LoginPage from '../pages/LoginPage';
-import ProfilePage from '../pages/ProfilePage';
-import RegisterPage from '../pages/RegisterPage';
-import WishlistPage from '../pages/WishlistPage';
-import ProtectedRoute from './ProtectedRoute';
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import BikeDetailPage from "../pages/BikeDetailPage";
+import BikeListPage from "../pages/BikeListPage";
+import CreateListingPage from "../pages/CreateListingPage";
+import HomePage from "../pages/HomePage";
+import LoginPage from "../pages/LoginPage";
+import ProfilePage from "../pages/ProfilePage";
+import RegisterPage from "../pages/RegisterPage";
+import SellerDashboardPage from "../pages/SellerDashboardPage";
+import WishlistPage from "../pages/WishlistPage";
+import ProtectedRoute from "./ProtectedRoute";
 
 function AppRoutes() {
   return (
@@ -19,10 +20,34 @@ function AppRoutes() {
         <Route path="/bikes" element={<BikeListPage />} />
         <Route path="/bikes/:id" element={<BikeDetailPage />} />
         <Route
+          path="/seller/dashboard"
+          element={
+            <ProtectedRoute>
+              <SellerDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/seller/create"
+          element={
+            <ProtectedRoute>
+              <CreateListingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/seller/edit/:id"
+          element={
+            <ProtectedRoute>
+              <CreateListingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/create"
           element={
             <ProtectedRoute>
-              <CreateBikePage />
+              <CreateListingPage />
             </ProtectedRoute>
           }
         />
