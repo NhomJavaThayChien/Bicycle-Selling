@@ -1,15 +1,15 @@
-import { useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
-import useAuth from '../hooks/useAuth';
+import { useState } from "react";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import useAuth from "../hooks/useAuth";
 
 function LoginPage() {
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
-    usernameOrEmail: '',
-    password: '',
+    usernameOrEmail: "",
+    password: "",
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (isAuthenticated) {
@@ -23,23 +23,28 @@ function LoginPage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError('');
+    setError("");
     setIsSubmitting(true);
 
     try {
       await login(formData);
-      navigate('/profile');
+      navigate("/profile");
     } catch (submitError) {
-      setError('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
+      setError("Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <section style={{ maxWidth: '420px', margin: '40px auto' }}>
-      <h1>Login</h1>
-      <form onSubmit={handleSubmit}>
+    <section className="auth-page">
+      <div className="auth-card">
+        <div className="section-heading">
+          <p className="eyebrow">Welcome back</p>
+          <h1>Login</h1>
+          <p>Continue where you left off and manage your bike marketplace activity.</p>
+        </div>
+        <form className="auth-form" onSubmit={handleSubmit}>
         <label htmlFor="usernameOrEmail">Username hoặc Email</label>
         <input
           id="usernameOrEmail"
@@ -60,15 +65,16 @@ function LoginPage() {
           required
         />
 
-        {error && <p>{error}</p>}
+        {error && <p className="form-error">{error}</p>}
 
-        <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
+        <button type="submit" className="primary-button full-width" disabled={isSubmitting}>
+          {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
         </button>
-      </form>
-      <p>
-        Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
-      </p>
+        </form>
+        <p className="auth-footnote">
+          Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
+        </p>
+      </div>
     </section>
   );
 }

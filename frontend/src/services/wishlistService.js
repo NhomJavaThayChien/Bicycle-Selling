@@ -1,6 +1,6 @@
-import api from './api';
+import api from "./api";
 
-const WISHLIST_KEY = 'wishlist_items';
+const WISHLIST_KEY = "wishlist_items";
 
 const readWishlist = () => {
   const raw = localStorage.getItem(WISHLIST_KEY);
@@ -51,7 +51,7 @@ export const clearWishlist = () => {
 
 export const fetchWishlist = async () => {
   try {
-    const response = await api.get('/buyer/wishlist');
+    const response = await api.get("/buyer/wishlist");
     const items = Array.isArray(response.data) ? response.data : [];
     writeWishlist(items);
     return items;

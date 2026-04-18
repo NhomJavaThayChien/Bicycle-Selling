@@ -1,10 +1,10 @@
-import { createContext, useCallback, useMemo, useState } from 'react';
-import * as authService from '../services/authService';
+import { createContext, useCallback, useMemo, useState } from "react";
+import * as authService from "../services/authService";
 
 export const AuthContext = createContext(null);
 
-const TOKEN_KEY = 'token';
-const USER_KEY = 'user';
+const TOKEN_KEY = "token";
+const USER_KEY = "user";
 
 const parseStoredUser = () => {
   const storedUser = localStorage.getItem(USER_KEY);
@@ -33,7 +33,7 @@ function AuthProvider({ children }) {
 
   const saveSession = useCallback((payload) => {
     if (!payload?.token) {
-      throw new Error('Token không tồn tại trong phản hồi từ server.');
+      throw new Error("Token không tồn tại trong phản hồi từ server.");
     }
 
     const sessionUser = mapAuthPayloadToUser(payload);
@@ -43,17 +43,23 @@ function AuthProvider({ children }) {
     setUser(sessionUser);
   }, []);
 
-  const login = useCallback(async (credentials) => {
-    const response = await authService.login(credentials);
-    saveSession(response.data);
-    return response.data;
-  }, [saveSession]);
+  const login = useCallback(
+    async (credentials) => {
+      const response = await authService.login(credentials);
+      saveSession(response.data);
+      return response.data;
+    },
+    [saveSession],
+  );
 
-  const register = useCallback(async (payload) => {
-    const response = await authService.register(payload);
-    saveSession(response.data);
-    return response.data;
-  }, [saveSession]);
+  const register = useCallback(
+    async (payload) => {
+      const response = await authService.register(payload);
+      saveSession(response.data);
+      return response.data;
+    },
+    [saveSession],
+  );
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
@@ -71,7 +77,7 @@ function AuthProvider({ children }) {
       register,
       logout,
     }),
-    [user, token, login, register, logout]
+    [user, token, login, register, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

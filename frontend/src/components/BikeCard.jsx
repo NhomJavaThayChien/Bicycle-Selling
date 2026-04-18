@@ -1,9 +1,9 @@
-import { formatPrice } from '../utils/formatPrice';
+import { formatPrice } from "../utils/formatPrice";
 
 function BikeCard({ bike }) {
-  const title = bike?.title || bike?.name || 'Bike name';
+  const title = bike?.title || bike?.name || "Bike name";
   const price = Number(bike?.price || 0);
-  const imageUrl = bike?.primaryImageUrl || bike?.image || '';
+  const imageUrl = bike?.primaryImageUrl || bike?.image || "";
 
   return (
     <div>
@@ -11,7 +11,12 @@ function BikeCard({ bike }) {
         <img
           src={imageUrl}
           alt={title}
-          style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: '6px' }}
+          style={{
+            width: "100%",
+            height: "160px",
+            objectFit: "cover",
+            borderRadius: "6px",
+          }}
         />
       )}
       <h3>{title}</h3>

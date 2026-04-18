@@ -1,19 +1,19 @@
-import { useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
-import useAuth from '../hooks/useAuth';
+import { useState } from "react";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import useAuth from "../hooks/useAuth";
 
 function RegisterPage() {
   const navigate = useNavigate();
   const { register, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    fullName: '',
-    phoneNumber: '',
-    role: 'BUYER',
+    username: "",
+    email: "",
+    password: "",
+    fullName: "",
+    phoneNumber: "",
+    role: "BUYER",
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (isAuthenticated) {
@@ -27,23 +27,28 @@ function RegisterPage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError('');
+    setError("");
     setIsSubmitting(true);
 
     try {
       await register(formData);
-      navigate('/profile');
+      navigate("/profile");
     } catch (submitError) {
-      setError('Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.');
+      setError("Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <section style={{ maxWidth: '420px', margin: '40px auto' }}>
-      <h1>Register</h1>
-      <form onSubmit={handleSubmit}>
+    <section className="auth-page">
+      <div className="auth-card auth-card-wide">
+        <div className="section-heading">
+          <p className="eyebrow">Create account</p>
+          <h1>Register</h1>
+          <p>Choose a buyer or seller profile and start using the marketplace.</p>
+        </div>
+        <form className="auth-form two-column" onSubmit={handleSubmit}>
         <label htmlFor="username">Username</label>
         <input
           id="username"
@@ -96,20 +101,26 @@ function RegisterPage() {
         />
 
         <label htmlFor="role">Role</label>
-        <select id="role" name="role" value={formData.role} onChange={handleChange}>
+        <select
+          id="role"
+          name="role"
+          value={formData.role}
+          onChange={handleChange}
+        >
           <option value="BUYER">BUYER</option>
           <option value="SELLER">SELLER</option>
         </select>
 
-        {error && <p>{error}</p>}
+        {error && <p className="form-error full-span">{error}</p>}
 
-        <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Đang đăng ký...' : 'Đăng ký'}
+        <button type="submit" className="primary-button full-width full-span" disabled={isSubmitting}>
+          {isSubmitting ? "Đang đăng ký..." : "Đăng ký"}
         </button>
-      </form>
-      <p>
-        Đã có tài khoản? <Link to="/login">Đăng nhập</Link>
-      </p>
+        </form>
+        <p className="auth-footnote">
+          Đã có tài khoản? <Link to="/login">Đăng nhập</Link>
+        </p>
+      </div>
     </section>
   );
 }
