@@ -25,21 +25,25 @@ public class PaymentController {
     final PaymentService paymentService;
 
     @PostMapping("/deposit")
-    public PaymentStripeResponse createDepositPayment(@RequestBody PaymentRequest request) {
+    public PaymentStripeResponse createDepositPayment(
+        @RequestBody PaymentRequest request, 
+        @AuthenticationPrincipal UserDetailsImpl user) {
         if (request.currency == null) {
             request.currency = "vnd";
         }
-        String checkoutSession = paymentService.PaymentDeposit(request.orderId, request.currency);
+        String checkoutSession = paymentService.PaymentDeposit(request.orderId, request.currency, user.getId());
         PaymentStripeResponse response = new PaymentStripeResponse(checkoutSession);
         return response;
     }
 
     @PostMapping("/full-paid")
-    public PaymentStripeResponse createFullPayment(@RequestBody PaymentRequest request) {
+    public PaymentStripeResponse createFullPayment(
+        @RequestBody PaymentRequest request,
+        @AuthenticationPrincipal UserDetailsImpl user) {
         if (request.currency == null) {
             request.currency = "vnd";
         }
-        String checkoutSession = paymentService.fullPayment(request.orderId, request.currency);
+        String checkoutSession = paymentService.fullPayment(request.orderId, request.currency, user.getId());
         PaymentStripeResponse response = new PaymentStripeResponse(checkoutSession);
         return response;
     }

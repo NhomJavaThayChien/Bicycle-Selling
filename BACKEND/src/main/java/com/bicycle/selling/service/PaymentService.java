@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -26,10 +27,17 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
 
-    public String PaymentDeposit(Long orderId, String currency) {
+    public String PaymentDeposit(Long orderId, String currency, Long requesterId) {
         try {
             Order order = orderRepository.findById(orderId)
                     .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+
+            Long buyer = order.getBuyer().getId();
+
+            if (!Objects.equals(buyer, requesterId)) {
+                throw new RuntimeException("Access denied: only the buyer of this order can payment");
+            }
+
             BigDecimal depositAmount = order.getDepositAmount();
 
             if (depositAmount == null || depositAmount.compareTo(BigDecimal.ZERO) <= 0) {
@@ -79,10 +87,17 @@ public class PaymentService {
         }
     }
 
-    public String fullPayment(Long orderId, String currency) {
+    public String fullPayment(Long orderId, String currency, Long requesterId) {
         try {
             Order order = orderRepository.findById(orderId)
                     .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+
+            Long buyer = order.getBuyer().getId();
+            
+            if (!Objects.equals(buyer, requesterId)) {
+                throw new RuntimeException("Access denied: only the buyer of this order can payment");
+            }
+
             BigDecimal amount = order.getAgreedPrice();
 
             if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
@@ -118,7 +133,7 @@ public class PaymentService {
         try {
             Order order = orderRepository.findById(orderId)
                     .orElseThrow(() -> new IllegalArgumentException("Order not found"));
-                    
+
             if (paymentRepository.findByOrderId(orderId).isPresent()) {
                 throw new IllegalStateException("Payment already exists for this order");
             }

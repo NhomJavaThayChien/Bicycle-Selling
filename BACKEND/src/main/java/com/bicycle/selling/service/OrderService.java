@@ -118,9 +118,9 @@ public class OrderService {
     public Order setConfirmOrder(Long orderId, Long requesterId) {
         Order order = getOrderById(orderId);
 
-        if (order.getStatus() != OrderStatus.DEPOSIT_PAID && order.getStatus() != OrderStatus.FULL_PAID) {
-            throw new RuntimeException("Order must be in DEPOSIT_PAID or FULL_PAID status to confirm");
-        }
+        // if (order.getStatus() != OrderStatus.DEPOSIT_PAID && order.getStatus() != OrderStatus.FULL_PAID) {
+        //     throw new RuntimeException("Order must be in DEPOSIT_PAID or FULL_PAID status to confirm");
+        // }
 
         // Kiểm tra caller là seller của listing trong đơn này
         Long sellerId = order.getListing().getSeller().getId();
