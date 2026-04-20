@@ -34,6 +34,9 @@ public class ShippingOrder {
     @Builder.Default
     private BigDecimal shippingFee = BigDecimal.ZERO;
 
+    @Column(name = "cod_amount", columnDefinition = "DECIMAL(10,0)")
+    private BigDecimal codAmount;
+
     // Tên người nhận
     @Column(name = "recipient_name", length = 100)
     private String recipientName;
