@@ -1,1 +1,8 @@
 jira-mcp-server
+target/
+.idea/
+.vscode/
+*.log
+*.ps1
+BACKEND/processing/logs/
+BACKEND/processing/
