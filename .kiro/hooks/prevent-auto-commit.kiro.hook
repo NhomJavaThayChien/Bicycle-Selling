@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Prevent Auto Commits",
+  "description": "Yêu cầu xác nhận trước khi commit code",
+  "version": "1",
+  "when": {
+    "type": "preToolUse",
+    "toolTypes": [
+      ".*git.*commit.*"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "STOP! Người dùng không muốn tôi tự ý commit. Hãy hỏi xác nhận trước khi commit: 'Bạn có muốn tôi commit những thay đổi này không?' Nếu người dùng không đồng ý, đừng commit."
+  }
+}

@@ -5,6 +5,7 @@ public enum ListingStatus {
     APPROVED,           // Đã duyệt - đang hiển thị
     REJECTED,           // Bị từ chối
     HIDDEN,             // Người bán ẩn
-    SOLD,               // Đã bán
+    RESERVED,           // Đã được giữ (lúc tạo order)
+    SOLD,               // Đã bán (đã hoàn tất giao dịch)
     EXPIRED             // Hết hạn
 }
