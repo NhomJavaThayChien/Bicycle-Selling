@@ -31,10 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
-<<<<<<< HEAD
 
 ### Custom Test Logs ###
 processing/logs/
-=======
+
+### Spring Boot ###
 src/main/resources/application-dev.properties
->>>>>>> 3de58141fad7f6fee5ac5b804bda755462cb0086
+src/main/resources/application.properties
