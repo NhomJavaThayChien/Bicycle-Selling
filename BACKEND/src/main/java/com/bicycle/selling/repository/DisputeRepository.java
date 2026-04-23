@@ -3,6 +3,7 @@ package com.bicycle.selling.repository;
 import com.bicycle.selling.model.Dispute;
 import com.bicycle.selling.model.enums.DisputeStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,4 +19,11 @@ public interface DisputeRepository extends JpaRepository<Dispute, Long> {
     List<Dispute> findByOpenedById(Long userId);
 
     List<Dispute> findByHandledById(Long adminId);
+
+    @Query("""
+                SELECT d.status, COUNT(d)
+                FROM Dispute d
+                GROUP BY d.status
+            """)
+    List<Object[]> countByStatus();
 }
