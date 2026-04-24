@@ -4,7 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import java.io.IOException;
+
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -18,7 +18,7 @@ import com.bicycle.selling.dto.UserProfileResponse;
 import com.bicycle.selling.service.UserService;
 import com.bicycle.selling.service.ImageService;
 import java.util.Map;
-import java.util.List;
+
 
 @RestController
 @RequestMapping("/api")

@@ -28,7 +28,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                 WHERE o.buyer.id = :userId
             """)
     List<OrderResponse> findByBuyerId(Long userId);
-    
+
     @Query("""
                 SELECT new com.bicycle.selling.dto.OrderResponse(
                     o.id,
@@ -41,4 +41,28 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                 WHERE o.listing.seller.id = :sellerId
             """)
     List<OrderResponse> findByListingSellerId(Long sellerId);
+
+    @Query("""
+                SELECT COALESCE(SUM(o.agreedPrice), 0)
+                FROM Order o
+                WHERE o.status = com.bicycle.selling.model.enums.OrderStatus.COMPLETED
+            """)
+    Double getTotalRevenue();
+
+    @Query("""
+                SELECT FUNCTION('DATE', o.createdAt) as date, COUNT(o) as total
+                FROM Order o
+                GROUP BY FUNCTION('DATE', o.createdAt)
+                ORDER BY date
+            """)
+    List<Object[]> getOrdersPerDay();
+
+    @Query("""
+                SELECT FUNCTION('DATE', o.createdAt) as date, SUM(o.agreedPrice)
+                FROM Order o
+                WHERE o.status = com.bicycle.selling.model.enums.OrderStatus.COMPLETED
+                GROUP BY FUNCTION('DATE', o.createdAt)
+                ORDER BY date
+            """)
+    List<Object[]> getRevenuePerDay();
 }

@@ -1,4 +1,4 @@
-import { Link, NavLink, useNavigate, useLocation } from "react-router-dom"; // Đã thêm useLocation
+import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 
 function Navbar() {

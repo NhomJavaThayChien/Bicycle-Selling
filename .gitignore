@@ -1,5 +1,11 @@
 jira-mcp-server
-/.vscode
-/.vscode/settings.json
+target/
+.idea/
+.vscode/
+*.log
+*.ps1
 BACKEND/processing/
 /logs
+
+# Ignore backend application properties
+BACKEND/src/main/resources/application.properties
