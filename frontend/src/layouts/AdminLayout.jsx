@@ -1,16 +1,39 @@
-import AdminNavbar from "../components/AdminNavbar";
+import React from "react";
+import AdminSidebar from "../components/AdminSidebar"; // Cập nhật đường dẫn
+import AdminHeader from "../components/AdminHeader"; // Cập nhật đường dẫn
 
-// Chúng ta dùng { children } để nhận nội dung trang Admin truyền vào
 export default function AdminLayout({ children }) {
   return (
-    <div className="admin-container">
-      {/* Thanh điều hướng Admin luôn cố định ở trên */}
-      <AdminNavbar />
+    <div style={styles.container}>
+      {/* Cột trái: Sidebar */}
+      <AdminSidebar />
 
-      {/* Nội dung các trang Dashboard, Users... sẽ hiển thị ở đây */}
-      <div className="admin-content" style={{ padding: "20px" }}>
-        {children}
+      {/* Cột phải: Header và Nội dung chính */}
+      <div style={styles.mainWrapper}>
+        <AdminHeader />
+
+        <main style={styles.content}>{children}</main>
       </div>
     </div>
   );
 }
+
+const styles = {
+  container: {
+    display: "flex",
+    height: "100vh",
+    width: "100vw",
+    overflow: "hidden",
+    backgroundColor: "#f4f7f6",
+  },
+  mainWrapper: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+  },
+  content: {
+    flex: 1,
+    padding: "20px",
+    overflowY: "auto",
+  },
+};

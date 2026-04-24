@@ -16,6 +16,7 @@ import SellerDashboardPage from "../pages/SellerDashboardPage";
 import SellerProfilePage from "../pages/SellerProfilePage";
 import WishlistPage from "../pages/WishlistPage";
 import ProtectedRoute from "./ProtectedRoute";
+import AdminProfile from "../pages/admin/AdminProfile";
 
 // ======= IMPORT ADMIN =======
 import AdminLayout from "../layouts/AdminLayout";
@@ -156,6 +157,18 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/admin/profile"
+        element={
+          <ProtectedRoute>
+            <AdminLayout>
+              <AdminProfile />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
+
       <Route
         path="/admin/categories"
         element={

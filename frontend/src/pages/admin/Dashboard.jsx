@@ -19,18 +19,23 @@ export default function Dashboard() {
 
   return (
     <Row gutter={16}>
+           {" "}
       <Col span={6}>
-        <Card title="Users">{data.totalUsers}</Card>
+                <Card title="Users">{data.totalUsers}</Card>     {" "}
       </Col>
+           {" "}
       <Col span={6}>
-        <Card title="Cars">{data.totalCars}</Card>
+                <Card title="Cars">{data.totalCars}</Card>     {" "}
       </Col>
+           {" "}
       <Col span={6}>
-        <Card title="Orders">{data.totalOrders}</Card>
+                <Card title="Orders">{data.totalOrders}</Card>     {" "}
       </Col>
+           {" "}
       <Col span={6}>
-        <Card title="Revenue">{data.revenue}</Card>
+                <Card title="Revenue">{data.revenue}</Card>     {" "}
       </Col>
+         {" "}
     </Row>
   );
 }
