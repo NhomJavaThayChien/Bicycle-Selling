@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   const [formData, setFormData] = useState({
     usernameOrEmail: "",
     password: "",
@@ -12,9 +12,18 @@ function LoginPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (isAuthenticated) {
-    return <Navigate to="/profile" replace />;
-  }
+  // === ĐOẠN CODE QUAN TRỌNG ĐỂ CHUYỂN TRANG ĐÚNG ===
+  // useEffect sẽ tự động chạy ngay khi biến 'isAuthenticated' hoặc 'user' thay đổi
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const role = (user.role || "").toUpperCase();
+      if (role === "ADMIN") {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/profile", { replace: true });
+      }
+    }
+  }, [isAuthenticated, user, navigate]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -27,8 +36,8 @@ function LoginPage() {
     setIsSubmitting(true);
 
     try {
+      // Chỉ gọi hàm login, việc chuyển trang để useEffect ở trên lo
       await login(formData);
-      navigate("/profile");
     } catch (submitError) {
       setError("Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
     } finally {
@@ -72,7 +81,11 @@ function LoginPage() {
 
           {error && <p className="form-error">{error}</p>}
 
-          <button type="submit" className="primary-button full-width" disabled={isSubmitting}>
+          <button
+            type="submit"
+            className="primary-button full-width"
+            disabled={isSubmitting}
+          >
             {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
           </button>
         </form>

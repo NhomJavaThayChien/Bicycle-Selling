@@ -1,9 +1,18 @@
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 
 function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation(); // Khởi tạo useLocation để lấy đường dẫn hiện tại
   const { user, isAuthenticated, logout } = useAuth();
+
+  // Kiểm tra: Nếu đường dẫn bắt đầu bằng /admin hoặc /inspector thì không render gì cả (ẩn Navbar)
+  if (
+    location.pathname.startsWith("/admin") ||
+    location.pathname.startsWith("/inspector")
+  ) {
+    return null;
+  }
 
   const handleLogout = () => {
     logout();
@@ -17,20 +26,45 @@ function Navbar() {
       </Link>
 
       <nav className="topbar-links">
-        <NavLink to="/bikes" className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}>
+        <NavLink
+          to="/bikes"
+          className={({ isActive }) =>
+            isActive ? "nav-link active" : "nav-link"
+          }
+        >
           Bikes
         </NavLink>
-        <NavLink to="/wishlist" className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}>
+        <NavLink
+          to="/wishlist"
+          className={({ isActive }) =>
+            isActive ? "nav-link active" : "nav-link"
+          }
+        >
           Wishlist
         </NavLink>
-        <NavLink to="/orders" className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}>
+        <NavLink
+          to="/orders"
+          className={({ isActive }) =>
+            isActive ? "nav-link active" : "nav-link"
+          }
+        >
           Orders
         </NavLink>
-        <NavLink to="/profile" className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}>
+        <NavLink
+          to="/profile"
+          className={({ isActive }) =>
+            isActive ? "nav-link active" : "nav-link"
+          }
+        >
           Profile
         </NavLink>
         {user?.role === "SELLER" && (
-          <NavLink to="/seller/dashboard" className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}>
+          <NavLink
+            to="/seller/dashboard"
+            className={({ isActive }) =>
+              isActive ? "nav-link active" : "nav-link"
+            }
+          >
             Seller dashboard
           </NavLink>
         )}
@@ -40,7 +74,11 @@ function Navbar() {
         {isAuthenticated ? (
           <>
             <span className="topbar-chip">{user?.username}</span>
-            <button type="button" className="ghost-button" onClick={handleLogout}>
+            <button
+              type="button"
+              className="ghost-button"
+              onClick={handleLogout}
+            >
               Logout
             </button>
           </>

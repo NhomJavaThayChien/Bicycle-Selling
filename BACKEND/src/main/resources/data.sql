@@ -4,7 +4,7 @@
 -- hash: $2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.
 -- ============================================================
 
--- ============ BRANDS ============
+-- Ensure deterministic IDs for automated tests
 INSERT INTO brands (id, name, country, is_active, created_at)
 VALUES (1, 'TEST_BRAND_ID_1', 'N/A', true, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO NOTHING;
@@ -13,6 +13,7 @@ INSERT INTO brands (id, name, country, is_active, created_at)
 VALUES (2, 'TEST_BRAND_ID_2', 'N/A', true, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO NOTHING;
 
+-- ============ REAL BRANDS ============
 INSERT INTO brands (name, country, is_active, created_at)
 VALUES ('Giant', 'Taiwan', true, CURRENT_TIMESTAMP)
 ON CONFLICT (name) DO NOTHING;

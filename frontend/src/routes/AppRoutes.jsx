@@ -16,9 +16,25 @@ import SellerProfilePage from "../pages/SellerProfilePage";
 import WishlistPage from "../pages/WishlistPage";
 import ProtectedRoute from "./ProtectedRoute";
 
+import AdminProfile from "../pages/admin/AdminProfile";
+
+// ======= IMPORT ADMIN =======
+import AdminLayout from "../layouts/AdminLayout";
+import Dashboard from "../pages/admin/Dashboard";
+import UserManagement from "../pages/admin/UserManagement";
+import Category from "../pages/admin/Category";
+import Brand from "../pages/admin/Brand";
+import CarApproval from "../pages/admin/CarApproval";
+
+// ======= IMPORT TUẦN 3 (NEW) =======
+import DisputeManagement from "../pages/admin/DisputeManagement";
+import TransactionManagement from "../pages/admin/TransactionManagement";
+import InspectorDashboard from "../pages/Inspector/InspectorDashboard";
+
 function AppRoutes() {
   return (
     <Routes>
+      {/* ================= PUBLIC ROUTES ================= */}
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
@@ -26,6 +42,8 @@ function AppRoutes() {
       <Route path="/bikes" element={<BikeListPage />} />
       <Route path="/bikes/:id" element={<BikeDetailPage />} />
       <Route path="/users/:userId/profile" element={<SellerProfilePage />} />
+
+      {/* ================= USER PROTECTED ROUTES ================= */}
       <Route
         path="/inbox"
         element={
@@ -103,6 +121,113 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <WishlistPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ================= ADMIN ROUTES ================= */}
+      {/* Mình bọc từng trang Admin vào AdminLayout và ProtectedRoute để giữ đúng cấu trúc của bạn */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <AdminLayout>
+              <Dashboard />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/dashboard"
+        element={
+          <ProtectedRoute>
+            <AdminLayout>
+              <Dashboard />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          <ProtectedRoute>
+            <AdminLayout>
+              <UserManagement />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/profile"
+        element={
+          <ProtectedRoute>
+            <AdminLayout>
+              <AdminProfile />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/categories"
+        element={
+          <ProtectedRoute>
+            <AdminLayout>
+              <Category />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/brands"
+        element={
+          <ProtectedRoute>
+            <AdminLayout>
+              <Brand />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/approvals"
+        element={
+          <ProtectedRoute>
+            <AdminLayout>
+              <CarApproval />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ================= TUẦN 3: ADMIN ROUTES (NEW) ================= */}
+      <Route
+        path="/admin/disputes"
+        element={
+          <ProtectedRoute>
+            <AdminLayout>
+              <DisputeManagement />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/transactions"
+        element={
+          <ProtectedRoute>
+            <AdminLayout>
+              <TransactionManagement />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ================= TUẦN 3: INSPECTOR ROUTES (NEW) ================= */}
+      <Route
+        path="/inspector/dashboard"
+        element={
+          <ProtectedRoute>
+            <InspectorDashboard />
           </ProtectedRoute>
         }
       />
