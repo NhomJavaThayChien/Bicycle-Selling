@@ -8,6 +8,7 @@ import com.bicycle.selling.repository.UserRepository;
 import com.bicycle.selling.security.JwtUtil;
 import com.bicycle.selling.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -69,12 +70,31 @@ public class AuthService {
     }
     
     public AuthResponse login(LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(
-                request.getUsernameOrEmail(),
-                request.getPassword()
-            )
-        );
+        Authentication authentication;
+        try {
+            // Log để debug
+            System.out.println("Attempting login for: " + request.getUsernameOrEmail());
+            
+            boolean userExists = userRepository.existsByUsername(request.getUsernameOrEmail()) || 
+                                 userRepository.existsByEmail(request.getUsernameOrEmail());
+            
+            if (!userExists) {
+                throw new RuntimeException("Tài khoản '" + request.getUsernameOrEmail() + "' không tồn tại trong hệ thống");
+            }
+
+            authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                    request.getUsernameOrEmail(),
+                    request.getPassword()
+                )
+            );
+        } catch (BadCredentialsException ex) {
+            throw new RuntimeException("Mật khẩu không chính xác");
+        } catch (RuntimeException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new RuntimeException("Lỗi hệ thống: " + ex.getMessage());
+        }
         
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtUtil.generateToken(authentication);

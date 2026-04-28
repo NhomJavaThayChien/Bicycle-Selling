@@ -77,36 +77,10 @@ const InspectorDashboard = () => {
     setLoading(true);
     try {
       const res = await inspectionService.getAll();
-      if (res && res.length > 0) {
-        setData(res);
-      } else {
-        throw new Error("Empty");
-      }
+      setData(res || []);
     } catch (err) {
-      // Mock data để bạn test giao diện khi BE chưa có data
-      setData([
-        {
-          id: 101,
-          listingId: "BIKE-2026-001",
-          status: "PENDING",
-          createdAt: "2026-04-29T08:30:00",
-          notes: "Đang đợi xe vận chuyển đến kho...",
-        },
-        {
-          id: 102,
-          listingId: "BIKE-2026-005",
-          status: "PASSED",
-          createdAt: "2026-04-28T14:20:00",
-          notes: "Xe rất mới, khung sườn nguyên bản.",
-        },
-        {
-          id: 103,
-          listingId: "BIKE-2026-009",
-          status: "FAILED",
-          createdAt: "2026-04-27T09:15:00",
-          notes: "Phát hiện nứt khung ở mối hàn cổ xe.",
-        },
-      ]);
+      console.error("Load data error:", err);
+      message.error("Không thể tải danh sách kiểm định.");
     } finally {
       setLoading(false);
     }
@@ -137,19 +111,30 @@ const InspectorDashboard = () => {
       dataIndex: "status",
       key: "status",
       render: (status) => {
-        let color =
-          status === "PASSED" ? "green" : status === "FAILED" ? "red" : "blue";
+        let color = "blue";
+        let text = status;
+        
+        if (status === "PASSED") color = "green";
+        else if (status === "FAILED") color = "red";
+        else if (status === "REQUESTED") {
+            color = "orange";
+            text = "CHỜ KIỂM ĐỊNH";
+        } else if (status === "IN_PROGRESS") {
+            color = "processing";
+            text = "ĐANG LÀM";
+        }
+        
         return (
           <Tag color={color} style={{ borderRadius: "12px" }}>
-            {status}
+            {text}
           </Tag>
         );
       },
     },
     {
       title: "Ghi chú kiểm định",
-      dataIndex: "notes",
-      key: "notes",
+      dataIndex: "summary",
+      key: "summary",
       render: (text) => (
         <Text italic type="secondary">
           {text || "Chưa có ghi chú"}
@@ -161,24 +146,26 @@ const InspectorDashboard = () => {
       dataIndex: "createdAt",
       key: "createdAt",
       render: (date) => (
-        <small>{new Date(date).toLocaleDateString("vi-VN")}</small>
+        <small>{date ? new Date(date).toLocaleDateString("vi-VN") : "---"}</small>
       ),
     },
     {
       title: "Thao tác",
       key: "action",
       align: "right",
-      render: (_, record) => (
-        <Button
-          type="primary"
-          shape="round"
-          icon={<EditOutlined />}
-          onClick={() => navigate(`/inspector/inspect/${record.id}`)}
-          disabled={record.status !== "PENDING"}
-        >
-          {record.status === "PENDING" ? "Kiểm định" : "Xem lại"}
-        </Button>
-      ),
+      render: (_, record) => {
+        const canInspect = record.status === "REQUESTED" || record.status === "IN_PROGRESS";
+        return (
+          <Button
+            type="primary"
+            shape="round"
+            icon={canInspect ? <EditOutlined /> : <EyeOutlined />}
+            onClick={() => navigate(`/inspector/inspect/${record.id}`)}
+          >
+            {canInspect ? "Kiểm định" : "Xem lại"}
+          </Button>
+        );
+      },
     },
   ];
 

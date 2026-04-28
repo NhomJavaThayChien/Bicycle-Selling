@@ -1,10 +1,12 @@
 package com.bicycle.selling.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.Data;
 
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SubmitInspectionRequest {
 
     @Min(1) @Max(10)

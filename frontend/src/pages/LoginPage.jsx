@@ -42,7 +42,8 @@ function LoginPage() {
     try {
       await login(formData);
     } catch (submitError) {
-      setError("Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
+      const serverMessage = submitError?.response?.data?.message;
+      setError(serverMessage || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
     } finally {
       setIsSubmitting(false);
     }

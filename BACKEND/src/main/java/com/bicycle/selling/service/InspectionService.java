@@ -42,52 +42,60 @@ public class InspectionService {
         return mapToResponse(inspectionReportRepository.save(report));
     }
 
-    // Inspector/ admin submit report
+    @org.springframework.transaction.annotation.Transactional
     public InspectionResponse submitInspection(
             Long reportId,
             SubmitInspectionRequest request,
             Long inspectorId
     ) {
-        InspectionReport report = getEntity(reportId);
+        try {
+            System.out.println(">>> [TRANSACTION START] Submitting inspection for reportId: " + reportId);
+            InspectionReport report = inspectionReportRepository.findById(reportId)
+                    .orElseThrow(() -> new RuntimeException("Inspection report not found with ID: " + reportId));
 
-        if (report.getStatus() != InspectionStatus.REQUESTED &&
-            report.getStatus() != InspectionStatus.IN_PROGRESS) {
-            throw new RuntimeException("Inspection is not in valid state");
+            User inspector = userRepository.findById(inspectorId)
+                    .orElseThrow(() -> new RuntimeException("Inspector not found with ID: " + inspectorId));
+
+            // Đảm bảo không có giá trị null
+            int fScore = request.getFrameScore() != null ? request.getFrameScore() : 10;
+            int bScore = request.getBrakeScore() != null ? request.getBrakeScore() : 10;
+            int dScore = request.getDrivetrainScore() != null ? request.getDrivetrainScore() : 10;
+            int wScore = request.getWheelsScore() != null ? request.getWheelsScore() : 10;
+            int hScore = request.getHandlebarSaddleScore() != null ? request.getHandlebarSaddleScore() : 10;
+
+            report.setFrameScore(fScore);
+            report.setBrakeScore(bScore);
+            report.setDrivetrainScore(dScore);
+            report.setWheelsScore(wScore);
+            report.setHandlebarSaddleScore(hScore);
+            report.setSummary(request.getSummary());
+            report.setRecommendations(request.getRecommendations());
+
+            double avg = (fScore + bScore + dScore + wScore + hScore) / 5.0;
+            report.setOverallScore(avg);
+
+            if (avg >= 7) {
+                report.setStatus(InspectionStatus.PASSED);
+                BicycleListing listing = report.getListing();
+                if (listing != null) {
+                    listing.setInspected(true);
+                    listingRepository.save(listing);
+                }
+            } else {
+                report.setStatus(InspectionStatus.FAILED);
+            }
+
+            report.setInspector(inspector);
+            report.setInspectedAt(LocalDateTime.now());
+
+            InspectionReport savedReport = inspectionReportRepository.save(report);
+            System.out.println(">>> [TRANSACTION SUCCESS] Saved report #" + reportId);
+            return mapToResponse(savedReport);
+        } catch (Exception e) {
+            System.err.println(">>> [TRANSACTION FAIL] reportId " + reportId + ": " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Lỗi hệ thống: " + e.getMessage());
         }
-
-        User inspector = userRepository.findById(inspectorId)
-                .orElseThrow(() -> new RuntimeException("Inspector not found"));
-
-        // set score
-        report.setFrameScore(request.getFrameScore());
-        report.setBrakeScore(request.getBrakeScore());
-        report.setDrivetrainScore(request.getDrivetrainScore());
-        report.setWheelsScore(request.getWheelsScore());
-        report.setHandlebarSaddleScore(request.getHandlebarSaddleScore());
-
-        report.setSummary(request.getSummary());
-        report.setRecommendations(request.getRecommendations());
-
-        double avg = (
-                request.getFrameScore() +
-                request.getBrakeScore() +
-                request.getDrivetrainScore() +
-                request.getWheelsScore() +
-                request.getHandlebarSaddleScore()
-        ) / 5.0;
-
-        report.setOverallScore(avg);
-
-        if (avg >= 7) {
-            report.setStatus(InspectionStatus.PASSED);
-        } else {
-            report.setStatus(InspectionStatus.FAILED);
-        }
-
-        report.setInspector(inspector);
-        report.setInspectedAt(LocalDateTime.now());
-
-        return mapToResponse(inspectionReportRepository.save(report));
     }
 
     // Cancel (seller)
@@ -134,12 +142,19 @@ public class InspectionService {
     }
 
     private InspectionResponse mapToResponse(InspectionReport report) {
+        if (report == null) return null;
+        
+        Long listingId = null;
+        if (report.getListing() != null) {
+            listingId = report.getListing().getId();
+        }
+
         return InspectionResponse.builder()
                 .id(report.getId())
-                .listingId(report.getListing().getId())
+                .listingId(listingId)
                 .inspectorId(report.getInspector() != null ? report.getInspector().getId() : null)
                 .overallScore(report.getOverallScore())
-                .status(report.getStatus().name())
+                .status(report.getStatus() != null ? report.getStatus().name() : "REQUESTED")
                 .summary(report.getSummary())
                 .recommendations(report.getRecommendations())
                 .inspectedAt(report.getInspectedAt())

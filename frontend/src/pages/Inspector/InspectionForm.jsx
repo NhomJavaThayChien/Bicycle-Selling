@@ -18,14 +18,12 @@ import {
   SaveOutlined,
   ArrowLeftOutlined,
   InboxOutlined,
-  FilePdfOutlined,
   CheckCircleOutlined,
 } from "@ant-design/icons";
 import { inspectionService } from "../../services/inspectionService";
 
 const { TextArea } = Input;
-const { Dragger } = Upload;
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 const InspectionForm = () => {
   const { reportId } = useParams();
@@ -36,13 +34,22 @@ const InspectionForm = () => {
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      // Logic xử lý: Nếu có file PDF, bạn cần upload lên server/cloud trước để lấy URL
-      // Ở đây mình giả định bạn gửi kèm thông tin file trong object values
-      await inspectionService.submit(reportId, values);
-      message.success("Đã hoàn tất báo cáo kiểm định Phase 3!");
+      // Chỉ gửi các trường dữ liệu JSON mà Backend hỗ trợ
+      const submitData = {
+        frameScore: values.frameScore,
+        brakeScore: values.brakeScore,
+        drivetrainScore: values.drivetrainScore,
+        wheelsScore: values.wheelsScore,
+        handlebarSaddleScore: values.handlebarSaddleScore,
+        summary: values.summary
+      };
+      
+      await inspectionService.submit(reportId, submitData);
+      message.success("Đã hoàn tất báo cáo kiểm định!");
       navigate("/inspector/dashboard");
     } catch (err) {
-      message.error("Lỗi khi gửi báo cáo!");
+      console.error("Submission error:", err);
+      message.error("Lỗi khi gửi báo cáo! Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
@@ -76,11 +83,11 @@ const InspectionForm = () => {
           onFinish={onFinish}
           initialValues={{
             status: "PASSED",
-            scoreFrame: 10,
-            scoreBrakes: 10,
-            scoreDrivetrain: 10,
-            scoreWheels: 10,
-            scoreHandlebar: 10,
+            frameScore: 10,
+            brakeScore: 10,
+            drivetrainScore: 10,
+            wheelsScore: 10,
+            handlebarSaddleScore: 10,
           }}
         >
           <Divider orientation="left">
@@ -90,7 +97,7 @@ const InspectionForm = () => {
             <Col span={8}>
               <Form.Item
                 label="Khung sườn"
-                name="scoreFrame"
+                name="frameScore"
                 rules={[{ required: true }]}
               >
                 <InputNumber
@@ -104,7 +111,7 @@ const InspectionForm = () => {
             <Col span={8}>
               <Form.Item
                 label="Hệ thống phanh"
-                name="scoreBrakes"
+                name="brakeScore"
                 rules={[{ required: true }]}
               >
                 <InputNumber
@@ -118,7 +125,7 @@ const InspectionForm = () => {
             <Col span={8}>
               <Form.Item
                 label="Bộ truyền động"
-                name="scoreDrivetrain"
+                name="drivetrainScore"
                 rules={[{ required: true }]}
               >
                 <InputNumber
@@ -132,7 +139,7 @@ const InspectionForm = () => {
             <Col span={8}>
               <Form.Item
                 label="Bánh xe/Lốp"
-                name="scoreWheels"
+                name="wheelsScore"
                 rules={[{ required: true }]}
               >
                 <InputNumber
@@ -146,7 +153,7 @@ const InspectionForm = () => {
             <Col span={8}>
               <Form.Item
                 label="Yên / Tay lái"
-                name="scoreHandlebar"
+                name="handlebarSaddleScore"
                 rules={[{ required: true }]}
               >
                 <InputNumber
@@ -176,27 +183,8 @@ const InspectionForm = () => {
             </Col>
           </Row>
 
-          <Divider orientation="left">2. Hồ sơ đính kèm (PDF)</Divider>
-          <Form.Item name="reportPdf">
-            <Dragger
-              accept=".pdf"
-              maxCount={1}
-              beforeUpload={() => false} // Chặn tự động upload để xử lý tay
-            >
-              <p className="ant-upload-drag-icon">
-                <InboxOutlined />
-              </p>
-              <p className="ant-upload-text">
-                Nhấp hoặc kéo tệp PDF vào đây để tải lên
-              </p>
-              <p className="ant-upload-hint">
-                Yêu cầu tệp PDF chính thức có chữ ký kiểm định.
-              </p>
-            </Dragger>
-          </Form.Item>
-
-          <Divider orientation="left">3. Ghi chú bổ sung</Divider>
-          <Form.Item name="notes">
+          <Divider orientation="left">2. Ghi chú bổ sung</Divider>
+          <Form.Item name="summary">
             <TextArea
               rows={4}
               placeholder="Nhập chi tiết tình trạng xe nếu có hư hỏng..."

@@ -55,3 +55,4 @@ Người bán	seller_lan	lan@gmail.com	Tương tự (đã có sẵn một số t
 Người mua	buyer_minh	minh@gmail.com	Xem xe, thêm vào wishlist, đặt hàng.
 Người mua	buyer_hoa	hoa@gmail.com	Tương tự người mua Minh.
 Kiểm định viên	inspector_nam	nam@bicycle-inspect.com	Thực hiện kiểm định các xe đang chờ duyệt.
+inspector_linh

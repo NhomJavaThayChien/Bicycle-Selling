@@ -76,7 +76,7 @@ INSERT INTO users (username, email, password, full_name, phone, address, role, i
 VALUES (
     'admin',
     'admin@bicycleshop.com',
-    '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.',
+    '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xdVZz1SPSUXVSfey',
     'Hệ Thống Quản Trị',
     '0900000000',
     'TP. Hồ Chí Minh',
@@ -88,7 +88,7 @@ INSERT INTO users (username, email, password, full_name, phone, address, role, i
 VALUES (
     'seller_thanh',
     'thanh@gmail.com',
-    '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.',
+    '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xdVZz1SPSUXVSfey',
     'Nguyễn Văn Thanh',
     '0912345678',
     'Quận 1, TP. Hồ Chí Minh',
@@ -100,7 +100,7 @@ INSERT INTO users (username, email, password, full_name, phone, address, role, i
 VALUES (
     'seller_lan',
     'lan@gmail.com',
-    '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.',
+    '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xdVZz1SPSUXVSfey',
     'Trần Thị Lan',
     '0987654321',
     'Quận Bình Thạnh, TP. Hồ Chí Minh',
@@ -112,7 +112,7 @@ INSERT INTO users (username, email, password, full_name, phone, address, role, i
 VALUES (
     'buyer_minh',
     'minh@gmail.com',
-    '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.',
+    '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xdVZz1SPSUXVSfey',
     'Trần Quang Minh',
     '0911111111',
     'Quận 7, TP. Hồ Chí Minh',
@@ -124,7 +124,7 @@ INSERT INTO users (username, email, password, full_name, phone, address, role, i
 VALUES (
     'buyer_hoa',
     'hoa@gmail.com',
-    '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.',
+    '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xdVZz1SPSUXVSfey',
     'Lê Thị Hoa',
     '0922222222',
     'Quận Gò Vấp, TP. Hồ Chí Minh',
@@ -136,10 +136,22 @@ INSERT INTO users (username, email, password, full_name, phone, address, role, i
 VALUES (
     'inspector_nam',
     'nam@bicycle-inspect.com',
-    '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.',
+    '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xdVZz1SPSUXVSfey',
     'Phạm Văn Nam (Kiểm định viên)',
     '0933333333',
     'Quận 3, TP. Hồ Chí Minh',
+    'INSPECTOR',
+    true, 5.0, 0, 0, CURRENT_TIMESTAMP
+) ON CONFLICT (username) DO NOTHING;
+
+INSERT INTO users (username, email, password, full_name, phone, address, role, is_active, reputation_score, total_sales, total_reviews, created_at)
+VALUES (
+    'inspector_linh',
+    'linh@bicycle-inspect.com',
+    '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xdVZz1SPSUXVSfey',
+    'Ngô Linh (Kiểm định viên)',
+    '0934444444',
+    'Quận 5, TP. Hồ Chí Minh',
     'INSPECTOR',
     true, 5.0, 0, 0, CURRENT_TIMESTAMP
 ) ON CONFLICT (username) DO NOTHING;
@@ -575,3 +587,19 @@ WHERE NOT EXISTS (
       AND seller_id   = (SELECT id FROM users WHERE username = 'seller_lan')
       AND comment = 'Mua xe specialized của chị Lan, xe còn rất mới y như ảnh. Chị còn cho thêm bình nước miễn phí. Highly recommended!'
 );
+
+-- ============ INSPECTION REPORTS (REAL DATA) ============
+INSERT INTO inspection_reports (listing_id, status, created_at)
+SELECT id, 'REQUESTED', CURRENT_TIMESTAMP FROM bicycle_listings 
+WHERE title LIKE 'Giant Contend AR 2%'
+ON CONFLICT (listing_id) DO NOTHING;
+
+INSERT INTO inspection_reports (listing_id, status, created_at)
+SELECT id, 'REQUESTED', CURRENT_TIMESTAMP FROM bicycle_listings 
+WHERE title LIKE 'Trek Marlin 5%'
+ON CONFLICT (listing_id) DO NOTHING;
+
+INSERT INTO inspection_reports (listing_id, status, created_at)
+SELECT id, 'REQUESTED', CURRENT_TIMESTAMP FROM bicycle_listings 
+WHERE title LIKE 'Specialized Sirrus X 2.0%'
+ON CONFLICT (listing_id) DO NOTHING;
