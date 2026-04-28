@@ -21,6 +21,16 @@ export default function AdminSidebar() {
           Bảng điều khiển
         </NavLink>
 
+        {/* === NÚT THỐNG KÊ MỚI THÊM VÀO ĐÂY === */}
+        <NavLink
+          to="/admin/statistics"
+          style={({ isActive }) =>
+            isActive ? { ...styles.link, ...styles.activeLink } : styles.link
+          }
+        >
+          Thống kê
+        </NavLink>
+
         <div style={styles.menuGroup}>QUẢN LÝ</div>
         <NavLink
           to="/admin/users"

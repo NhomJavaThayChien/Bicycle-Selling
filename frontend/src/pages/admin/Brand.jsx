@@ -58,6 +58,35 @@ const Brand = () => {
     }
   };
 
+  // --------------------------------------------------------
+  // ĐÂY LÀ HÀM ĐƯỢC THÊM MỚI ĐỂ XỬ LÝ NÚT "LƯU LẠI"
+  // --------------------------------------------------------
+  const handleSave = () => {
+    // Kiểm tra dữ liệu trống
+    if (!currentBrand.name.trim()) {
+      alert("Vui lòng nhập tên thương hiệu!");
+      return;
+    }
+
+    if (isEdit) {
+      // Logic SỬA: Cập nhật object có id tương ứng
+      setBrands(
+        brands.map((b) =>
+          b.id === currentBrand.id ? { ...b, ...currentBrand } : b,
+        ),
+      );
+    } else {
+      // Logic THÊM MỚI: Tạo id tự động tăng và nối vào mảng
+      const newId =
+        brands.length > 0 ? Math.max(...brands.map((b) => b.id)) + 1 : 1;
+      const newBrand = { ...currentBrand, id: newId };
+      setBrands([...brands, newBrand]);
+    }
+
+    // Tắt modal sau khi lưu thành công
+    setIsModalOpen(false);
+  };
+
   return (
     <div style={styles.container}>
       <div style={styles.header}>
@@ -105,7 +134,7 @@ const Brand = () => {
         </tbody>
       </table>
 
-      {/* MODAL THÊM/SỬA (Làm đơn giản bằng CSS) */}
+      {/* MODAL THÊM/SỬA */}
       {isModalOpen && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalContent}>
@@ -151,10 +180,8 @@ const Brand = () => {
               >
                 Hủy
               </button>
-              <button
-                style={styles.saveBtn}
-                onClick={() => setIsModalOpen(false)}
-              >
+              {/* ĐÃ SỬA SỰ KIỆN onClick CHO NÚT LƯU LẠI */}
+              <button style={styles.saveBtn} onClick={handleSave}>
                 Lưu lại
               </button>
             </div>
@@ -165,7 +192,7 @@ const Brand = () => {
   );
 };
 
-// CSS nội bộ cho đẹp
+// CSS nội bộ
 const styles = {
   container: { padding: "30px", background: "#f8fafc", minHeight: "90vh" },
   header: {
@@ -222,8 +249,6 @@ const styles = {
     borderRadius: "4px",
     cursor: "pointer",
   },
-
-  // Modal styles
   modalOverlay: {
     position: "fixed",
     top: 0,

@@ -31,6 +31,10 @@ import DisputeManagement from "../pages/admin/DisputeManagement";
 import TransactionManagement from "../pages/admin/TransactionManagement";
 import InspectorDashboard from "../pages/Inspector/InspectorDashboard";
 
+// ======= IMPORT TUẦN 4 (NEW) =======
+import StatisticsReport from "../pages/admin/StatisticsReport";
+import OrderTrackingPage from "../pages/OrderTrackingPage";
+
 function AppRoutes() {
   return (
     <Routes>
@@ -76,6 +80,17 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      {/* Thêm route cho Order Tracking (Tuần 4) */}
+      <Route
+        path="/order-tracking"
+        element={
+          <ProtectedRoute>
+            <OrderTrackingPage />
+          </ProtectedRoute>
+        }
+      />
+
       <Route
         path="/seller/dashboard"
         element={
@@ -126,7 +141,6 @@ function AppRoutes() {
       />
 
       {/* ================= ADMIN ROUTES ================= */}
-      {/* Mình bọc từng trang Admin vào AdminLayout và ProtectedRoute để giữ đúng cấu trúc của bạn */}
       <Route
         path="/admin"
         element={
@@ -157,7 +171,6 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/admin/profile"
         element={
@@ -168,7 +181,6 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/admin/categories"
         element={
@@ -200,7 +212,7 @@ function AppRoutes() {
         }
       />
 
-      {/* ================= TUẦN 3: ADMIN ROUTES (NEW) ================= */}
+      {/* ================= TUẦN 3: ADMIN ROUTES ================= */}
       <Route
         path="/admin/disputes"
         element={
@@ -222,7 +234,19 @@ function AppRoutes() {
         }
       />
 
-      {/* ================= TUẦN 3: INSPECTOR ROUTES (NEW) ================= */}
+      {/* ================= TUẦN 4: ADMIN ROUTES (NEW) ================= */}
+      <Route
+        path="/admin/statistics"
+        element={
+          <ProtectedRoute>
+            <AdminLayout>
+              <StatisticsReport />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ================= TUẦN 3: INSPECTOR ROUTES ================= */}
       <Route
         path="/inspector/dashboard"
         element={
