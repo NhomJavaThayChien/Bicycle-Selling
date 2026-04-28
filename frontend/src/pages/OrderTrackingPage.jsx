@@ -1,11 +1,11 @@
 import React from "react";
 import { Card, Steps, Typography, Divider, Badge } from "antd";
-import {
-  CheckCircleOutlined,
-  SyncOutlined,
-  CarOutlined,
-  InboxOutlined,
-} from "@ant-design/icons";
+import { 
+  CheckCircle, 
+  RefreshCw, 
+  Truck, 
+  Package 
+} from "lucide-react";
 
 const { Title, Text } = Typography;
 
@@ -48,20 +48,21 @@ const OrderTrackingPage = () => {
               title: "Chờ lấy hàng",
               description:
                 "28/04/2026 - 09:00 AM\nNgười gửi đang chuẩn bị hàng",
-              icon: <InboxOutlined />,
+              icon: <Package size={20} />,
             },
             {
               title: "Đã lấy hàng",
               description:
                 "28/04/2026 - 11:30 AM\nShipper đã lấy hàng thành công",
-              icon: <CheckCircleOutlined />,
+              icon: <CheckCircle size={20} />,
             },
             {
               title: "Đang giao hàng",
               description:
                 "29/04/2026 - 08:15 AM\nĐơn hàng đang trên đường tới bạn",
               icon: (
-                <CarOutlined
+                <Truck
+                  size={20}
                   style={currentStep === 2 ? { color: "#1890ff" } : {}}
                 />
               ),
@@ -69,7 +70,7 @@ const OrderTrackingPage = () => {
             {
               title: "Giao thành công",
               description: "Dự kiến: 29/04/2026 - Chiều",
-              icon: <SyncOutlined />,
+              icon: <RefreshCw size={20} />,
             },
           ]}
         />
