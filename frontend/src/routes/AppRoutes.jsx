@@ -30,6 +30,7 @@ import CarApproval from "../pages/admin/CarApproval";
 import DisputeManagement from "../pages/admin/DisputeManagement";
 import TransactionManagement from "../pages/admin/TransactionManagement";
 import InspectorDashboard from "../pages/Inspector/InspectorDashboard";
+import InspectionForm from "../pages/Inspector/InspectionForm"; // <-- THÊM DÒNG NÀY
 
 // ======= IMPORT TUẦN 4 (NEW) =======
 import StatisticsReport from "../pages/admin/StatisticsReport";
@@ -252,6 +253,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <InspectorDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inspector/inspect/:reportId"
+        element={
+          <ProtectedRoute>
+            <InspectionForm />
           </ProtectedRoute>
         }
       />
