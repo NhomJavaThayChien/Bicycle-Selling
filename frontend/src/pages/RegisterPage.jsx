@@ -41,82 +41,113 @@ function RegisterPage() {
   };
 
   return (
-    <section className="auth-page">
-      <div className="auth-card auth-card-wide">
-        <div className="section-heading">
-          <p className="eyebrow">Create account</p>
-          <h1>Register</h1>
-          <p>Choose a buyer or seller profile and start using the marketplace.</p>
+    <section className="auth-page auth-page-register">
+      <div className="auth-card auth-card-register">
+        <div className="register-intro">
+          <p className="simple-auth-kicker">Bicycle Selling</p>
+          <h1>Đăng ký tài khoản</h1>
+          <p>
+            Tạo hồ sơ mua hoặc bán xe đạp trong vài bước, bố cục rõ ràng và dễ
+            theo dõi hơn.
+          </p>
         </div>
-        <form className="auth-form two-column" onSubmit={handleSubmit}>
-        <label htmlFor="username">Username</label>
-        <input
-          id="username"
-          name="username"
-          type="text"
-          value={formData.username}
-          onChange={handleChange}
-          minLength={3}
-          required
-        />
 
-        <label htmlFor="fullName">Họ tên</label>
-        <input
-          id="fullName"
-          name="fullName"
-          type="text"
-          value={formData.fullName}
-          onChange={handleChange}
-          required
-        />
+        <form className="auth-form register-form" onSubmit={handleSubmit}>
+          <label htmlFor="username">
+            Username
+            <input
+              id="username"
+              name="username"
+              type="text"
+              value={formData.username}
+              onChange={handleChange}
+              minLength={3}
+              placeholder="Nhập username"
+              required
+            />
+          </label>
 
-        <label htmlFor="email">Email</label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
+          <label htmlFor="fullName">
+            Họ tên
+            <input
+              id="fullName"
+              name="fullName"
+              type="text"
+              value={formData.fullName}
+              onChange={handleChange}
+              placeholder="Nhập họ tên"
+              required
+            />
+          </label>
 
-        <label htmlFor="phoneNumber">Số điện thoại</label>
-        <input
-          id="phoneNumber"
-          name="phoneNumber"
-          type="text"
-          value={formData.phoneNumber}
-          onChange={handleChange}
-        />
+          <label htmlFor="email">
+            Email
+            <input
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Nhập email"
+              required
+            />
+          </label>
 
-        <label htmlFor="password">Password</label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          value={formData.password}
-          onChange={handleChange}
-          minLength={6}
-          required
-        />
+          <label htmlFor="phoneNumber">
+            Số điện thoại
+            <input
+              id="phoneNumber"
+              name="phoneNumber"
+              type="text"
+              value={formData.phoneNumber}
+              onChange={handleChange}
+              placeholder="Nhập số điện thoại"
+            />
+          </label>
 
-        <label htmlFor="role">Role</label>
-        <select
-          id="role"
-          name="role"
-          value={formData.role}
-          onChange={handleChange}
-        >
-          <option value="BUYER">BUYER</option>
-          <option value="SELLER">SELLER</option>
-        </select>
+          <label htmlFor="password">
+            Mật khẩu
+            <input
+              id="password"
+              name="password"
+              type="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Ít nhất 6 ký tự"
+              minLength={6}
+              required
+            />
+          </label>
 
-        {error && <p className="form-error full-span">{error}</p>}
+          <label htmlFor="role">
+            Vai trò
+            <select
+              id="role"
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+            >
+              <option value="BUYER">Người mua</option>
+              <option value="SELLER">Người bán</option>
+            </select>
+          </label>
 
-        <button type="submit" className="primary-button full-width full-span" disabled={isSubmitting}>
-          {isSubmitting ? "Đang đăng ký..." : "Đăng ký"}
-        </button>
+          {error && <p className="form-error full-span">{error}</p>}
+
+          <button
+            type="submit"
+            className="primary-button full-width"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Đang đăng ký..." : "Đăng ký"}
+          </button>
         </form>
+
+        <div className="register-note">
+          <span>Gợi ý:</span> điền thông tin theo từng dòng để dễ kiểm tra và
+          chỉnh sửa hơn trên máy tính lẫn điện thoại.
+        </div>
+
         <p className="auth-footnote">
           Đã có tài khoản? <Link to="/login">Đăng nhập</Link>
         </p>
