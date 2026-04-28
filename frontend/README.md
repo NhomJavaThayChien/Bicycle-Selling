@@ -44,3 +44,6 @@ npm start
 ## Notes
 - JWT is attached automatically to authenticated API requests.
 - Some UI flows include graceful fallback behavior when a backend endpoint is not available yet.
+
+
+./mvnw spring-boot:run
