@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 
@@ -12,14 +12,18 @@ function LoginPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // === ĐOẠN CODE QUAN TRỌNG ĐỂ CHUYỂN TRANG ĐÚNG ===
-  // useEffect sẽ tự động chạy ngay khi biến 'isAuthenticated' hoặc 'user' thay đổi
+  // === CẬP NHẬT LOGIC ĐIỀU HƯỚNG TẠI ĐÂY ===
   useEffect(() => {
     if (isAuthenticated && user) {
       const role = (user.role || "").toUpperCase();
+
       if (role === "ADMIN") {
         navigate("/admin", { replace: true });
+      } else if (role === "INSPECTOR") {
+        // Nếu là Inspector, đẩy thẳng vào Dashboard kiểm định
+        navigate("/inspector/dashboard", { replace: true });
       } else {
+        // Các role khác (SELLER, BUYER) về profile
         navigate("/profile", { replace: true });
       }
     }
@@ -36,7 +40,6 @@ function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      // Chỉ gọi hàm login, việc chuyển trang để useEffect ở trên lo
       await login(formData);
     } catch (submitError) {
       setError("Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
