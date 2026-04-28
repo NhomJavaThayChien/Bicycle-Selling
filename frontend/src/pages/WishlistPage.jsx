@@ -1,5 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  Heart, 
+  Trash2, 
+  MapPin, 
+  ArrowRight, 
+  ShoppingBag,
+  ExternalLink
+} from "lucide-react";
 import BikeCard from "../components/BikeCard";
 import {
   clearWishlist,
@@ -7,15 +16,23 @@ import {
   getWishlist,
   removeFromWishlistApi,
 } from "../services/wishlistService";
+import "./WishlistPage.css";
 
 function WishlistPage() {
   const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     const load = async () => {
-      const response = await fetchWishlist();
-      setItems(response.length ? response : getWishlist());
+      try {
+        const response = await fetchWishlist();
+        setItems(response.length ? response : getWishlist());
+      } catch (error) {
+        console.error("Failed to load wishlist:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     load();
@@ -27,74 +44,112 @@ function WishlistPage() {
   };
 
   const handleClearAll = () => {
-    clearWishlist();
-    setItems([]);
+    if (window.confirm("Are you sure you want to clear your entire wishlist?")) {
+      clearWishlist();
+      setItems([]);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="wishlist-page">
+        <div className="wishlist-loading">
+          <div className="spinner"></div>
+          <p>Loading your wishlist...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!items.length) {
     return (
-      <div style={{ maxWidth: "960px", margin: "0 auto", padding: "20px" }}>
-        <h1>My Wishlist</h1>
-        <p>Your wishlist is empty.</p>
-        <button type="button" onClick={() => navigate("/bikes")}>
-          Browse bikes
-        </button>
+      <div className="wishlist-page">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="wishlist-empty"
+        >
+          <div className="empty-icon-container">
+            <Heart size={64} fill="#f0f0f0" color="#bfbfbf" />
+          </div>
+          <h2>Your Wishlist is Empty</h2>
+          <p>Seems like you haven't found your dream bike yet. Explore our collection and save your favorites here!</p>
+          <button 
+            type="button" 
+            className="browse-btn"
+            onClick={() => navigate("/bikes")}
+          >
+            <ShoppingBag size={20} />
+            Browse Collection
+          </button>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "20px" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <h1>My Wishlist</h1>
-        <button type="button" onClick={handleClearAll}>
-          Clear all
+    <div className="wishlist-page">
+      <div className="wishlist-header">
+        <h1 className="wishlist-title">
+          <Heart size={32} fill="#ff4d4f" color="#ff4d4f" />
+          My Wishlist
+        </h1>
+        <button 
+          type="button" 
+          className="clear-wishlist-btn"
+          onClick={handleClearAll}
+        >
+          <Trash2 size={18} />
+          Clear All
         </button>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-          gap: "16px",
-        }}
-      >
-        {items.map((item) => (
-          <div
-            key={item.id}
-            style={{
-              border: "1px solid #ddd",
-              borderRadius: "8px",
-              background: "#fff",
-              padding: "12px",
-            }}
-          >
-            <BikeCard bike={item} />
-            <p style={{ color: "#555" }}>
-              {item.location || "Unknown location"}
-            </p>
-            <div style={{ display: "flex", gap: "8px" }}>
-              <button
-                type="button"
-                onClick={() => navigate(`/bikes/${item.id}`)}
+      <div className="wishlist-grid">
+        <AnimatePresence>
+          {items.map((item, index) => (
+            <motion.div
+              key={item.id || index}
+              layout
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
+              transition={{ delay: index * 0.05 }}
+              className="wishlist-item-card"
+            >
+              <button 
+                type="button" 
+                className="remove-item-btn"
+                onClick={() => handleRemove(item.id)}
+                title="Remove from wishlist"
               >
-                View detail
+                <Trash2 size={18} />
               </button>
-              <button type="button" onClick={() => handleRemove(item.id)}>
-                Remove
-              </button>
-            </div>
-          </div>
-        ))}
+              
+              <div className="wishlist-card-content">
+                <BikeCard bike={item} />
+              </div>
+              
+              <div className="wishlist-card-footer">
+                <div className="location-tag">
+                  <MapPin size={14} />
+                  <span>{item.location || "Location not specified"}</span>
+                </div>
+                <button 
+                  type="button" 
+                  className="view-detail-btn"
+                  onClick={() => navigate(`/bikes/${item.id}`)}
+                >
+                  View Details
+                  <ExternalLink size={16} style={{ marginLeft: '8px' }} />
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
     </div>
   );
 }
 
 export default WishlistPage;
+

@@ -154,433 +154,194 @@ function BikeListPage() {
   };
 
   // Render
-  if (loading) {
-    return (
-      <div style={{ maxWidth: "1400px", margin: "0 auto", padding: "20px" }}>
-        <p>Loading bikes...</p>
-      </div>
-    );
-  }
-
   return (
-    <div
-      style={{
-        maxWidth: "1400px",
-        margin: "0 auto",
-        padding: "20px",
-        display: "flex",
-        gap: "20px",
-      }}
-    >
+    <div className="bike-list-container">
       {/* Sidebar Filter */}
-      <aside
-        style={{
-          width: "280px",
-          backgroundColor: "#f9f9f9",
-          padding: "20px",
-          borderRadius: "8px",
-          border: "1px solid #ddd",
-          height: "fit-content",
-        }}
-      >
-        <h3>Filters</h3>
+      <aside className="filters-sidebar">
+        <h3>Bộ lọc tìm kiếm</h3>
 
         {/* Search */}
-        <div style={{ marginBottom: "20px" }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "8px",
-              fontWeight: "bold",
-            }}
-          >
-            Search
-          </label>
+        <div className="filter-group">
+          <label>Tìm kiếm</label>
           <input
             type="text"
-            placeholder="Search by name..."
+            placeholder="Tên xe, thương hiệu..."
             value={searchQuery}
             onChange={handleSearchChange}
-            style={{
-              width: "100%",
-              padding: "8px",
-              fontSize: "0.9rem",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-              boxSizing: "border-box",
-            }}
           />
         </div>
 
         {/* Brand Filter */}
-        <div style={{ marginBottom: "20px" }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "8px",
-              fontWeight: "bold",
-            }}
-          >
-            Brand
-          </label>
-          <select
-            value={selectedBrand}
-            onChange={handleBrandChange}
-            style={{
-              width: "100%",
-              padding: "8px",
-              fontSize: "0.9rem",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-            }}
-          >
+        <div className="filter-group">
+          <label>Thương hiệu</label>
+          <select value={selectedBrand} onChange={handleBrandChange}>
             {brands.map((brand) => (
               <option key={brand} value={brand}>
-                {brand}
+                {brand === "ALL" ? "Tất cả thương hiệu" : brand}
               </option>
             ))}
           </select>
         </div>
 
         {/* Category Filter */}
-        <div style={{ marginBottom: "20px" }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "8px",
-              fontWeight: "bold",
-            }}
-          >
-            Category
-          </label>
-          <select
-            value={selectedCategory}
-            onChange={handleCategoryChange}
-            style={{
-              width: "100%",
-              padding: "8px",
-              fontSize: "0.9rem",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-            }}
-          >
+        <div className="filter-group">
+          <label>Danh mục</label>
+          <select value={selectedCategory} onChange={handleCategoryChange}>
             {categories.map((category) => (
               <option key={category} value={category}>
-                {category}
+                {category === "ALL" ? "Tất cả danh mục" : category}
               </option>
             ))}
           </select>
         </div>
 
         {/* Condition Filter */}
-        <div style={{ marginBottom: "20px" }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "8px",
-              fontWeight: "bold",
-            }}
-          >
-            Condition
-          </label>
-          <select
-            value={selectedCondition}
-            onChange={handleConditionChange}
-            style={{
-              width: "100%",
-              padding: "8px",
-              fontSize: "0.9rem",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-            }}
-          >
+        <div className="filter-group">
+          <label>Tình trạng</label>
+          <select value={selectedCondition} onChange={handleConditionChange}>
             {conditions.map((condition) => (
               <option key={condition} value={condition}>
-                {condition}
+                {condition === "all" ? "Mọi tình trạng" : condition}
               </option>
             ))}
           </select>
         </div>
 
         {/* Price Range Filter */}
-        <div style={{ marginBottom: "20px" }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "8px",
-              fontWeight: "bold",
-            }}
-          >
-            Price Range
-          </label>
-          <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+        <div className="filter-group">
+          <label>Khoảng giá (VND)</label>
+          <div className="price-inputs">
             <input
               type="number"
               placeholder="Min"
               value={priceRange.min}
               onChange={(e) => handlePriceChange("min", e.target.value)}
-              style={{
-                flex: 1,
-                padding: "8px",
-                fontSize: "0.9rem",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-              }}
             />
             <input
               type="number"
               placeholder="Max"
               value={priceRange.max}
               onChange={(e) => handlePriceChange("max", e.target.value)}
-              style={{
-                flex: 1,
-                padding: "8px",
-                fontSize: "0.9rem",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-              }}
             />
           </div>
-          <small>{`${priceRange.min.toLocaleString()} - ${priceRange.max.toLocaleString()} VND`}</small>
+          <span className="price-display">
+            {`${priceRange.min.toLocaleString()} - ${priceRange.max.toLocaleString()} VND`}
+          </span>
         </div>
 
         {/* Clear Filters */}
-        <button
-          onClick={handleClearFilters}
-          style={{
-            width: "100%",
-            padding: "10px",
-            backgroundColor: "#95a5a6",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-            fontWeight: "bold",
-          }}
-        >
-          Clear All Filters
+        <button className="clear-filters-btn" onClick={handleClearFilters}>
+          Xóa tất cả bộ lọc
         </button>
       </aside>
 
       {/* Main Content */}
-      <section style={{ flex: 1 }}>
-        {/* Header */}
-        <div style={{ marginBottom: "30px" }}>
-          <h1 style={{ marginBottom: "20px" }}>Browse Bikes</h1>
-
-          {/* Sorting and Results Info */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "20px",
-              flexWrap: "wrap",
-              gap: "10px",
-            }}
-          >
-            <p style={{ color: "#666" }}>
-              Found {filteredListings.length} bike(s)
-              {totalPages > 1 && ` | Page ${currentPage} of ${totalPages}`}
+      <main className="bike-list-main">
+        <header>
+          <h1>Khám phá xe đạp</h1>
+          <div className="results-info">
+            <p className="results-count">
+              Tìm thấy <strong>{filteredListings.length}</strong> sản phẩm
+              {totalPages > 1 && ` | Trang ${currentPage} / ${totalPages}`}
             </p>
-            <select
-              value={sortBy}
-              onChange={handleSortChange}
-              style={{
-                padding: "8px 12px",
-                fontSize: "0.9rem",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
-              <option value="newest">Newest</option>
-              <option value="price-asc">Price: Low to High</option>
-              <option value="price-desc">Price: High to Low</option>
-              <option value="name">Name: A to Z</option>
+            <select className="sort-select" value={sortBy} onChange={handleSortChange}>
+              <option value="newest">Mới nhất</option>
+              <option value="price-asc">Giá: Thấp đến Cao</option>
+              <option value="price-desc">Giá: Cao đến Thấp</option>
+              <option value="name">Tên: A đến Z</option>
             </select>
           </div>
-        </div>
+        </header>
 
-        {/* Bikes Grid */}
         {error && (
-          <div
-            style={{
-              marginBottom: "12px",
-              border: "1px solid #f5c2c7",
-              backgroundColor: "#fff3f5",
-              color: "#b42318",
-              padding: "12px",
-              borderRadius: "6px",
-            }}
-          >
-            <p style={{ margin: 0 }}>{error}</p>
-            <button
-              type="button"
-              onClick={handleRetry}
-              style={{
-                marginTop: "10px",
-                padding: "8px 12px",
-                backgroundColor: "#344054",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
-              Thu lai ket noi API
+          <div className="alert alert-error">
+            <p>{error}</p>
+            <button className="ghost-button" onClick={handleRetry} style={{ marginTop: '10px' }}>
+              Thử lại kết nối API
             </button>
           </div>
         )}
 
-        {paginatedListings.length > 0 ? (
+        {loading ? (
+          <div className="bikes-grid">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="bike-item-card">
+                <div className="skeleton" style={{ height: '200px', borderRadius: '24px', marginBottom: '16px' }}></div>
+                <div className="skeleton" style={{ height: '24px', width: '70%', marginBottom: '12px' }}></div>
+                <div className="skeleton" style={{ height: '20px', width: '40%', marginBottom: '24px' }}></div>
+                <div className="bike-meta" style={{ padding: 0 }}>
+                  <div className="bike-tags">
+                    <div className="skeleton" style={{ width: '60px', height: '24px', borderRadius: '6px' }}></div>
+                    <div className="skeleton" style={{ width: '60px', height: '24px', borderRadius: '6px' }}></div>
+                  </div>
+                  <div className="skeleton" style={{ width: '100%', height: '44px', borderRadius: '12px' }}></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : paginatedListings.length > 0 ? (
           <>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-                gap: "20px",
-                marginBottom: "30px",
-              }}
-            >
+            <div className="bikes-grid">
               {paginatedListings.map((bike) => (
-                <div
-                  key={bike.id}
-                  style={{
-                    border: "1px solid #ddd",
-                    borderRadius: "8px",
-                    padding: "15px",
-                    backgroundColor: "#f9f9f9",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                    transition: "transform 0.2s",
-                    cursor: "pointer",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-5px)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                  }}
-                >
+                <div key={bike.id} className="bike-item-card">
                   <BikeCard bike={bike} />
-                  <p
-                    style={{
-                      marginTop: "10px",
-                      fontSize: "0.85rem",
-                      color: "#999",
-                    }}
-                  >
-                    {bike.location} | {bike.condition}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/bikes/${bike.id}`)}
-                  >
-                    View detail
-                  </button>
+                  <div className="bike-meta">
+                    <div className="bike-tags">
+                      <span className="tag tag-location">{bike.location || 'N/A'}</span>
+                      <span className="tag tag-condition">{bike.condition}</span>
+                    </div>
+                    <button
+                      className="view-detail-btn"
+                      onClick={() => navigate(`/bikes/${bike.id}`)}
+                    >
+                      Xem chi tiết
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  gap: "10px",
-                  alignItems: "center",
-                  marginTop: "30px",
-                }}
-              >
+              <div className="pagination-container">
                 <button
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(prev - 1, 1))
-                  }
+                  className="page-btn"
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
-                  style={{
-                    padding: "8px 12px",
-                    backgroundColor: currentPage === 1 ? "#ccc" : "#3498db",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "4px",
-                    cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                  }}
                 >
-                  Previous
+                  Trước
                 </button>
 
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      style={{
-                        padding: "8px 12px",
-                        backgroundColor:
-                          page === currentPage ? "#2c3e50" : "#ecf0f1",
-                        color: page === currentPage ? "white" : "#333",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                        fontWeight: page === currentPage ? "bold" : "normal",
-                      }}
-                    >
-                      {page}
-                    </button>
-                  ),
-                )}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    className={`page-btn ${page === currentPage ? "active" : ""}`}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </button>
+                ))}
 
                 <button
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                  }
+                  className="page-btn"
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
-                  style={{
-                    padding: "8px 12px",
-                    backgroundColor:
-                      currentPage === totalPages ? "#ccc" : "#3498db",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "4px",
-                    cursor:
-                      currentPage === totalPages ? "not-allowed" : "pointer",
-                  }}
                 >
-                  Next
+                  Sau
                 </button>
               </div>
             )}
           </>
         ) : (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "60px 20px",
-              backgroundColor: "#f5f5f5",
-              borderRadius: "8px",
-            }}
-          >
-            <h2>No bikes found</h2>
-            <p>Try adjusting your search or filters</p>
-            <button
-              onClick={handleClearFilters}
-              style={{
-                marginTop: "20px",
-                padding: "10px 20px",
-                fontSize: "1rem",
-                backgroundColor: "#e74c3c",
-                color: "white",
-                border: "none",
-                borderRadius: "5px",
-                cursor: "pointer",
-              }}
-            >
-              Clear All Filters
+          <div className="empty-state">
+            <h2>Không tìm thấy xe phù hợp</h2>
+            <p>Hãy thử thay đổi từ khóa tìm kiếm hoặc điều chỉnh bộ lọc.</p>
+            <button className="primary-button" onClick={handleClearFilters}>
+              Đặt lại bộ lọc
             </button>
           </div>
         )}
-      </section>
+      </main>
     </div>
   );
 }

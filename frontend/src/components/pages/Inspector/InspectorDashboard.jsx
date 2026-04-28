@@ -10,7 +10,7 @@ import {
   Tag,
   Space,
 } from "antd";
-import { UploadOutlined, FormOutlined } from "@ant-design/icons";
+import { Upload, ClipboardCheck } from "lucide-react";
 
 export default function InspectorDashboard() {
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -62,7 +62,7 @@ export default function InspectorDashboard() {
       render: (_, record) => (
         <Button
           type="primary"
-          icon={<FormOutlined />}
+          icon={<ClipboardCheck size={16} />}
           onClick={() => openForm(record)}
         >
           Kiểm định
@@ -135,7 +135,7 @@ export default function InspectorDashboard() {
             ]}
           >
             <Upload beforeUpload={() => false} accept=".pdf" maxCount={1}>
-              <Button icon={<UploadOutlined />}>Chọn file PDF</Button>
+              <Button icon={<Upload size={16} />}>Chọn file PDF</Button>
             </Upload>
           </Form.Item>
         </Form>

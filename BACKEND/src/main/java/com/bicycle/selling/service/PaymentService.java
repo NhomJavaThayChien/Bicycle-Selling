@@ -72,19 +72,31 @@ public class PaymentService {
     public List<PaymentResponse> getPaymentsByUserId(Long userId) {
         try {
             List<Payment> payments = paymentRepository.findByOrderBuyerId(userId);
-            return payments.stream().map(payment -> new PaymentResponse(
-                    payment.getId(),
-                    payment.getAmount(),
-                    payment.getCurrency(),
-                    payment.getStatus().name(),
-                    payment.getMethod().name(),
-                    payment.getOrder().getId().toString(),
-                    payment.getPaidAt() != null ? payment.getPaidAt().toString() : null,
-                    payment.getUpdatedAt() != null ? payment.getUpdatedAt().toString() : null)).toList();
-
+            return payments.stream().map(this::mapToResponse).toList();
         } catch (Exception e) {
             throw new RuntimeException("Error retrieving payments: " + e.getMessage());
         }
+    }
+
+    public List<PaymentResponse> getAllPayments() {
+        try {
+            List<Payment> payments = paymentRepository.findAll();
+            return payments.stream().map(this::mapToResponse).toList();
+        } catch (Exception e) {
+            throw new RuntimeException("Error retrieving all payments: " + e.getMessage());
+        }
+    }
+
+    private PaymentResponse mapToResponse(Payment payment) {
+        return new PaymentResponse(
+                payment.getId(),
+                payment.getAmount(),
+                payment.getCurrency(),
+                payment.getStatus().name(),
+                payment.getMethod().name(),
+                payment.getOrder().getId().toString(),
+                payment.getCreatedAt() != null ? payment.getCreatedAt().toString() : null,
+                payment.getUpdatedAt() != null ? payment.getUpdatedAt().toString() : null);
     }
 
     public String fullPayment(Long orderId, String currency, Long requesterId) {

@@ -80,6 +80,9 @@ public class GhnService {
                 new ParameterizedTypeReference<>() {
                 });
 
+        if (response.getBody() == null || response.getBody().getData() == null) {
+            return List.of();
+        }
         return response.getBody().getData();
     }
 
@@ -101,6 +104,9 @@ public class GhnService {
                 new ParameterizedTypeReference<>() {
                 });
 
+        if (response.getBody() == null || response.getBody().getData() == null) {
+            return List.of();
+        }
         return response.getBody().getData();
     }
 
@@ -122,6 +128,9 @@ public class GhnService {
                 new ParameterizedTypeReference<>() {
                 });
 
+        if (response.getBody() == null || response.getBody().getData() == null) {
+            return List.of();
+        }
         return response.getBody().getData();
     }
 

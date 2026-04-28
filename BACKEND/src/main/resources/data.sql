@@ -329,12 +329,64 @@ WHERE NOT EXISTS (
     SELECT 1 FROM bicycle_listings WHERE title = 'Scott Speedster 30 2021 - Road bike entry level tuyệt vời'
 );
 
+-- Listing 8: Giant ATX 2026 - seller_thanh
+INSERT INTO bicycle_listings (
+    title, description, manufacture_year, frame_size, frame_material,
+    speed_count, drivetrain, brake_type, wheel_size, weight_kg, color,
+    condition, usage_history, accessories, reason_for_selling,
+    price, is_negotiable, location, status, is_inspected, view_count,
+    seller_id, brand_id, category_id, created_at
+)
+SELECT
+    'Giant ATX 2026 - Mẫu xe đa năng thế hệ mới',
+    'Phiên bản Giant ATX mới nhất 2026, thiết kế tối ưu cho cả đường phố và đường mòn nhẹ. Trang bị phanh đĩa dầu thủy lực, phuộc nhún êm ái. Xe mới 100% dành cho người yêu thích sự bền bỉ của Giant.',
+    2026, 'M', 'Aluminum',
+    24, 'Shimano Tourney/Acera', 'Disc Hydraulic', '27.5"', 13.80, 'Xanh Camo',
+    'LIKE_NEW',
+    'Xe mới chưa qua sử dụng, bảo hành chính hãng 5 năm.',
+    'Chân chống, chuông, phản quang.',
+    'Hàng trưng bày thanh lý.',
+    12000000, true, 'Hanoi', 'APPROVED', true, 150,
+    (SELECT id FROM users WHERE username = 'seller_thanh'),
+    (SELECT id FROM brands WHERE name = 'Giant'),
+    (SELECT id FROM categories WHERE name = 'Mountain Bike (MTB)'),
+    CURRENT_TIMESTAMP
+WHERE NOT EXISTS (
+    SELECT 1 FROM bicycle_listings WHERE title = 'Giant ATX 2026 - Mẫu xe đa năng thế hệ mới'
+);
+
+-- Listing 9: Test Phase 3 Bike - seller_lan
+INSERT INTO bicycle_listings (
+    title, description, manufacture_year, frame_size, frame_material,
+    speed_count, drivetrain, brake_type, wheel_size, weight_kg, color,
+    condition, usage_history, accessories, reason_for_selling,
+    price, is_negotiable, location, status, is_inspected, view_count,
+    seller_id, brand_id, category_id, created_at
+)
+SELECT
+    'Test Phase 3 Bike - Xe đạp dự án thử nghiệm',
+    'Đây là xe đạp mẫu phục vụ cho giai đoạn thử nghiệm Phase 3. Xe có cấu hình cao cấp, khung Carbon siêu nhẹ, phù hợp cho việc test các tính năng kiểm định và thanh toán trên hệ thống.',
+    2024, 'L', 'Carbon',
+    22, 'Shimano Ultegra', 'Disc Hydraulic', '700c', 7.80, 'Đen Nhám',
+    'LIKE_NEW',
+    'Chỉ sử dụng để test tính năng hệ thống.',
+    'Full phụ kiện cao cấp.',
+    'Hết giai đoạn thử nghiệm.',
+    5000000, false, 'Hanoi', 'APPROVED', true, 99,
+    (SELECT id FROM users WHERE username = 'seller_lan'),
+    (SELECT id FROM brands WHERE name = 'Trek'),
+    (SELECT id FROM categories WHERE name = 'Road Bike'),
+    CURRENT_TIMESTAMP
+WHERE NOT EXISTS (
+    SELECT 1 FROM bicycle_listings WHERE title = 'Test Phase 3 Bike - Xe đạp dự án thử nghiệm'
+);
+
 -- ============ LISTING IMAGES ============
 -- Ảnh placeholder từ Unsplash (public domain, không cần đăng nhập)
 -- Listing 1: Giant Contend AR 2 (Road Bike)
 INSERT INTO listing_images (image_url, display_order, is_primary, listing_id, uploaded_at)
 SELECT
-    'https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=800',
+    'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=800',
     0, true,
     (SELECT id FROM bicycle_listings WHERE title = 'Giant Contend AR 2 2022 - Xe đua đường trường như mới'),
     CURRENT_TIMESTAMP
@@ -344,20 +396,10 @@ WHERE NOT EXISTS (
     )
 );
 
-INSERT INTO listing_images (image_url, display_order, is_primary, listing_id, uploaded_at)
-SELECT
-    'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=800',
-    1, false,
-    (SELECT id FROM bicycle_listings WHERE title = 'Giant Contend AR 2 2022 - Xe đua đường trường như mới'),
-    CURRENT_TIMESTAMP
-WHERE (SELECT COUNT(*) FROM listing_images WHERE listing_id = (
-    SELECT id FROM bicycle_listings WHERE title = 'Giant Contend AR 2 2022 - Xe đua đường trường như mới'
-)) < 2;
-
 -- Listing 2: Trek Marlin 5 (MTB)
 INSERT INTO listing_images (image_url, display_order, is_primary, listing_id, uploaded_at)
 SELECT
-    'https://images.unsplash.com/photo-1544191696-15693072e3b4?w=800',
+    'https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?w=800',
     0, true,
     (SELECT id FROM bicycle_listings WHERE title = 'Trek Marlin 5 2021 - MTB 29 inch giá tốt'),
     CURRENT_TIMESTAMP
@@ -367,20 +409,10 @@ WHERE NOT EXISTS (
     )
 );
 
-INSERT INTO listing_images (image_url, display_order, is_primary, listing_id, uploaded_at)
-SELECT
-    'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800',
-    1, false,
-    (SELECT id FROM bicycle_listings WHERE title = 'Trek Marlin 5 2021 - MTB 29 inch giá tốt'),
-    CURRENT_TIMESTAMP
-WHERE (SELECT COUNT(*) FROM listing_images WHERE listing_id = (
-    SELECT id FROM bicycle_listings WHERE title = 'Trek Marlin 5 2021 - MTB 29 inch giá tốt'
-)) < 2;
-
 -- Listing 3: Specialized Sirrus X 2.0 (Hybrid)
 INSERT INTO listing_images (image_url, display_order, is_primary, listing_id, uploaded_at)
 SELECT
-    'https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?w=800',
+    'https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=800',
     0, true,
     (SELECT id FROM bicycle_listings WHERE title = 'Specialized Sirrus X 2.0 2023 - Hybrid đi phố chất'),
     CURRENT_TIMESTAMP
@@ -390,20 +422,10 @@ WHERE NOT EXISTS (
     )
 );
 
-INSERT INTO listing_images (image_url, display_order, is_primary, listing_id, uploaded_at)
-SELECT
-    'https://images.unsplash.com/photo-1502744688674-c619d1586c9e?w=800',
-    1, false,
-    (SELECT id FROM bicycle_listings WHERE title = 'Specialized Sirrus X 2.0 2023 - Hybrid đi phố chất'),
-    CURRENT_TIMESTAMP
-WHERE (SELECT COUNT(*) FROM listing_images WHERE listing_id = (
-    SELECT id FROM bicycle_listings WHERE title = 'Specialized Sirrus X 2.0 2023 - Hybrid đi phố chất'
-)) < 2;
-
 -- Listing 4: Cannondale Synapse Carbon (Road)
 INSERT INTO listing_images (image_url, display_order, is_primary, listing_id, uploaded_at)
 SELECT
-    'https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?w=800',
+    'https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?w=800',
     0, true,
     (SELECT id FROM bicycle_listings WHERE title = 'Cannondale Synapse Carbon 105 2020 - Full carbon giá hợp lý'),
     CURRENT_TIMESTAMP
@@ -412,16 +434,6 @@ WHERE NOT EXISTS (
         SELECT id FROM bicycle_listings WHERE title = 'Cannondale Synapse Carbon 105 2020 - Full carbon giá hợp lý'
     )
 );
-
-INSERT INTO listing_images (image_url, display_order, is_primary, listing_id, uploaded_at)
-SELECT
-    'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=800',
-    1, false,
-    (SELECT id FROM bicycle_listings WHERE title = 'Cannondale Synapse Carbon 105 2020 - Full carbon giá hợp lý'),
-    CURRENT_TIMESTAMP
-WHERE (SELECT COUNT(*) FROM listing_images WHERE listing_id = (
-    SELECT id FROM bicycle_listings WHERE title = 'Cannondale Synapse Carbon 105 2020 - Full carbon giá hợp lý'
-)) < 2;
 
 -- Listing 5: Merida Big Seven (MTB)
 INSERT INTO listing_images (image_url, display_order, is_primary, listing_id, uploaded_at)
@@ -449,16 +461,6 @@ WHERE NOT EXISTS (
     )
 );
 
-INSERT INTO listing_images (image_url, display_order, is_primary, listing_id, uploaded_at)
-SELECT
-    'https://images.unsplash.com/photo-1519583272095-6433daf26b6e?w=800',
-    1, false,
-    (SELECT id FROM bicycle_listings WHERE title = 'Giant Escape 3 2023 - Xe đạp đô thị nhẹ nhàng'),
-    CURRENT_TIMESTAMP
-WHERE (SELECT COUNT(*) FROM listing_images WHERE listing_id = (
-    SELECT id FROM bicycle_listings WHERE title = 'Giant Escape 3 2023 - Xe đạp đô thị nhẹ nhàng'
-)) < 2;
-
 -- Listing 7: Scott Speedster 30 (Road)
 INSERT INTO listing_images (image_url, display_order, is_primary, listing_id, uploaded_at)
 SELECT
@@ -471,6 +473,42 @@ WHERE NOT EXISTS (
         SELECT id FROM bicycle_listings WHERE title = 'Scott Speedster 30 2021 - Road bike entry level tuyệt vời'
     )
 );
+
+-- Listing 8: Giant ATX 2026
+INSERT INTO listing_images (image_url, display_order, is_primary, listing_id, uploaded_at)
+SELECT
+    'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=800',
+    0, true,
+    (SELECT id FROM bicycle_listings WHERE title = 'Giant ATX 2026 - Mẫu xe đa năng thế hệ mới'),
+    CURRENT_TIMESTAMP
+WHERE NOT EXISTS (
+    SELECT 1 FROM listing_images WHERE listing_id = (
+        SELECT id FROM bicycle_listings WHERE title = 'Giant ATX 2026 - Mẫu xe đa năng thế hệ mới'
+    )
+);
+
+-- Listing 9: Test Phase 3 Bike
+INSERT INTO listing_images (image_url, display_order, is_primary, listing_id, uploaded_at)
+SELECT
+    'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800',
+    0, true,
+    (SELECT id FROM bicycle_listings WHERE title = 'Test Phase 3 Bike - Xe đạp dự án thử nghiệm'),
+    CURRENT_TIMESTAMP
+WHERE NOT EXISTS (
+    SELECT 1 FROM listing_images WHERE listing_id = (
+        SELECT id FROM bicycle_listings WHERE title = 'Test Phase 3 Bike - Xe đạp dự án thử nghiệm'
+    )
+);
+
+-- ============ BULK IMAGE ASSIGNMENT ============
+-- Đảm bảo TẤT CẢ các xe trong hệ thống đều có ít nhất 1 ảnh (kể cả xe thêm tay hoặc xe cũ)
+INSERT INTO listing_images (image_url, display_order, is_primary, listing_id, uploaded_at)
+SELECT 
+    'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=800', 
+    0, true, id, CURRENT_TIMESTAMP
+FROM bicycle_listings bl
+WHERE NOT EXISTS (SELECT 1 FROM listing_images li WHERE li.listing_id = bl.id);
+
 
 -- ============ REVIEWS ============
 -- buyer_minh review seller_thanh (order_id = NULL vì không có order seed)

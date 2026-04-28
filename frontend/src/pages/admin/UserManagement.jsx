@@ -1,51 +1,23 @@
-import { Table, Button, Select, message } from "antd";
+import { Table, Button, Select, message, Tag } from "antd";
 import { useEffect, useState } from "react";
-import axios from "axios";
-
-const API_BASE = "http://localhost:8080";
+import API from "../../services/api";
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const loadUsers = (role = "") => {
-    const token = localStorage.getItem("token");
-
-    // Thêm kiểm tra: Nếu chưa có token (chưa đăng nhập) thì báo lỗi ngay
-    if (!token) {
-      message.error("Bạn chưa đăng nhập hoặc thiếu token xác thực!");
-      return;
-    }
-
     setLoading(true);
-
-    axios
-      .get(`${API_BASE}/api/admin/users`, {
-        params: { role },
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+    API.get("/admin/users", {
+      params: { role },
+    })
       .then((res) => {
-        if (res.data && res.data.content) {
-          setUsers(res.data.content);
-        } else {
-          setUsers(res.data);
-        }
+        // Backend trả về List<User> trực tiếp hoặc bọc trong content
+        setUsers(res.data.content || res.data);
       })
       .catch((err) => {
-        console.error("Chi tiết lỗi:", err.response);
-        if (err.response?.status === 401) {
-          message.error(
-            "Phiên đăng nhập hết hạn hoặc bạn không có quyền Admin!",
-          );
-        } else if (err.response?.status === 403) {
-          message.error(
-            "Tài khoản của bạn không có quyền truy cập chức năng này!",
-          );
-        } else {
-          message.error("Lỗi khi tải danh sách người dùng");
-        }
+        console.error("Lỗi tải users:", err);
+        message.error("Lỗi khi tải danh sách người dùng");
       })
       .finally(() => setLoading(false));
   };
@@ -54,36 +26,33 @@ export default function UserManagement() {
     loadUsers();
   }, []);
 
-  const toggle = (id) => {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      message.error("Bạn chưa đăng nhập!");
-      return;
-    }
-
-    axios
-      .post(
-        `${API_BASE}/api/admin/users/${id}/toggle`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      )
+  const toggle = (id, currentStatus) => {
+    const newStatus = !currentStatus;
+    API.patch(`/admin/users/${id}/activate`, null, {
+      params: { active: newStatus },
+    })
       .then(() => {
         message.success("Đã cập nhật trạng thái người dùng!");
-        loadUsers(); // Load lại danh sách sau khi sửa
+        loadUsers();
       })
       .catch((err) => {
-        console.error("Chi tiết lỗi cập nhật:", err.response);
-        if (err.response?.status === 401) {
-          message.error("Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!");
-        } else {
-          message.error("Cập nhật thất bại! Vui lòng thử lại.");
-        }
+        console.error("Lỗi cập nhật:", err);
+        message.error("Cập nhật thất bại!");
       });
+  };
+
+  const deleteUser = (id) => {
+    if (window.confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
+      API.delete(`/admin/users/${id}`)
+        .then(() => {
+          message.success("Đã xóa người dùng!");
+          loadUsers();
+        })
+        .catch((err) => {
+          console.error("Lỗi xóa:", err);
+          message.error("Xóa thất bại!");
+        });
+    }
   };
 
   return (
@@ -95,9 +64,10 @@ export default function UserManagement() {
         style={{ width: 200, marginBottom: 20 }}
         allowClear
       >
-        <Select.Option value="">Tất cả</Select.Option>
-        <Select.Option value="ADMIN">Quản trị viên (ADMIN)</Select.Option>
-        <Select.Option value="USER">Người dùng (USER)</Select.Option>
+        <Select.Option value="ADMIN">ADMIN</Select.Option>
+        <Select.Option value="SELLER">SELLER</Select.Option>
+        <Select.Option value="BUYER">BUYER</Select.Option>
+        <Select.Option value="INSPECTOR">INSPECTOR</Select.Option>
       </Select>
 
       <Table
@@ -106,10 +76,9 @@ export default function UserManagement() {
         loading={loading}
         columns={[
           {
-            title: "Tên",
-            // ĐÃ SỬA: Kiểm tra cả 2 trường hợp tên có thể trả về từ backend
-            render: (_, record) =>
-              record.fullName || record.name || "Chưa cập nhật",
+            title: "Tên đầy đủ",
+            dataIndex: "fullName",
+            render: (text, record) => text || record.username,
           },
           {
             title: "Email",
@@ -119,31 +88,39 @@ export default function UserManagement() {
             title: "Vai trò",
             dataIndex: "role",
             render: (role) => (
-              <span
-                style={{
-                  color: role === "ADMIN" ? "red" : "blue",
-                  fontWeight: "bold",
-                }}
-              >
-                {role}
-              </span>
+              <Tag color={role === "ADMIN" ? "red" : "blue"}>{role}</Tag>
             ),
           },
           {
             title: "Trạng thái",
-            dataIndex: "active",
-            render: (active) => (
-              <span style={{ color: active ? "green" : "gray" }}>
-                {active ? "Đang hoạt động" : "Đã khóa"}
-              </span>
+            dataIndex: "isActive",
+            render: (isActive) => (
+              <Tag color={isActive ? "green" : "gray"}>
+                {isActive ? "Hoạt động" : "Bị khóa"}
+              </Tag>
             ),
           },
           {
             title: "Thao tác",
             render: (_, r) => (
-              <Button danger={r.active} onClick={() => toggle(r.id)}>
-                {r.active ? "Khóa tài khoản" : "Mở khóa"}
-              </Button>
+              <>
+                <Button
+                  size="small"
+                  danger={r.isActive}
+                  onClick={() => toggle(r.id, r.isActive)}
+                  style={{ marginRight: 8 }}
+                >
+                  {r.isActive ? "Khóa" : "Mở khóa"}
+                </Button>
+                <Button
+                  size="small"
+                  type="primary"
+                  danger
+                  onClick={() => deleteUser(r.id)}
+                >
+                  Xóa
+                </Button>
+              </>
             ),
           },
         ]}

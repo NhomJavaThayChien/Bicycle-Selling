@@ -45,9 +45,11 @@ public class StripeService {
         public Session createCheckoutSession(BigDecimal amount, String currency, Long orderId, boolean isDeposit) throws StripeException {
                 long unitAmount = convertAmount(amount, currency);
 
-                SessionCreateParams params = SessionCreateParams.builder()
+                String dynamicSuccessUrl = successUrl + "?orderId=" + orderId;
+
+        SessionCreateParams params = SessionCreateParams.builder()
                                 .setMode(SessionCreateParams.Mode.PAYMENT)
-                                .setSuccessUrl(successUrl)
+                                .setSuccessUrl(dynamicSuccessUrl)
                                 .setCancelUrl(cancelUrl)
                                 .setPaymentIntentData(
                                         SessionCreateParams.PaymentIntentData.builder()

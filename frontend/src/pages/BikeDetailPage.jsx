@@ -20,10 +20,17 @@ function BikeDetailPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [actionError, setActionError] = useState("");
+  const defaultImage = "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?w=800";
   const [selectedImage, setSelectedImage] = useState("");
   const [wishlisted, setWishlisted] = useState(false);
   const [creatingConversation, setCreatingConversation] = useState(false);
   const [reviews, setReviews] = useState([]);
+
+  const handleImgError = () => {
+    if (selectedImage !== defaultImage) {
+      setSelectedImage(defaultImage);
+    }
+  };
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -34,7 +41,8 @@ function BikeDetailPage() {
         const response = await getListingById(id);
         const data = response.data;
         setListing(data);
-        setSelectedImage(data?.primaryImageUrl || data?.imageUrls?.[0] || "");
+        const initialImg = data?.primaryImageUrl || data?.imageUrls?.[0] || defaultImage;
+        setSelectedImage(initialImg);
         const wishlistItems = await fetchWishlist();
         setWishlisted(
           wishlistItems.some((item) => item.id === data.id) ||
@@ -48,6 +56,7 @@ function BikeDetailPage() {
     };
 
     fetchListing();
+
   }, [id]);
 
   useEffect(() => {
@@ -137,243 +146,187 @@ function BikeDetailPage() {
   };
 
   if (loading) {
-    return <p style={{ padding: "20px" }}>Loading listing detail...</p>;
+    return (
+      <div className="bike-detail-container">
+        <div className="bike-detail-layout">
+          <div className="bike-gallery">
+            <div className="main-image-container skeleton" style={{ height: '450px' }}></div>
+            <div className="thumbnail-list">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="thumbnail-btn skeleton"></div>
+              ))}
+            </div>
+          </div>
+          <div className="bike-info-section">
+            <div className="skeleton" style={{ height: '48px', width: '80%', marginBottom: '16px' }}></div>
+            <div className="skeleton" style={{ height: '40px', width: '40%', marginBottom: '24px' }}></div>
+            <div className="bike-badges">
+              {[1, 2].map(i => (
+                <div key={i} className="badge-detail skeleton" style={{ width: '100px', height: '32px' }}></div>
+              ))}
+            </div>
+            <div className="skeleton" style={{ height: '120px', width: '100%', marginBottom: '40px' }}></div>
+            <div className="action-buttons">
+              <div className="action-btn skeleton"></div>
+              <div className="action-btn skeleton"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (loadError || !listing) {
     return (
-      <p style={{ padding: "20px", color: "#b42318" }}>
-        {loadError || "Listing not found."}
-      </p>
+      <div className="bike-detail-container" style={{ textAlign: 'center', padding: '100px 20px' }}>
+        <h2 style={{ color: '#b42318' }}>Oops! Không tìm thấy thông tin</h2>
+        <p style={{ color: '#667085' }}>{loadError || "Chiếc xe này có thể đã bị gỡ hoặc không tồn tại."}</p>
+        <button className="primary-button" onClick={() => navigate('/bikes')} style={{ marginTop: '20px' }}>
+          Quay lại danh sách
+        </button>
+      </div>
     );
   }
 
   const specs = [
-    ["Frame size", listing.frameSize],
-    ["Frame material", listing.frameMaterial],
-    ["Wheel size", listing.wheelSize],
-    ["Brake type", listing.brakeType],
-    ["Gear system", listing.gearSystem],
-    ["Year", listing.yearOfManufacture],
-    ["Color", listing.color],
-    ["Weight", listing.weight ? `${listing.weight} kg` : null],
-    ["Location", listing.location],
+    ["Kích thước khung", listing.frameSize],
+    ["Chất liệu khung", listing.frameMaterial],
+    ["Kích thước bánh", listing.wheelSize],
+    ["Loại phanh", listing.brakeType],
+    ["Hệ thống truyền động", listing.gearSystem],
+    ["Năm sản xuất", listing.yearOfManufacture],
+    ["Màu sắc", listing.color],
+    ["Trọng lượng", listing.weight ? `${listing.weight} kg` : null],
+    ["Khu vực", listing.location],
   ].filter((item) => item[1]);
 
   return (
-    <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "20px" }}>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1.2fr 1fr",
-          gap: "24px",
-        }}
-      >
-        <section>
-          <div
-            style={{
-              width: "100%",
-              height: "420px",
-              border: "1px solid #ddd",
-              borderRadius: "10px",
-              overflow: "hidden",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "#fafafa",
-            }}
-          >
+    <div className="bike-detail-container">
+      <div className="bike-detail-layout">
+        <section className="bike-gallery">
+          <div className="main-image-container">
             {selectedImage ? (
               <img
                 src={selectedImage}
                 alt={listing.title}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                className="main-image"
+                onError={handleImgError}
               />
             ) : (
-              <p>No image</p>
+              <div style={{ height: '100%', display: 'grid', placeItems: 'center', background: '#f8fafc' }}>
+                <p style={{ color: '#94a3b8' }}>Không có hình ảnh</p>
+              </div>
             )}
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              gap: "10px",
-              marginTop: "12px",
-              flexWrap: "wrap",
-            }}
-          >
+          <div className="thumbnail-list">
             {galleryImages.map((image) => (
               <button
                 key={image}
                 type="button"
+                className={`thumbnail-btn ${selectedImage === image ? "active" : ""}`}
                 onClick={() => setSelectedImage(image)}
-                style={{
-                  border:
-                    selectedImage === image
-                      ? "2px solid #0f766e"
-                      : "1px solid #ddd",
-                  borderRadius: "6px",
-                  padding: 0,
-                  width: "84px",
-                  height: "64px",
-                  overflow: "hidden",
-                  cursor: "pointer",
-                  background: "white",
-                }}
               >
-                <img
-                  src={image}
-                  alt="thumbnail"
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
+                <img src={image} alt="thumbnail" />
               </button>
             ))}
           </div>
         </section>
 
-        <section>
-          <h1 style={{ marginTop: 0 }}>{listing.title}</h1>
-          <p style={{ fontSize: "1.5rem", fontWeight: 700 }}>
+        <section className="bike-info-section">
+          <h1>{listing.title}</h1>
+          <p className="bike-detail-price">
             {formatPrice(Number(listing.price || 0))}
           </p>
 
-          <div
-            style={{
-              display: "flex",
-              gap: "8px",
-              marginBottom: "12px",
-              flexWrap: "wrap",
-            }}
-          >
+          <div className="bike-badges">
             {listing.inspectionStatus && (
-              <span
-                style={{
-                  background: "#ecfdf3",
-                  color: "#067647",
-                  padding: "4px 8px",
-                  borderRadius: "999px",
-                }}
-              >
-                Inspection: {listing.inspectionStatus}
+              <span className="badge-detail badge-inspected">
+                ✓ Đã kiểm định: {listing.inspectionStatus}
               </span>
             )}
             {listing.condition && (
-              <span
-                style={{
-                  background: "#eff8ff",
-                  color: "#175cd3",
-                  padding: "4px 8px",
-                  borderRadius: "999px",
-                }}
-              >
-                {listing.condition}
+              <span className="badge-detail badge-condition">
+                Tình trạng: {listing.condition}
               </span>
             )}
             {listing.status && (
-              <span
-                style={{
-                  background: "#f4f3ff",
-                  color: "#5925dc",
-                  padding: "4px 8px",
-                  borderRadius: "999px",
-                }}
-              >
-                {listing.status}
+              <span className="badge-detail badge-status">
+                {listing.status === 'APPROVED' ? 'Đang bán' : listing.status}
               </span>
             )}
           </div>
 
-          <p>{listing.description}</p>
+          <div className="bike-description">
+            <p>{listing.description}</p>
+          </div>
 
-          <div
-            style={{
-              display: "flex",
-              gap: "10px",
-              marginTop: "14px",
-              flexWrap: "wrap",
-            }}
-          >
-            <button type="button" onClick={handleToggleWishlist}>
-              {wishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
+          <div className="action-buttons">
+            <button className="action-btn btn-buy" onClick={handleBuyNow}>
+              Mua ngay
             </button>
-            <button type="button" onClick={handleContactSeller}>
-              {creatingConversation ? "Opening chat..." : "Contact Seller"}
+            <button className="action-btn btn-contact" onClick={handleContactSeller} disabled={creatingConversation}>
+              {creatingConversation ? "Đang kết nối..." : "Nhắn tin cho người bán"}
             </button>
-            <button type="button" onClick={handleBuyNow}>
-              Buy Now
+            <button className="action-btn btn-wishlist" onClick={handleToggleWishlist}>
+              {wishlisted ? "❤️ Đã lưu vào yêu thích" : "🤍 Thêm vào yêu thích"}
             </button>
           </div>
 
           {actionError && (
-            <p style={{ color: "#b42318", marginTop: "10px" }}>{actionError}</p>
+            <div className="alert alert-error" style={{ marginBottom: '20px' }}>
+              {actionError}
+            </div>
           )}
 
-          <div
-            style={{
-              border: "1px solid #ddd",
-              borderRadius: "8px",
-              padding: "14px",
-              marginTop: "16px",
-            }}
-          >
-            <h3 style={{ marginTop: 0 }}>Seller info</h3>
-            <p>Username: {listing.sellerUsername || "N/A"}</p>
-            <p>Full name: {listing.sellerFullName || "N/A"}</p>
-            <p>Reputation: {listing.sellerReputation ?? "N/A"}</p>
-            {listing.sellerId && (
-              <Link to={`/users/${listing.sellerId}/profile`} style={{ color: "#175cd3", fontWeight: 600 }}>
-                View seller profile
-              </Link>
-            )}
+          <div className="seller-card">
+            <div className="seller-header">
+              <div className="seller-avatar">
+                {(listing.sellerUsername || "U").charAt(0).toUpperCase()}
+              </div>
+              <div className="seller-name-info">
+                <h4>{listing.sellerFullName || listing.sellerUsername}</h4>
+                <div className="seller-reputation">
+                  ⭐ {listing.sellerReputation ?? "5.0"} • Người bán uy tín
+                </div>
+              </div>
+            </div>
+            <Link to={`/users/${listing.sellerId}/profile`} className="view-seller-profile">
+              Xem hồ sơ người bán →
+            </Link>
           </div>
         </section>
       </div>
 
-      <section style={{ marginTop: "24px" }}>
-        <h2>Specifications</h2>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <tbody>
-            {specs.map(([label, value]) => (
-              <tr key={label}>
-                <td
-                  style={{
-                    borderBottom: "1px solid #eee",
-                    padding: "10px",
-                    width: "220px",
-                  }}
-                >
-                  {label}
-                </td>
-                <td style={{ borderBottom: "1px solid #eee", padding: "10px" }}>
-                  {value}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <section className="specs-section">
+        <h2>Thông số kỹ thuật</h2>
+        <div className="specs-grid">
+          {specs.map(([label, value]) => (
+            <div key={label} className="spec-item">
+              <span className="spec-label">{label}</span>
+              <span className="spec-value">{value}</span>
+            </div>
+          ))}
+        </div>
       </section>
 
-      <section style={{ marginTop: "24px" }}>
-        <h2>Reviews</h2>
+      <section style={{ marginTop: "60px" }}>
+        <h2>Đánh giá từ người mua</h2>
         {reviews.length === 0 ? (
-          <p>Chua co danh gia nao.</p>
+          <div style={{ padding: '40px', textAlign: 'center', background: '#f8fafc', borderRadius: '20px', color: '#667085' }}>
+            Chưa có đánh giá nào cho người bán này.
+          </div>
         ) : (
-          <div style={{ display: "grid", gap: "10px" }}>
+          <div style={{ display: "grid", gap: "16px" }}>
             {reviews.map((review) => (
-              <article
-                key={review.id}
-                style={{
-                  border: "1px solid #eaecf0",
-                  borderRadius: "10px",
-                  padding: "12px",
-                  backgroundColor: "#fff",
-                }}
-              >
-                <p style={{ marginTop: 0, marginBottom: "6px", fontWeight: 600 }}>
-                  {review?.reviewer?.username || "Anonymous"}
+              <article key={review.id} className="news-card" style={{ padding: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <strong style={{ fontSize: '1.1rem' }}>{review?.reviewer?.username || "Người dùng ẩn danh"}</strong>
+                  <span style={{ color: '#fbbf24', fontWeight: 800 }}>⭐ {review.rating}/5</span>
+                </div>
+                <p style={{ color: '#475467', lineHeight: 1.6, margin: 0 }}>
+                  {review.comment || "Người dùng không để lại nhận xét."}
                 </p>
-                <p style={{ margin: "4px 0" }}>Rating: {review.rating}/5</p>
-                <p style={{ marginBottom: 0 }}>{review.comment || "(Khong co nhan xet)"}</p>
               </article>
             ))}
           </div>

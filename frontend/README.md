@@ -47,3 +47,11 @@ npm start
 
 
 ./mvnw spring-boot:run
+
+Vai trò	Username	Email	Mục đích kiểm tra
+Quản trị viên	admin	admin@bicycleshop.com	Quản lý hệ thống, duyệt tin, quản lý người dùng.
+Người bán	seller_thanh	thanh@gmail.com	Đăng tin bán xe, quản lý danh sách xe của mình.
+Người bán	seller_lan	lan@gmail.com	Tương tự (đã có sẵn một số tin đăng mẫu).
+Người mua	buyer_minh	minh@gmail.com	Xem xe, thêm vào wishlist, đặt hàng.
+Người mua	buyer_hoa	hoa@gmail.com	Tương tự người mua Minh.
+Kiểm định viên	inspector_nam	nam@bicycle-inspect.com	Thực hiện kiểm định các xe đang chờ duyệt.

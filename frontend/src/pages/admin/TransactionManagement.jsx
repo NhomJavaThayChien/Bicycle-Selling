@@ -1,59 +1,70 @@
-import React from "react";
-import { Table, Tag, Card, Row, Col, Statistic } from "antd";
-import { DollarOutlined } from "@ant-design/icons";
+import React, { useState, useEffect } from "react";
+import { Table, Tag, Card, Row, Col, Statistic, message } from "antd";
+import { DollarSign } from "lucide-react";
+import API from "../../services/api";
 
 export default function TransactionManagement() {
-  const transactions = [
-    {
-      id: "TXN1001",
-      type: "ORDER_PAYMENT",
-      amount: 5000000,
-      fee: 250000,
-      date: "2026-04-18",
-      status: "SUCCESS",
-    },
-    {
-      id: "TXN1002",
-      type: "REFUND",
-      amount: 3000000,
-      fee: 0,
-      date: "2026-04-19",
-      status: "SUCCESS",
-    },
-  ];
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchTransactions = async () => {
+    setLoading(true);
+    try {
+      const res = await API.get("/admin/payments");
+      setTransactions(res.data);
+    } catch (err) {
+      console.error(err);
+      message.error("Lỗi khi tải lịch sử giao dịch!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
 
   const columns = [
-    { title: "Mã GD", dataIndex: "id" },
+    { title: "ID", dataIndex: "id" },
     {
-      title: "Loại giao dịch",
-      dataIndex: "type",
-      render: (type) => (
-        <Tag color={type === "REFUND" ? "volcano" : "cyan"}>{type}</Tag>
+      title: "Loại",
+      dataIndex: "isDeposit",
+      render: (isDeposit) => (
+        <Tag color={isDeposit ? "blue" : "green"}>
+          {isDeposit ? "Đặt cọc" : "Thanh toán hết"}
+        </Tag>
       ),
     },
     {
-      title: "Tổng tiền",
+      title: "Phương thức",
+      dataIndex: "method",
+    },
+    {
+      title: "Số tiền",
       dataIndex: "amount",
-      render: (val) => val.toLocaleString("vi-VN") + " đ",
+      render: (val, record) => `${val?.toLocaleString()} ${record.currency}`,
     },
     {
-      title: "Phí dịch vụ thu được",
-      dataIndex: "fee",
-      render: (val) => (
-        <span style={{ color: "green", fontWeight: "bold" }}>
-          +{val.toLocaleString("vi-VN")} đ
-        </span>
-      ),
+      title: "Mã đơn hàng",
+      dataIndex: ["order", "id"],
     },
-    { title: "Ngày GD", dataIndex: "date" },
+    {
+      title: "Ngày tạo",
+      dataIndex: "createdAt",
+      render: (date) => new Date(date).toLocaleString(),
+    },
     {
       title: "Trạng thái",
       dataIndex: "status",
-      render: () => <Tag color="success">Thành công</Tag>,
+      render: (status) => (
+        <Tag color={status === "COMPLETED" || status === "SUCCESS" ? "success" : "warning"}>
+          {status}
+        </Tag>
+      ),
     },
   ];
 
-  const totalFee = transactions.reduce((sum, tx) => sum + tx.fee, 0);
+  const totalAmount = transactions.reduce((sum, tx) => sum + (tx.amount || 0), 0);
 
   return (
     <div style={{ padding: 20 }}>
@@ -61,18 +72,23 @@ export default function TransactionManagement() {
         <Col span={8}>
           <Card>
             <Statistic
-              title="Tổng doanh thu phí dịch vụ"
-              value={totalFee}
-              prefix={<DollarOutlined />}
+              title="Tổng dòng tiền"
+              value={totalAmount}
+              prefix={<DollarSign size={16} style={{ marginRight: 4 }} />}
               suffix="đ"
-              valueStyle={{ color: "#3f8600" }}
+              styles={{ content: { color: "#3f8600" } }}
             />
           </Card>
         </Col>
       </Row>
 
       <h2>Lịch sử Giao dịch</h2>
-      <Table dataSource={transactions} columns={columns} rowKey="id" />
+      <Table
+        dataSource={transactions}
+        columns={columns}
+        rowKey="id"
+        loading={loading}
+      />
     </div>
   );
 }

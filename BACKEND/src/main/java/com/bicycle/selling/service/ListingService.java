@@ -262,7 +262,15 @@ public class ListingService {
         return mapToResponse(updatedListing);
     }
     
-    private ListingResponse mapToResponse(BicycleListing listing) {
+    @Transactional(readOnly = true)
+    public List<ListingResponse> getPendingListings() {
+        return listingRepository.findByStatus(ListingStatus.PENDING_APPROVAL)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+    
+    public ListingResponse mapToResponse(BicycleListing listing) {
         User seller = listing.getSeller();
         
         // Get images

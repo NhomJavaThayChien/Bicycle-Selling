@@ -1,9 +1,9 @@
 import React from "react";
 import {
-  UserOutlined,
-  SettingOutlined,
-  LogoutOutlined,
-} from "@ant-design/icons";
+  User,
+  Settings,
+  LogOut,
+} from "lucide-react";
 import { Dropdown, Avatar, Space, Typography } from "antd";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
@@ -24,13 +24,13 @@ export default function AdminUserMenu() {
     {
       key: "1",
       label: "Hồ sơ của tôi",
-      icon: <UserOutlined />,
+      icon: <User size={16} />,
       onClick: () => navigate("/admin/profile"),
     },
     {
       key: "2",
       label: "Cài đặt hệ thống",
-      icon: <SettingOutlined />,
+      icon: <Settings size={16} />,
       onClick: () => console.log("Cài đặt"),
     },
     {
@@ -39,7 +39,7 @@ export default function AdminUserMenu() {
     {
       key: "3",
       label: "Đăng xuất",
-      icon: <LogoutOutlined />,
+      icon: <LogOut size={16} />,
       danger: true, // Hiển thị màu đỏ
       onClick: handleLogout,
     },

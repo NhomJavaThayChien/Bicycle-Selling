@@ -1,5 +1,5 @@
 import { Form, InputNumber, Button, Upload, message } from "antd";
-import { UploadOutlined } from "@ant-design/icons";
+import { Upload } from "lucide-react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 
@@ -42,7 +42,7 @@ export default function InspectionForm() {
 
       <Form.Item name="file" label="Upload PDF">
         <Upload beforeUpload={() => false}>
-          <Button icon={<UploadOutlined />}>Upload</Button>
+          <Button icon={<Upload size={16} />}>Upload</Button>
         </Upload>
       </Form.Item>
 

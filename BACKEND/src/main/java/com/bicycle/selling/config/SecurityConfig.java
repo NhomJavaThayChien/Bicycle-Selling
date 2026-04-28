@@ -69,6 +69,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/webhook/stripe/**").permitAll()
                 .requestMatchers("/api/test/public").permitAll()
                 .requestMatchers("/api/listings", "/api/listings/**").permitAll()
+                .requestMatchers("/api/shipping/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/inspector/**").hasRole("INSPECTOR")

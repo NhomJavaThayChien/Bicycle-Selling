@@ -1,36 +1,24 @@
-import { Table, Button, Modal, Input, message } from "antd";
+import { Table, Button, Modal, Form, Input, message, Space, Popconfirm } from "antd";
 import { useEffect, useState } from "react";
-import axios from "axios";
-
-const API_BASE = "http://localhost:8080";
+import API from "../../services/api";
 
 export default function Category() {
   const [data, setData] = useState([]);
-  const [name, setName] = useState("");
-  const [editing, setEditing] = useState(null);
-
-  // 1. Tạo hàm lấy cấu hình chứa Token
-  const getAuthHeaders = () => {
-    // Lưu ý: Thay "token" bằng đúng từ khóa bạn dùng khi lưu lúc Login
-    const token = localStorage.getItem("token");
-    return {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    };
-  };
+  const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [form] = Form.useForm();
 
   const load = async () => {
+    setLoading(true);
     try {
-      // 2. Kèm token vào request GET
-      const res = await axios.get(
-        `${API_BASE}/admin/categories`,
-        getAuthHeaders(),
-      );
+      const res = await API.get("/admin/categories");
       setData(res.data);
     } catch (error) {
       console.error(error);
-      message.error("Lỗi 401: Bạn chưa đăng nhập hoặc Token hết hạn!");
+      message.error("Lỗi khi tải danh sách danh mục!");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -38,41 +26,27 @@ export default function Category() {
     load();
   }, []);
 
-  const save = async () => {
+  const save = async (values) => {
     try {
-      if (editing) {
-        // Kèm token vào request PUT
-        await axios.put(
-          `${API_BASE}/admin/categories/${editing}`,
-          { name },
-          getAuthHeaders(),
-        );
+      if (editingId) {
+        await API.post("/admin/categories", { ...values, id: editingId });
+        message.success("Cập nhật thành công!");
       } else {
-        // Kèm token vào request POST
-        await axios.post(
-          `${API_BASE}/admin/categories`,
-          { name },
-          getAuthHeaders(),
-        );
+        await API.post("/admin/categories", values);
+        message.success("Thêm mới thành công!");
       }
-
-      message.success("Lưu thành công!");
-      setName("");
-      setEditing(null);
+      setIsModalOpen(false);
+      form.resetFields();
       load();
     } catch (error) {
       console.error(error);
-      message.error("Lưu thất bại: Không có quyền truy cập!");
+      message.error("Lưu thất bại!");
     }
   };
 
   const remove = async (id) => {
     try {
-      // Kèm token vào request DELETE
-      await axios.delete(
-        `${API_BASE}/admin/categories/${id}`,
-        getAuthHeaders(),
-      );
+      await API.delete(`/admin/categories/${id}`);
       message.success("Xóa thành công!");
       load();
     } catch (error) {
@@ -82,57 +56,76 @@ export default function Category() {
   };
 
   return (
-    <>
-      <Button
-        type="primary"
-        onClick={() => setEditing(0)}
-        style={{ marginBottom: 16 }}
-      >
-        Add Category
-      </Button>
+    <div style={{ padding: "20px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
+        <h2>Quản lý danh mục</h2>
+        <Button
+          type="primary"
+          onClick={() => {
+            setEditingId(null);
+            form.resetFields();
+            setIsModalOpen(true);
+          }}
+        >
+          + Thêm danh mục
+        </Button>
+      </div>
 
       <Table
         dataSource={data}
         rowKey="id"
+        loading={loading}
         columns={[
-          { title: "Name", dataIndex: "name" },
+          { title: "ID", dataIndex: "id" },
+          { title: "Tên danh mục", dataIndex: "name" },
+          { title: "Mô tả", dataIndex: "description" },
           {
-            title: "Action",
+            title: "Hành động",
             render: (_, r) => (
-              <>
+              <Space size="middle">
                 <Button
-                  style={{ marginRight: 8 }}
                   onClick={() => {
-                    setEditing(r.id);
-                    setName(r.name);
+                    setEditingId(r.id);
+                    form.setFieldsValue(r);
+                    setIsModalOpen(true);
                   }}
                 >
-                  Edit
+                  Sửa
                 </Button>
-                <Button danger onClick={() => remove(r.id)}>
-                  Delete
-                </Button>
-              </>
+                <Popconfirm
+                  title="Xóa danh mục này?"
+                  onConfirm={() => remove(r.id)}
+                >
+                  <Button danger>Xóa</Button>
+                </Popconfirm>
+              </Space>
             ),
           },
         ]}
       />
 
       <Modal
-        title={editing ? "Edit Category" : "Add Category"}
-        open={editing !== null}
-        onOk={save}
-        onCancel={() => {
-          setEditing(null);
-          setName("");
-        }}
+        title={editingId ? "Sửa danh mục" : "Thêm danh mục"}
+        open={isModalOpen}
+        onOk={() => form.submit()}
+        onCancel={() => setIsModalOpen(false)}
       >
-        <Input
-          placeholder="Nhập tên category..."
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+        <Form form={form} layout="vertical" onFinish={save}>
+          <Form.Item
+            name="name"
+            label="Tên danh mục"
+            rules={[{ required: true }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item name="description" label="Mô tả">
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <Form.Item name="iconUrl" label="Icon URL">
+            <Input />
+          </Form.Item>
+        </Form>
       </Modal>
-    </>
+    </div>
   );
 }

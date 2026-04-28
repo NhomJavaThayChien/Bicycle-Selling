@@ -1,5 +1,33 @@
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { 
+  Layout, 
+  Row, 
+  Col, 
+  Card, 
+  Form, 
+  Input, 
+  Select, 
+  Button, 
+  Typography, 
+  Space, 
+  Divider, 
+  Radio, 
+  message,
+  Spin,
+  Alert
+} from "antd";
+import { 
+  Truck, 
+  CreditCard, 
+  MapPin, 
+  Info, 
+  ChevronRight, 
+  ShieldCheck,
+  CreditCard as CardIcon,
+  Wallet
+} from "lucide-react";
+import { motion } from "framer-motion";
 import { getListingById } from "../services/bikeService";
 import { createOrder } from "../services/orderService";
 import { createCashPayment, createDepositPayment } from "../services/paymentService";
@@ -11,472 +39,335 @@ import {
 } from "../services/shippingService";
 import { formatPrice } from "../utils/formatPrice";
 
+const { Title, Text, Paragraph } = Typography;
+const { Option } = Select;
+
 const DEFAULT_FROM_DISTRICT_ID = 1450;
 const DEFAULT_FROM_WARD_CODE = "21211";
 
-function CheckoutPage() {
+export default function CheckoutPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [form] = Form.useForm();
 
   const [listing, setListing] = useState(null);
-  const [loadingListing, setLoadingListing] = useState(true);
-
-  const [streetAddress, setStreetAddress] = useState("");
-  const [note, setNote] = useState("");
-
+  const [loading, setLoading] = useState(true);
   const [provinces, setProvinces] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [wards, setWards] = useState([]);
-
-  const [selectedProvinceId, setSelectedProvinceId] = useState("");
-  const [selectedDistrictId, setSelectedDistrictId] = useState("");
-  const [selectedWardCode, setSelectedWardCode] = useState("");
-
-  const [fromDistrictId, setFromDistrictId] = useState(DEFAULT_FROM_DISTRICT_ID);
-  const [fromWardCode, setFromWardCode] = useState(DEFAULT_FROM_WARD_CODE);
-
+  
+  const [loadingDistricts, setLoadingDistricts] = useState(false);
+  const [loadingWards, setLoadingWards] = useState(false);
   const [shippingFee, setShippingFee] = useState(null);
-  const [loadingFee, setLoadingFee] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("COD");
-  const [cardholderName, setCardholderName] = useState("");
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardExpiry, setCardExpiry] = useState("");
-  const [cardCvc, setCardCvc] = useState("");
-
+  const [calculatingFee, setCalculatingFee] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
 
   useEffect(() => {
-    const loadInitialData = async () => {
-      setLoadingListing(true);
-      setError("");
-
+    const fetchData = async () => {
       try {
         const [listingRes, provinceRes] = await Promise.all([
           getListingById(id),
           getProvinces(),
         ]);
-
-        setListing(listingRes.data || null);
+        setListing(listingRes.data);
         setProvinces(Array.isArray(provinceRes.data) ? provinceRes.data : []);
-      } catch {
-        setError("Khong tai duoc thong tin checkout. Vui long thu lai.");
+      } catch (err) {
+        message.error("Không thể tải thông tin thanh toán.");
+        console.error(err);
       } finally {
-        setLoadingListing(false);
+        setLoading(false);
       }
     };
-
-    loadInitialData();
+    fetchData();
   }, [id]);
 
-  useEffect(() => {
-    if (!selectedProvinceId) {
-      setDistricts([]);
-      setSelectedDistrictId("");
-      setWards([]);
-      setSelectedWardCode("");
-      return;
-    }
-
-    const loadDistricts = async () => {
-      setError("");
-      try {
-        const response = await getDistricts(selectedProvinceId);
-        const nextDistricts = Array.isArray(response.data) ? response.data : [];
-        setDistricts(nextDistricts);
-        setSelectedDistrictId("");
-        setWards([]);
-        setSelectedWardCode("");
-      } catch {
-        setError("Khong tai duoc danh sach quan/huyen.");
-      }
-    };
-
-    loadDistricts();
-  }, [selectedProvinceId]);
-
-  useEffect(() => {
-    if (!selectedDistrictId) {
-      setWards([]);
-      setSelectedWardCode("");
-      return;
-    }
-
-    const loadWards = async () => {
-      setError("");
-      try {
-        const response = await getWards(selectedDistrictId);
-        const nextWards = Array.isArray(response.data) ? response.data : [];
-        setWards(nextWards);
-        setSelectedWardCode("");
-      } catch {
-        setError("Khong tai duoc danh sach phuong/xa.");
-      }
-    };
-
-    loadWards();
-  }, [selectedDistrictId]);
-
-  const selectedProvince = useMemo(
-    () =>
-      provinces.find((province) =>
-        String(province.provinceId) === String(selectedProvinceId),
-      ) || null,
-    [provinces, selectedProvinceId],
-  );
-
-  const selectedDistrict = useMemo(
-    () =>
-      districts.find((district) =>
-        String(district.districtId) === String(selectedDistrictId),
-      ) || null,
-    [districts, selectedDistrictId],
-  );
-
-  const selectedWard = useMemo(
-    () => wards.find((ward) => ward.wardCode === selectedWardCode) || null,
-    [wards, selectedWardCode],
-  );
-
-  const totalEstimate = useMemo(() => {
-    const price = Number(listing?.price || 0);
-    const fee = Number(shippingFee || 0);
-    return price + fee;
-  }, [listing?.price, shippingFee]);
-
-  const buildShippingAddress = () => {
-    const parts = [
-      streetAddress.trim(),
-      selectedWard?.wardName,
-      selectedDistrict?.districtName,
-      selectedProvince?.provinceName,
-    ].filter(Boolean);
-
-    return parts.join(", ");
-  };
-
-  const canCalculateFee =
-    listing &&
-    selectedDistrictId &&
-    selectedWardCode &&
-    fromDistrictId &&
-    fromWardCode;
-
-  const handleCalculateFee = async () => {
-    if (!canCalculateFee) {
-      setError("Vui long chon day du thong tin GHN de tinh phi ship.");
-      return;
-    }
-
-    setLoadingFee(true);
-    setError("");
-
+  const handleProvinceChange = async (value) => {
+    form.setFieldsValue({ districtId: undefined, wardCode: undefined });
+    setDistricts([]);
+    setWards([]);
+    setShippingFee(null);
+    
+    if (!value) return;
+    
+    setLoadingDistricts(true);
     try {
-      const response = await calculateShippingFee({
-        listingId: listing.id,
-        fromDistrictId: Number(fromDistrictId),
-        fromWardCode: String(fromWardCode).trim(),
-        toDistrictId: Number(selectedDistrictId),
-        toWardCode: selectedWardCode,
-      });
-
-      setShippingFee(Number(response?.data?.fee || 0));
-    } catch {
-      setShippingFee(null);
-      setError(
-        "Khong tinh duoc phi ship GHN. Kiem tra lai fromDistrict/fromWard hoac thong tin dia chi.",
-      );
+      const res = await getDistricts(value);
+      setDistricts(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      message.error("Lỗi khi tải danh sách quận/huyện.");
     } finally {
-      setLoadingFee(false);
+      setLoadingDistricts(false);
     }
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-    if (!listing) {
-      return;
-    }
-
-    if (!streetAddress.trim() || !selectedDistrictId || !selectedWardCode) {
-      setError("Vui long nhap day du dia chi giao hang.");
-      return;
-    }
-
-    const shippingAddress = buildShippingAddress();
-    if (!shippingAddress) {
-      setError("Dia chi giao hang khong hop le.");
-      return;
-    }
-
-    setSubmitting(true);
-    setError("");
-
+  const handleDistrictChange = async (value) => {
+    form.setFieldsValue({ wardCode: undefined });
+    setWards([]);
+    setShippingFee(null);
+    
+    if (!value) return;
+    
+    setLoadingWards(true);
     try {
-      const orderResponse = await createOrder({
+      const res = await getWards(value);
+      setWards(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      message.error("Lỗi khi tải danh sách phường/xã.");
+    } finally {
+      setLoadingWards(false);
+    }
+  };
+
+  const onCalculateFee = async () => {
+    const values = form.getFieldsValue();
+    if (!values.districtId || !values.wardCode) {
+      message.warning("Vui lòng chọn đầy đủ Quận/Huyện và Phường/Xã.");
+      return;
+    }
+
+    setCalculatingFee(true);
+    try {
+      const res = await calculateShippingFee({
         listingId: listing.id,
-        agreedPrice: Number(listing.price),
+        fromDistrictId: DEFAULT_FROM_DISTRICT_ID,
+        fromWardCode: DEFAULT_FROM_WARD_CODE,
+        toDistrictId: values.districtId,
+        toWardCode: values.wardCode,
+      });
+      setShippingFee(res.data?.fee || 0);
+      message.success("Đã cập nhật phí vận chuyển.");
+    } catch (err) {
+      message.error("Không thể tính phí vận chuyển GHN.");
+    } finally {
+      setCalculatingFee(false);
+    }
+  };
+
+  const onFinish = async (values) => {
+    setSubmitting(true);
+    try {
+      const selectedProvince = provinces.find(p => p.provinceId === values.provinceId)?.provinceName;
+      const selectedDistrict = districts.find(d => d.districtId === values.districtId)?.districtName;
+      const selectedWard = wards.find(w => w.wardCode === values.wardCode)?.wardName;
+      
+      const shippingAddress = `${values.address}, ${selectedWard}, ${selectedDistrict}, ${selectedProvince}`;
+
+      const orderRes = await createOrder({
+        listingId: listing.id,
+        agreedPrice: listing.price,
         shippingAddress,
-        note: note.trim() || null,
-        paymentMethod,
+        note: values.note,
+        paymentMethod: values.paymentMethod,
       });
 
-      const orderId = orderResponse?.data?.id;
-
-      if (orderId) {
-        if (paymentMethod === "STRIPE") {
-          try {
-            await createDepositPayment(orderId);
-          } catch {
-            // Continue with fake redirect even if payment API is unavailable.
-          }
-
-          navigate(`/payment-success?orderId=${orderId}`);
+      const orderId = orderRes.data?.id;
+      if (values.paymentMethod === "STRIPE") {
+        const payRes = await createDepositPayment(orderId);
+        const stripeUrl = payRes.data?.checkoutSession;
+        if (stripeUrl) {
+          window.location.href = stripeUrl;
           return;
         }
-
-        try {
-          await createCashPayment(orderId);
-        } catch {
-          // Cash payment API failure should not block order history navigation.
-        }
+      } else {
+        await createCashPayment(orderId);
       }
-
+      
+      message.success("Đặt hàng thành công!");
       navigate("/orders");
     } catch (err) {
-      const serverError = err?.response?.data?.error || err?.response?.data?.message;
-      setError(serverError || "Tao don hang that bai. Vui long thu lai.");
+      message.error(err.response?.data?.message || "Đặt hàng thất bại. Vui lòng thử lại.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loadingListing) {
-    return (
-      <main style={{ maxWidth: "760px", margin: "24px auto", padding: "0 16px" }}>
-        <p>Dang tai du lieu checkout...</p>
-      </main>
-    );
-  }
+  if (loading) return (
+    <div style={{ textAlign: 'center', padding: '100px' }}>
+      <Spin size="large" tip="Đang tải dữ liệu thanh toán..." />
+    </div>
+  );
 
-  if (!listing) {
-    return (
-      <main style={{ maxWidth: "760px", margin: "24px auto", padding: "0 16px" }}>
-        <p>Khong tim thay thong tin xe de checkout.</p>
-      </main>
-    );
-  }
+  const totalAmount = (listing?.price || 0) + (shippingFee || 0);
 
   return (
-    <main className="content-wrap checkout-layout">
-      <div className="section-heading" style={{ marginBottom: "18px" }}>
-        <p className="eyebrow">Secure checkout</p>
-        <h1 style={{ marginBottom: "8px" }}>Checkout</h1>
-        <p style={{ marginTop: 0, color: "#475467" }}>
-          Xac nhan thong tin giao hang, chon phuong thuc thanh toan va tao don mua xe.
-        </p>
+    <div style={{ background: "#f8fafc", minHeight: "100vh", padding: "40px 20px" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <Space direction="vertical" size={2} style={{ marginBottom: 32 }}>
+            <Text type="secondary" style={{ textTransform: "uppercase", letterSpacing: 1, fontSize: 12, fontWeight: 700 }}>
+              Thanh toán an toàn
+            </Text>
+            <Title level={2}>Xác nhận đặt hàng</Title>
+          </Space>
+
+          <Form form={form} layout="vertical" onFinish={onFinish} initialValues={{ paymentMethod: "COD" }}>
+            <Row gutter={32}>
+              <Col xs={24} lg={15}>
+                <Card 
+                  title={<Space><MapPin size={18} /><span>Thông tin giao hàng</span></Space>}
+                  bordered={false}
+                  style={{ borderRadius: 16, boxShadow: "0 4px 12px rgba(0,0,0,0.05)", marginBottom: 24 }}
+                >
+                  <Row gutter={16}>
+                    <Col span={24}>
+                      <Form.Item name="address" label="Địa chỉ cụ thể (Số nhà, tên đường)" rules={[{ required: true, message: 'Vui lòng nhập địa chỉ' }]}>
+                        <Input placeholder="VD: 123 Nguyễn Trãi" style={{ height: 42 }} />
+                      </Form.Item>
+                    </Col>
+                    <Col span={8}>
+                      <Form.Item name="provinceId" label="Tỉnh / Thành phố" rules={[{ required: true, message: 'Chọn tỉnh thành' }]}>
+                        <Select 
+                          placeholder="Chọn tỉnh/thành" 
+                          onChange={handleProvinceChange}
+                          showSearch
+                          optionFilterProp="children"
+                          style={{ height: 42 }}
+                        >
+                          {provinces.map(p => <Option key={p.provinceId} value={p.provinceId}>{p.provinceName}</Option>)}
+                        </Select>
+                      </Form.Item>
+                    </Col>
+                    <Col span={8}>
+                      <Form.Item name="districtId" label="Quận / Huyện" rules={[{ required: true, message: 'Chọn quận huyện' }]}>
+                        <Select 
+                          placeholder="Chọn quận/huyện" 
+                          onChange={handleDistrictChange}
+                          loading={loadingDistricts}
+                          disabled={!districts.length}
+                          showSearch
+                          optionFilterProp="children"
+                          style={{ height: 42 }}
+                        >
+                          {districts.map(d => <Option key={d.districtId} value={d.districtId}>{d.districtName}</Option>)}
+                        </Select>
+                      </Form.Item>
+                    </Col>
+                    <Col span={8}>
+                      <Form.Item name="wardCode" label="Phường / Xã" rules={[{ required: true, message: 'Chọn phường xã' }]}>
+                        <Select 
+                          placeholder="Chọn phường/xã" 
+                          loading={loadingWards}
+                          disabled={!wards.length}
+                          showSearch
+                          optionFilterProp="children"
+                          style={{ height: 42 }}
+                          onSelect={onCalculateFee}
+                        >
+                          {wards.map(w => <Option key={w.wardCode} value={w.wardCode}>{w.wardName}</Option>)}
+                        </Select>
+                      </Form.Item>
+                    </Col>
+                    <Col span={24}>
+                      <Form.Item name="note" label="Ghi chú cho người bán">
+                        <Input.TextArea rows={3} placeholder="VD: Giao vào giờ hành chính..." />
+                      </Form.Item>
+                    </Col>
+                  </Row>
+                </Card>
+
+                <Card 
+                  title={<Space><CreditCard size={18} /><span>Phương thức thanh toán</span></Space>}
+                  bordered={false}
+                  style={{ borderRadius: 16, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}
+                >
+                  <Form.Item name="paymentMethod" noStyle>
+                    <Radio.Group style={{ width: "100%" }}>
+                      <Row gutter={16}>
+                        <Col span={12}>
+                          <Radio.Button value="COD" style={{ width: "100%", height: "auto", padding: "16px", borderRadius: 12 }}>
+                            <Space align="start">
+                              <Wallet size={20} style={{ color: "#52c41a" }} />
+                              <div>
+                                <div style={{ fontWeight: 600 }}>Tiền mặt (COD)</div>
+                                <div style={{ fontSize: 12, color: "#8c8c8c" }}>Thanh toán khi nhận hàng</div>
+                              </div>
+                            </Space>
+                          </Radio.Button>
+                        </Col>
+                        <Col span={12}>
+                          <Radio.Button value="STRIPE" style={{ width: "100%", height: "auto", padding: "16px", borderRadius: 12 }}>
+                            <Space align="start">
+                              <CardIcon size={20} style={{ color: "#1890ff" }} />
+                              <div>
+                                <div style={{ fontWeight: 600 }}>Thẻ tín dụng (Stripe)</div>
+                                <div style={{ fontSize: 12, color: "#8c8c8c" }}>Thanh toán an toàn qua cổng Stripe</div>
+                              </div>
+                            </Space>
+                          </Radio.Button>
+                        </Col>
+                      </Row>
+                    </Radio.Group>
+                  </Form.Item>
+                  
+                  <div style={{ marginTop: 24, padding: "16px", background: "#f0f5ff", borderRadius: 12, display: "flex", gap: 12 }}>
+                    <ShieldCheck size={24} style={{ color: "#1890ff", flexShrink: 0 }} />
+                    <Text type="secondary" style={{ fontSize: 13 }}>
+                      Mọi giao dịch trên BikeMarket đều được bảo vệ. Tiền của bạn sẽ chỉ được chuyển cho người bán sau khi bạn xác nhận đã nhận hàng thành công.
+                    </Text>
+                  </div>
+                </Card>
+              </Col>
+
+              <Col xs={24} lg={9}>
+                <Card 
+                  bordered={false} 
+                  style={{ borderRadius: 20, boxShadow: "0 8px 24px rgba(0,0,0,0.08)", position: "sticky", top: 24 }}
+                >
+                  <Title level={4}>Tóm tắt đơn hàng</Title>
+                  <Divider style={{ margin: "16px 0" }} />
+                  
+                  <div style={{ display: "flex", gap: 16, marginBottom: 24 }}>
+                    <img 
+                      src={listing.primaryImageUrl || "https://via.placeholder.com/100"} 
+                      alt="bike" 
+                      style={{ width: 80, height: 80, borderRadius: 12, objectFit: "cover" }} 
+                    />
+                    <div>
+                      <Text strong style={{ display: "block", fontSize: 16 }}>{listing.title}</Text>
+                      <Text type="secondary" style={{ fontSize: 12 }}>Mã sản phẩm: #{listing.id}</Text>
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
+                    <Text type="secondary">Giá xe</Text>
+                    <Text strong>{formatPrice(listing.price)}</Text>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
+                    <Text type="secondary">Phí vận chuyển (GHN)</Text>
+                    <Text strong>
+                      {calculatingFee ? <Spin size="small" /> : (shippingFee !== null ? formatPrice(shippingFee) : "Chưa tính")}
+                    </Text>
+                  </div>
+                  
+                  <Divider />
+                  
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 24 }}>
+                    <Title level={4} style={{ margin: 0 }}>Tổng cộng</Title>
+                    <Title level={4} style={{ margin: 0, color: "#1890ff" }}>{formatPrice(totalAmount)}</Title>
+                  </div>
+
+                  <Button 
+                    type="primary" 
+                    block 
+                    size="large" 
+                    htmlType="submit"
+                    loading={submitting}
+                    style={{ height: 52, borderRadius: 12, fontSize: 16, fontWeight: 700 }}
+                  >
+                    Xác nhận đặt hàng
+                  </Button>
+                  
+                  <div style={{ textAlign: "center", marginTop: 16 }}>
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      Bằng cách đặt hàng, bạn đồng ý với Điều khoản dịch vụ của BikeMarket.
+                    </Text>
+                  </div>
+                </Card>
+              </Col>
+            </Row>
+          </Form>
+        </motion.div>
       </div>
-
-      <div className="checkout-grid">
-        <section className="panel-card checkout-summary-card">
-          <h3 style={{ marginTop: 0 }}>{listing.title}</h3>
-          <p style={{ margin: "4px 0" }}>Gia xe: {formatPrice(Number(listing.price || 0))}</p>
-          <p style={{ margin: "4px 0", color: "#667085" }}>Listing ID: {listing.id}</p>
-          <div className="checkout-summary-price">
-            <span>Total estimate</span>
-            <strong>{formatPrice(totalEstimate)}</strong>
-          </div>
-        </section>
-
-        {error && <div className="alert alert-error full-span">{error}</div>}
-
-        <form onSubmit={handleSubmit} className="panel-card checkout-form">
-        <Field label="So nha, duong" required fullWidth>
-          <input
-            value={streetAddress}
-            onChange={(event) => setStreetAddress(event.target.value)}
-            placeholder="VD: 123 Nguyen Trai"
-          />
-        </Field>
-
-        <Field label="Tinh/Thanh pho" required>
-          <select
-            value={selectedProvinceId}
-            onChange={(event) => setSelectedProvinceId(event.target.value)}
-          >
-            <option value="">Chon tinh/thanh</option>
-            {provinces.map((province) => (
-              <option key={province.provinceId} value={province.provinceId}>
-                {province.provinceName}
-              </option>
-            ))}
-          </select>
-        </Field>
-
-        <Field label="Quan/Huyen" required>
-          <select
-            value={selectedDistrictId}
-            onChange={(event) => setSelectedDistrictId(event.target.value)}
-            disabled={!selectedProvinceId}
-          >
-            <option value="">Chon quan/huyen</option>
-            {districts.map((district) => (
-              <option key={district.districtId} value={district.districtId}>
-                {district.districtName}
-              </option>
-            ))}
-          </select>
-        </Field>
-
-        <Field label="Phuong/Xa" required>
-          <select
-            value={selectedWardCode}
-            onChange={(event) => setSelectedWardCode(event.target.value)}
-            disabled={!selectedDistrictId}
-          >
-            <option value="">Chon phuong/xa</option>
-            {wards.map((ward) => (
-              <option key={ward.wardCode} value={ward.wardCode}>
-                {ward.wardName}
-              </option>
-            ))}
-          </select>
-        </Field>
-
-        <Field label="From district (GHN shop)">
-          <input
-            type="number"
-            value={fromDistrictId}
-            onChange={(event) => setFromDistrictId(event.target.value)}
-          />
-        </Field>
-
-        <Field label="From ward code (GHN shop)">
-          <input
-            value={fromWardCode}
-            onChange={(event) => setFromWardCode(event.target.value)}
-          />
-        </Field>
-
-        <Field label="Ghi chu don hang" fullWidth>
-          <textarea
-            rows={4}
-            value={note}
-            onChange={(event) => setNote(event.target.value)}
-            placeholder="Vi du: Giao gio hanh chinh"
-          />
-        </Field>
-
-        <Field label="Payment method" required>
-          <select
-            value={paymentMethod}
-            onChange={(event) => setPaymentMethod(event.target.value)}
-          >
-            <option value="COD">Cash on Delivery</option>
-            <option value="STRIPE">Stripe</option>
-          </select>
-        </Field>
-
-        {paymentMethod === "STRIPE" && (
-          <section className="stripe-card full-span">
-            <div className="section-heading" style={{ marginBottom: "10px" }}>
-              <p className="eyebrow">Stripe test form</p>
-              <h3 style={{ margin: 0 }}>Card details</h3>
-              <p style={{ margin: 0, color: "#667085" }}>This is UI-only for test mode and confirmation flow.</p>
-            </div>
-            <div className="form-grid">
-              <label>
-                <span>Cardholder name</span>
-                <input value={cardholderName} onChange={(event) => setCardholderName(event.target.value)} placeholder="Nguyen Van A" />
-              </label>
-              <label>
-                <span>Card number</span>
-                <input value={cardNumber} onChange={(event) => setCardNumber(event.target.value)} placeholder="4242 4242 4242 4242" />
-              </label>
-              <label>
-                <span>Expiry</span>
-                <input value={cardExpiry} onChange={(event) => setCardExpiry(event.target.value)} placeholder="12/28" />
-              </label>
-              <label>
-                <span>CVC</span>
-                <input value={cardCvc} onChange={(event) => setCardCvc(event.target.value)} placeholder="123" />
-              </label>
-            </div>
-          </section>
-        )}
-
-        <div
-          className="checkout-actions full-span"
-        >
-          <div>
-            <p style={{ margin: 0 }}>
-              Phi ship GHN: {shippingFee != null ? formatPrice(shippingFee) : "Chua tinh"}
-            </p>
-            <p style={{ margin: 0, color: "#667085" }}>
-              Tong tam tinh: {formatPrice(totalEstimate)}
-            </p>
-          </div>
-
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button
-              type="button"
-              onClick={handleCalculateFee}
-              disabled={loadingFee}
-              style={secondaryButtonStyle}
-            >
-              {loadingFee ? "Dang tinh phi..." : "Tinh phi ship GHN"}
-            </button>
-            <button type="submit" disabled={submitting} style={primaryButtonStyle}>
-              {submitting ? "Dang tao don..." : "Place Order"}
-            </button>
-          </div>
-        </div>
-        </form>
-      </div>
-    </main>
+    </div>
   );
 }
-
-function Field({ label, required, fullWidth = false, children }) {
-  return (
-    <label
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "6px",
-        fontWeight: 600,
-        fontSize: "0.9rem",
-        color: "#344054",
-        gridColumn: fullWidth ? "1 / -1" : "auto",
-      }}
-    >
-      <span>
-        {label}
-        {required ? " *" : ""}
-      </span>
-      {children}
-    </label>
-  );
-}
-
-const primaryButtonStyle = {
-  border: "none",
-  borderRadius: "8px",
-  padding: "10px 14px",
-  backgroundColor: "#0c6cf2",
-  color: "#fff",
-  fontWeight: 600,
-  cursor: "pointer",
-};
-
-const secondaryButtonStyle = {
-  border: "1px solid #d0d5dd",
-  borderRadius: "8px",
-  padding: "10px 14px",
-  backgroundColor: "#fff",
-  color: "#344054",
-  fontWeight: 600,
-  cursor: "pointer",
-};
-
-export default CheckoutPage;

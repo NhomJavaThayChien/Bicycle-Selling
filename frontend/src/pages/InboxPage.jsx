@@ -1,5 +1,27 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { 
+  Layout, 
+  List, 
+  Avatar, 
+  Typography, 
+  Button, 
+  Spin, 
+  Empty, 
+  Card, 
+  Badge,
+  Input,
+  Space
+} from "antd";
+import { 
+  MessageSquare, 
+  Search, 
+  RefreshCw, 
+  User as UserIcon,
+  ChevronRight,
+  Clock
+} from "lucide-react";
+import { motion } from "framer-motion";
 import useAuth from "../hooks/useAuth";
 import {
   getCachedConversations,
@@ -7,17 +29,19 @@ import {
   upsertCachedConversation,
 } from "../services/chatService";
 
-function InboxPage() {
+const { Title, Text } = Typography;
+
+export default function InboxPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
-  const loadInbox = useCallback(async () => {
-    setLoading(true);
-    setError("");
+  const loadInbox = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
 
     try {
       const cachedItems = getCachedConversations();
@@ -31,14 +55,12 @@ function InboxPage() {
 
             const otherSender = [...messages]
               .reverse()
-              .find(
-                (message) => Number(message.senderId) !== Number(user?.userId),
-              );
+              .find((message) => Number(message.senderId) !== Number(user?.userId));
 
             const otherUsername =
               item.otherUsername ||
               otherSender?.senderUsername ||
-              "Unknown user";
+              "Người dùng ẩn danh";
 
             upsertCachedConversation({
               ...item,
@@ -49,31 +71,29 @@ function InboxPage() {
             return {
               ...item,
               otherUsername,
-              lastMessage: lastMessage?.content || "No messages yet",
+              lastMessage: lastMessage?.content || "Chưa có tin nhắn nào",
               lastMessageAt: lastMessage?.sentAt || item.updatedAt,
             };
           } catch {
             return {
               ...item,
-              lastMessage: "Cannot load messages",
+              lastMessage: "Không thể tải tin nhắn",
               lastMessageAt: item.updatedAt,
             };
           }
-        }),
+        })
       );
 
       setConversations(
         enrichedItems.sort(
-          (a, b) =>
-            new Date(b.lastMessageAt).getTime() -
-            new Date(a.lastMessageAt).getTime(),
-        ),
+          (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
+        )
       );
-    } catch {
-      setError("Khong tai duoc inbox.");
-      setConversations([]);
+    } catch (err) {
+      console.error("Lỗi tải inbox:", err);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [user?.userId]);
 
@@ -81,101 +101,133 @@ function InboxPage() {
     loadInbox();
   }, [loadInbox]);
 
-  const hasItems = useMemo(() => conversations.length > 0, [conversations]);
+  const getTimeLabel = (dateStr) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = now - date;
+    
+    if (diff < 24 * 3600 * 1000) {
+      return date.toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' });
+    }
+    return date.toLocaleDateString("vi-VN", { month: 'numeric', day: 'numeric' });
+  };
 
   return (
-    <main style={{ maxWidth: "900px", margin: "24px auto", padding: "0 16px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1 style={{ marginTop: 0 }}>Inbox</h1>
-        <button type="button" onClick={loadInbox} style={secondaryButtonStyle}>
-          Refresh
-        </button>
-      </div>
-
-      {error && (
-        <div style={errorBoxStyle}>
-          {error}
+    <div style={{ maxWidth: 800, margin: "40px auto", padding: "0 16px" }}>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+          <div>
+            <Title level={2} style={{ margin: 0 }}>Hộp thư đến</Title>
+            <Text type="secondary">Quản lý các cuộc trò chuyện của bạn với người mua và người bán.</Text>
+          </div>
+          <Button 
+            icon={<RefreshCw size={16} className={refreshing ? "spin-animation" : ""} />} 
+            onClick={() => loadInbox(true)}
+            loading={refreshing}
+          >
+            Làm mới
+          </Button>
         </div>
-      )}
 
-      {loading ? (
-        <p>Dang tai hoi thoai...</p>
-      ) : !hasItems ? (
-        <section style={emptyStyle}>
-          <p style={{ marginTop: 0 }}>Chua co hoi thoai nao.</p>
-          <p style={{ marginBottom: 0, color: "#667085" }}>
-            Nhan "Contact Seller" trong trang chi tiet xe de tao chat.
-          </p>
-        </section>
-      ) : (
-        <div style={{ display: "grid", gap: "10px" }}>
-          {conversations.map((conversation) => (
-            <button
-              key={conversation.conversationId}
-              type="button"
-              onClick={() => navigate(`/chat/${conversation.conversationId}`)}
-              style={cardButtonStyle}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", gap: "8px" }}>
-                <strong>{conversation.otherUsername || "Unknown user"}</strong>
-                <span style={{ color: "#667085", fontSize: "0.82rem" }}>
-                  {conversation.lastMessageAt
-                    ? new Date(conversation.lastMessageAt).toLocaleString("vi-VN")
-                    : "-"}
-                </span>
-              </div>
-              <p
-                style={{
-                  marginBottom: 0,
-                  marginTop: "6px",
-                  color: "#475467",
-                  textAlign: "left",
-                }}
-              >
-                {conversation.lastMessage || "No messages yet"}
-              </p>
-            </button>
-          ))}
-        </div>
-      )}
-    </main>
+        <Card 
+          bordered={false} 
+          style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.05)", overflow: "hidden" }}
+          bodyStyle={{ padding: 0 }}
+        >
+          <div style={{ padding: "16px 24px", borderBottom: "1px solid #f0f0f0", background: "#fafafa" }}>
+            <Input 
+              prefix={<Search size={16} style={{ color: "#bfbfbf" }} />} 
+              placeholder="Tìm kiếm người dùng hoặc tin nhắn..." 
+              style={{ borderRadius: 8, height: 40 }}
+            />
+          </div>
+
+          {loading ? (
+            <div style={{ padding: 60, textAlign: "center" }}>
+              <Spin tip="Đang tải hộp thư..." />
+            </div>
+          ) : conversations.length === 0 ? (
+            <Empty 
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={
+                <Space direction="vertical">
+                  <Text type="secondary">Chưa có cuộc hội thoại nào.</Text>
+                  <Text type="secondary" style={{ fontSize: 13 }}>
+                    Hãy nhấn "Liên hệ người bán" trong trang chi tiết sản phẩm để bắt đầu.
+                  </Text>
+                </Space>
+              }
+              style={{ padding: 60 }}
+            />
+          ) : (
+            <List
+              itemLayout="horizontal"
+              dataSource={conversations}
+              renderItem={(item) => (
+                <List.Item
+                  onClick={() => navigate(`/chat/${item.conversationId}`)}
+                  style={{
+                    padding: "20px 24px",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    borderBottom: "1px solid #f0f0f0"
+                  }}
+                  className="inbox-item"
+                  actions={[<ChevronRight size={18} style={{ color: "#bfbfbf" }} />]}
+                >
+                  <List.Item.Meta
+                    avatar={
+                      <Badge dot status="processing" offset={[-2, 32]}>
+                        <Avatar 
+                          size={54} 
+                          icon={<UserIcon size={28} />} 
+                          style={{ backgroundColor: "#1890ff" }} 
+                        />
+                      </Badge>
+                    }
+                    title={
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <Text strong style={{ fontSize: 16 }}>{item.otherUsername}</Text>
+                        <Space style={{ color: "#8c8c8c", fontSize: 12 }}>
+                          <Clock size={12} />
+                          {getTimeLabel(item.lastMessageAt)}
+                        </Space>
+                      </div>
+                    }
+                    description={
+                      <Text 
+                        type="secondary" 
+                        ellipsis 
+                        style={{ maxWidth: 500, display: "block", marginTop: 4 }}
+                      >
+                        {item.lastMessage}
+                      </Text>
+                    }
+                  />
+                </List.Item>
+              )}
+            />
+          )}
+        </Card>
+      </motion.div>
+
+      <style>{`
+        .inbox-item:hover {
+          background-color: #f9f9f9;
+        }
+        .spin-animation {
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
   );
 }
-
-const cardButtonStyle = {
-  border: "1px solid #eaecf0",
-  borderRadius: "12px",
-  padding: "12px",
-  backgroundColor: "#fff",
-  cursor: "pointer",
-  textAlign: "left",
-};
-
-const emptyStyle = {
-  border: "1px dashed #d0d5dd",
-  borderRadius: "10px",
-  padding: "24px",
-  textAlign: "center",
-  backgroundColor: "#fcfcfd",
-};
-
-const errorBoxStyle = {
-  marginBottom: "14px",
-  border: "1px solid #fecdca",
-  backgroundColor: "#fef3f2",
-  color: "#b42318",
-  borderRadius: "8px",
-  padding: "10px 12px",
-};
-
-const secondaryButtonStyle = {
-  border: "1px solid #d0d5dd",
-  borderRadius: "8px",
-  padding: "8px 12px",
-  backgroundColor: "#fff",
-  color: "#344054",
-  fontWeight: 600,
-  cursor: "pointer",
-};
-
-export default InboxPage;

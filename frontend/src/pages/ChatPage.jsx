@@ -1,5 +1,28 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { 
+  Layout, 
+  Input, 
+  Button, 
+  Avatar, 
+  List, 
+  Typography, 
+  Space, 
+  Spin, 
+  Empty,
+  Badge,
+  Card
+} from "antd";
+import { 
+  Send, 
+  ArrowLeft, 
+  MoreVertical, 
+  Smile, 
+  Paperclip,
+  User as UserIcon,
+  Search
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import useAuth from "../hooks/useAuth";
 import {
   getCachedConversations,
@@ -9,7 +32,10 @@ import {
   upsertCachedConversation,
 } from "../services/chatService";
 
-function ChatPage() {
+const { Header, Content, Sider, Footer } = Layout;
+const { Title, Text } = Typography;
+
+export default function ChatPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -18,45 +44,54 @@ function ChatPage() {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [error, setError] = useState("");
-
+  const [conversations, setConversations] = useState([]);
+  
   const bottomRef = useRef(null);
+  const inputRef = useRef(null);
 
-  const conversationMeta = useMemo(
-    () => getCachedConversations().find((item) => String(item.conversationId) === String(id)),
-    [id],
+  const activeConversation = useMemo(
+    () => conversations.find((item) => String(item.conversationId) === String(id)),
+    [conversations, id]
   );
 
-  const loadMessages = useCallback(async () => {
-    setError("");
+  const loadConversations = useCallback(() => {
+    setConversations(getCachedConversations());
+  }, []);
 
+  const loadMessages = useCallback(async () => {
+    if (!id) return;
     try {
       const response = await getMessages(id);
       const nextMessages = Array.isArray(response.data) ? response.data : [];
-      setMessages(nextMessages);
+      
+      // Update messages only if changed to avoid unnecessary re-renders
+      setMessages(prev => JSON.stringify(prev) !== JSON.stringify(nextMessages) ? nextMessages : prev);
 
       const lastMessage = nextMessages[nextMessages.length - 1];
-      upsertCachedConversation({
-        conversationId: Number(id),
-        otherUsername: conversationMeta?.otherUsername,
-        updatedAt: lastMessage?.sentAt || new Date().toISOString(),
-      });
+      if (lastMessage) {
+        upsertCachedConversation({
+          conversationId: Number(id),
+          updatedAt: lastMessage.sentAt,
+        });
+        loadConversations();
+      }
 
       await markConversationRead(id);
-    } catch {
-      setError("Khong tai duoc tin nhan.");
+    } catch (err) {
+      console.error("Lỗi tải tin nhắn:", err);
     } finally {
       setLoading(false);
     }
-  }, [conversationMeta?.otherUsername, id]);
+  }, [id, loadConversations]);
 
   useEffect(() => {
-    setLoading(true);
+    loadConversations();
     loadMessages();
-  }, [loadMessages]);
+  }, [id, loadConversations, loadMessages]);
 
+  // Polling for new messages
   useEffect(() => {
-    const interval = setInterval(loadMessages, 2000);
+    const interval = setInterval(loadMessages, 3000);
     return () => clearInterval(interval);
   }, [loadMessages]);
 
@@ -65,149 +100,220 @@ function ChatPage() {
   }, [messages]);
 
   const handleSend = async () => {
-    if (!text.trim()) {
-      return;
-    }
+    if (!text.trim() || sending) return;
 
+    const content = text.trim();
+    setText("");
     setSending(true);
-    setError("");
 
     try {
       await sendMessage({
         conversationId: Number(id),
-        content: text.trim(),
+        content,
       });
-
-      setText("");
       await loadMessages();
-    } catch {
-      setError("Gui tin nhan that bai.");
+      inputRef.current?.focus();
+    } catch (err) {
+      console.error("Gửi tin nhắn thất bại:", err);
+      setText(content); // Restore text on failure
     } finally {
       setSending(false);
     }
   };
 
-  return (
-    <main style={{ maxWidth: "900px", margin: "24px auto", padding: "0 16px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
-        <h1 style={{ marginTop: 0 }}>
-          Chat {conversationMeta?.otherUsername ? `- ${conversationMeta.otherUsername}` : ""}
-        </h1>
-        <button type="button" onClick={() => navigate("/inbox")} style={secondaryButtonStyle}>
-          Back to Inbox
-        </button>
-      </div>
+  const renderMessage = (message) => {
+    const isMine = Number(message.senderId) === Number(user?.userId);
+    const sentTime = new Date(message.sentAt).toLocaleTimeString("vi-VN", { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
 
-      {error && <div style={errorBoxStyle}>{error}</div>}
-
-      <section
+    return (
+      <div
+        key={message.id}
         style={{
-          border: "1px solid #eaecf0",
-          borderRadius: "12px",
-          padding: "12px",
-          minHeight: "360px",
-          maxHeight: "460px",
-          overflowY: "auto",
-          backgroundColor: "#fcfcfd",
-          marginBottom: "10px",
+          display: "flex",
+          justifyContent: isMine ? "flex-end" : "flex-start",
+          marginBottom: 16,
+          padding: "0 16px"
         }}
       >
-        {loading ? (
-          <p>Dang tai tin nhan...</p>
-        ) : messages.length === 0 ? (
-          <p>Chua co tin nhan nao.</p>
-        ) : (
-          messages.map((message) => {
-            const isMine = Number(message.senderId) === Number(user?.userId);
-
-            return (
-              <div
-                key={message.id}
-                style={{
-                  display: "flex",
-                  justifyContent: isMine ? "flex-end" : "flex-start",
-                  marginBottom: "8px",
-                }}
-              >
-                <div
-                  style={{
-                    maxWidth: "72%",
-                    padding: "8px 10px",
-                    borderRadius: "12px",
-                    backgroundColor: isMine ? "#d1e9ff" : "#fff",
-                    border: "1px solid #d0d5dd",
-                  }}
-                >
-                  <div style={{ fontSize: "0.78rem", color: "#667085", marginBottom: "4px" }}>
-                    {message.senderUsername} · {new Date(message.sentAt).toLocaleTimeString("vi-VN")}
-                  </div>
-                  <div>{message.content}</div>
-                </div>
-              </div>
-            );
-          })
+        {!isMine && (
+          <Avatar 
+            icon={<UserIcon size={16} />} 
+            style={{ marginRight: 8, marginTop: 4, backgroundColor: "#87d068" }} 
+          />
         )}
-        <div ref={bottomRef} />
-      </section>
-
-      <div style={{ display: "flex", gap: "8px" }}>
-        <input
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          placeholder="Type message..."
-          style={{
-            flex: 1,
-            border: "1px solid #d0d5dd",
-            borderRadius: "8px",
-            padding: "10px",
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              handleSend();
-            }
-          }}
-        />
-        <button
-          type="button"
-          onClick={handleSend}
-          disabled={sending}
-          style={primaryButtonStyle}
-        >
-          {sending ? "Sending..." : "Send"}
-        </button>
+        <div style={{ maxWidth: "70%" }}>
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            style={{
+              padding: "10px 16px",
+              borderRadius: isMine ? "18px 18px 2px 18px" : "18px 18px 18px 2px",
+              backgroundColor: isMine ? "#1890ff" : "#f0f2f5",
+              color: isMine ? "#fff" : "#000",
+              boxShadow: "0 2px 5px rgba(0,0,0,0.05)"
+            }}
+          >
+            <Text style={{ color: "inherit", fontSize: 15 }}>{message.content}</Text>
+          </motion.div>
+          <div style={{ 
+            fontSize: 11, 
+            color: "#8c8c8c", 
+            marginTop: 4, 
+            textAlign: isMine ? "right" : "left",
+            padding: "0 4px"
+          }}>
+            {sentTime}
+          </div>
+        </div>
       </div>
-    </main>
+    );
+  };
+
+  return (
+    <Layout style={{ height: "calc(100vh - 64px)", background: "#fff" }}>
+      <Sider
+        width={320}
+        theme="light"
+        style={{ borderRight: "1px solid #f0f0f0" }}
+        breakpoint="lg"
+        collapsedWidth="0"
+      >
+        <div style={{ padding: "16px", borderBottom: "1px solid #f0f0f0" }}>
+          <Title level={4} style={{ margin: 0 }}>Tin nhắn</Title>
+          <Input 
+            prefix={<Search size={16} style={{ color: "#bfbfbf" }} />} 
+            placeholder="Tìm kiếm hội thoại..." 
+            style={{ marginTop: 12, borderRadius: 20 }}
+          />
+        </div>
+        <List
+          dataSource={conversations}
+          renderItem={(item) => (
+            <List.Item
+              onClick={() => navigate(`/chat/${item.conversationId}`)}
+              style={{
+                padding: "12px 16px",
+                cursor: "pointer",
+                backgroundColor: String(item.conversationId) === String(id) ? "#e6f7ff" : "transparent",
+                transition: "all 0.3s"
+              }}
+              className="conversation-item"
+            >
+              <List.Item.Meta
+                avatar={<Avatar icon={<UserIcon size={20} />} style={{ backgroundColor: "#1890ff" }} />}
+                title={<Text strong>{item.otherUsername || "Người dùng"}</Text>}
+                description={
+                  <Text type="secondary" ellipsis style={{ maxWidth: 180 }}>
+                    {item.lastMessage || "Nhấn để xem tin nhắn"}
+                  </Text>
+                }
+              />
+              <div style={{ fontSize: 11, color: "#bfbfbf" }}>
+                {new Date(item.updatedAt).toLocaleDateString("vi-VN", { month: 'numeric', day: 'numeric' })}
+              </div>
+            </List.Item>
+          )}
+        />
+      </Sider>
+
+      <Layout>
+        {id ? (
+          <>
+            <Header style={{ 
+              background: "#fff", 
+              padding: "0 24px", 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "space-between",
+              borderBottom: "1px solid #f0f0f0",
+              height: 64
+            }}>
+              <Space>
+                <Button 
+                  type="text" 
+                  icon={<ArrowLeft size={20} />} 
+                  onClick={() => navigate("/inbox")}
+                  style={{ marginRight: 8 }}
+                />
+                <Avatar icon={<UserIcon size={20} />} style={{ backgroundColor: "#87d068" }} />
+                <div>
+                  <Title level={5} style={{ margin: 0 }}>{activeConversation?.otherUsername || "Đang tải..."}</Title>
+                  <Text type="success" style={{ fontSize: 12 }}>● Đang hoạt động</Text>
+                </div>
+              </Space>
+              <Space>
+                <Button type="text" icon={<MoreVertical size={20} />} />
+              </Space>
+            </Header>
+
+            <Content style={{ 
+              background: "#fff", 
+              overflowY: "auto", 
+              display: "flex", 
+              flexDirection: "column",
+              padding: "16px 0"
+            }}>
+              {loading ? (
+                <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
+                  <Spin tip="Đang tải tin nhắn..." />
+                </div>
+              ) : messages.length === 0 ? (
+                <Empty description="Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!" style={{ marginTop: 60 }} />
+              ) : (
+                messages.map(renderMessage)
+              )}
+              <div ref={bottomRef} />
+            </Content>
+
+            <Footer style={{ background: "#fff", padding: "16px 24px", borderTop: "1px solid #f0f0f0" }}>
+              <Space.Compact style={{ width: "100%" }}>
+                <Button icon={<Paperclip size={18} />} type="text" style={{ height: 46 }} />
+                <Input
+                  ref={inputRef}
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder="Nhập tin nhắn..."
+                  onPressEnter={handleSend}
+                  style={{ 
+                    borderRadius: "23px 0 0 23px", 
+                    height: 46, 
+                    borderRight: "none",
+                    paddingLeft: 20
+                  }}
+                  suffix={<Smile size={20} style={{ color: "#bfbfbf", cursor: "pointer" }} />}
+                />
+                <Button 
+                  type="primary" 
+                  onClick={handleSend} 
+                  loading={sending}
+                  style={{ 
+                    height: 46, 
+                    width: 60, 
+                    borderRadius: "0 23px 23px 0",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center"
+                  }}
+                  icon={<Send size={18} />}
+                />
+              </Space.Compact>
+            </Footer>
+          </>
+        ) : (
+          <Content style={{ display: "flex", justifyContent: "center", alignItems: "center", background: "#f9f9f9" }}>
+            <Empty description="Chọn một cuộc trò chuyện để bắt đầu" />
+          </Content>
+        )}
+      </Layout>
+
+      <style>{`
+        .conversation-item:hover {
+          background-color: #f5f5f5 !important;
+        }
+      `}</style>
+    </Layout>
   );
 }
-
-const errorBoxStyle = {
-  marginBottom: "14px",
-  border: "1px solid #fecdca",
-  backgroundColor: "#fef3f2",
-  color: "#b42318",
-  borderRadius: "8px",
-  padding: "10px 12px",
-};
-
-const secondaryButtonStyle = {
-  border: "1px solid #d0d5dd",
-  borderRadius: "8px",
-  padding: "8px 12px",
-  backgroundColor: "#fff",
-  color: "#344054",
-  fontWeight: 600,
-  cursor: "pointer",
-};
-
-const primaryButtonStyle = {
-  border: "none",
-  borderRadius: "8px",
-  padding: "10px 14px",
-  backgroundColor: "#0c6cf2",
-  color: "#fff",
-  fontWeight: 600,
-  cursor: "pointer",
-};
-
-export default ChatPage;

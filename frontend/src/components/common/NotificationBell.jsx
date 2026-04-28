@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Badge, Popover, List, Typography, Button, Spin } from "antd";
-import { BellOutlined, CheckCircleOutlined } from "@ant-design/icons";
+import { Bell, CheckCircle } from "lucide-react";
 // import axios from 'axios';
 
 const { Text } = Typography;
@@ -59,7 +59,8 @@ export default function NotificationBell() {
               actions={
                 !item.read
                   ? [
-                      <CheckCircleOutlined
+                      <CheckCircle
+                        size={16}
                         style={{ color: "#1890ff" }}
                         title="Đánh dấu đã đọc"
                       />,
@@ -91,8 +92,9 @@ export default function NotificationBell() {
       trigger="click"
     >
       <Badge count={unreadCount} style={{ cursor: "pointer" }}>
-        <BellOutlined
-          style={{ fontSize: "20px", cursor: "pointer", color: "#fff" }}
+        <Bell
+          size={20}
+          style={{ cursor: "pointer", color: "#fff" }}
         />
       </Badge>
     </Popover>

@@ -1,4 +1,4 @@
-import { BellOutlined } from "@ant-design/icons";
+import { Bell } from "lucide-react";
 import { Badge, Dropdown, List, Typography } from "antd";
 import { useEffect, useState } from "react";
 import api from "../../services/api";
@@ -95,8 +95,9 @@ export default function NotificationBell() {
           count={data.filter((n) => !n.read).length}
           style={{ cursor: "pointer" }}
         >
-          <BellOutlined
-            style={{ fontSize: 22, color: "#64748b", cursor: "pointer" }}
+          <Bell
+            size={22}
+            style={{ color: "#64748b", cursor: "pointer" }}
           />
         </Badge>
       </div>

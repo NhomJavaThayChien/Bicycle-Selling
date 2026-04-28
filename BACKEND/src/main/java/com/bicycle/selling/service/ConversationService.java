@@ -19,7 +19,7 @@ public class ConversationService {
     // Get id conservation between 2 user its can be buyer and seller or smt else, if not exist then create new one
     public Conversation getOrCreateConversation(Long userId1, Long userId2, Long listingId) {
         return conversationRepository
-                .findByBuyerIdAndSellerId(userId1, userId2)
+                .findConversationBetweenUsers(userId1, userId2)
                 .orElseGet(() -> {
                     Conversation convo = new Conversation();
                     convo.setBuyer(userRepository.findById(userId1).orElseThrow());

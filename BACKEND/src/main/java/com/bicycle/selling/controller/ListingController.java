@@ -5,6 +5,7 @@ import com.bicycle.selling.dto.ListingResponse;
 import com.bicycle.selling.dto.ListingSearchRequest;
 import com.bicycle.selling.service.ImageService;
 import com.bicycle.selling.service.ListingService;
+import com.bicycle.selling.model.BicycleListing;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -151,6 +152,14 @@ public class ListingController {
     
     // ========== ADMIN ENDPOINTS ==========
     
+    @GetMapping("/admin/listings/pending")
+    @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "Danh sách tin chờ duyệt", description = "Admin lấy danh sách listings đang ở trạng thái PENDING_APPROVAL")
+    public ResponseEntity<List<ListingResponse>> getPendingListings() {
+        return ResponseEntity.ok(listingService.getPendingListings());
+    }
+
     @PatchMapping("/admin/listings/{id}/approve")
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "Bearer Authentication")

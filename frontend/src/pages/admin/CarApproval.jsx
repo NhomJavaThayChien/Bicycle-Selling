@@ -1,35 +1,23 @@
-import { Table, Button, Modal, Input, message } from "antd";
+import { Table, Button, Modal, Input, message, Tag } from "antd";
 import { useEffect, useState } from "react";
-import axios from "axios";
-
-// ĐIỀN CỔNG BACKEND CỦA BẠN VÀO ĐÂY
-const API_BASE = "http://localhost:8080";
+import API from "../../services/api";
 
 export default function CarApproval() {
-  const [cars, setCars] = useState([]);
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [reason, setReason] = useState("");
   const [selectedId, setSelectedId] = useState(null);
 
-  // Hàm lấy Token từ localStorage để gửi kèm API
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem("token"); // Sửa lại chữ "token" nếu bạn lưu bằng tên khác
-    return {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    };
-  };
-
   const loadData = async () => {
+    setLoading(true);
     try {
-      const res = await axios.get(
-        `${API_BASE}/admin/cars/pending`,
-        getAuthHeaders(),
-      );
-      setCars(res.data);
+      const res = await API.get("/admin/listings/pending");
+      setListings(res.data);
     } catch (error) {
       console.error("Lỗi khi tải danh sách:", error);
-      message.error("Lỗi tải dữ liệu. Kiểm tra lại Token hoặc Server!");
+      message.error("Lỗi tải dữ liệu tin đăng chờ duyệt!");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -39,13 +27,8 @@ export default function CarApproval() {
 
   const approve = async (id) => {
     try {
-      // Lưu ý: post cần tham số thứ 2 là data, nếu không có data phải để object rỗng {}
-      await axios.post(
-        `${API_BASE}/admin/cars/${id}/approve`,
-        {},
-        getAuthHeaders(),
-      );
-      message.success("Approved!");
+      await API.patch(`/admin/listings/${id}/approve`);
+      message.success("Đã duyệt tin đăng!");
       loadData();
     } catch (error) {
       console.error("Lỗi khi duyệt:", error);
@@ -60,12 +43,10 @@ export default function CarApproval() {
     }
 
     try {
-      await axios.post(
-        `${API_BASE}/admin/cars/${selectedId}/reject`,
-        { reason },
-        getAuthHeaders(),
-      );
-      message.success("Rejected!");
+      await API.patch(`/admin/listings/${selectedId}/reject`, null, {
+        params: { reason },
+      });
+      message.success("Đã từ chối tin đăng!");
       setSelectedId(null);
       setReason("");
       loadData();
@@ -76,21 +57,42 @@ export default function CarApproval() {
   };
 
   const columns = [
-    { title: "Name", dataIndex: "name" },
-    { title: "Price", dataIndex: "price" },
     {
-      title: "Action",
+      title: "Ảnh",
+      dataIndex: "primaryImageUrl",
+      render: (url) => (
+        <img
+          src={url || "https://via.placeholder.com/50"}
+          alt="bike"
+          style={{ width: 50, height: 50, objectFit: "cover" }}
+        />
+      ),
+    },
+    { title: "Tiêu đề", dataIndex: "title" },
+    {
+      title: "Giá",
+      dataIndex: "price",
+      render: (p) => `${p?.toLocaleString()}đ`,
+    },
+    { title: "Người bán", dataIndex: "sellerUsername" },
+    {
+      title: "Trạng thái",
+      dataIndex: "status",
+      render: (status) => <Tag color="orange">{status}</Tag>,
+    },
+    {
+      title: "Thao tác",
       render: (_, record) => (
         <>
           <Button type="primary" onClick={() => approve(record.id)}>
-            Approve
+            Duyệt
           </Button>
           <Button
             danger
             onClick={() => setSelectedId(record.id)}
             style={{ marginLeft: 8 }}
           >
-            Reject
+            Từ chối
           </Button>
         </>
       ),
@@ -98,24 +100,31 @@ export default function CarApproval() {
   ];
 
   return (
-    <>
-      <Table dataSource={cars} columns={columns} rowKey="id" />
+    <div style={{ padding: "20px" }}>
+      <h2>Duyệt tin đăng xe đạp</h2>
+      <Table
+        dataSource={listings}
+        columns={columns}
+        rowKey="id"
+        loading={loading}
+      />
 
       <Modal
-        title="Reject Reason"
+        title="Lý do từ chối"
         open={!!selectedId}
         onOk={reject}
         onCancel={() => {
           setSelectedId(null);
-          setReason(""); // Reset lại ô input khi bấm Hủy
+          setReason("");
         }}
       >
-        <Input
-          placeholder="Enter reason..."
+        <Input.TextArea
+          placeholder="Nhập lý do từ chối..."
           value={reason}
           onChange={(e) => setReason(e.target.value)}
+          rows={4}
         />
       </Modal>
-    </>
+    </div>
   );
 }

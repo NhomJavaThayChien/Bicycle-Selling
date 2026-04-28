@@ -19,7 +19,7 @@ public class AdminStatsService {
         return AdminDashboardResponse.builder()
                 .totalUsers(userRepository.count())
                 .totalOrders(orderRepository.count())
-                .totalRevenue(orderRepository.getTotalRevenue())
+                .totalRevenue(orderRepository.getTotalRevenue() != null ? orderRepository.getTotalRevenue() : 0.0)
                 .totalDisputes(disputeRepository.count())
                 .build();
     }

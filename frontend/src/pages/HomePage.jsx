@@ -9,27 +9,27 @@ function HomePage() {
   const featuredBikes = [
     {
       id: 1,
-      name: "Mountain Bike Pro",
-      price: 450,
-      image: "bike1.jpg",
+      name: "Specialized Stumpjumper Pro",
+      price: 45000000,
+      image: "https://images.unsplash.com/photo-1471286174890-9c112ffca5b4?q=80&w=800&auto=format&fit=crop",
     },
     {
       id: 2,
-      name: "Road Bike Deluxe",
-      price: 650,
-      image: "bike2.jpg",
+      name: "Trek Domane SL 6 Deluxe",
+      price: 65000000,
+      image: "https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&q=80&w=800",
     },
     {
       id: 3,
-      name: "City Bike Classic",
-      price: 320,
-      image: "bike3.jpg",
+      name: "Giant Escape 2 City Classic",
+      price: 12500000,
+      image: "https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?auto=format&fit=crop&q=80&w=800",
     },
     {
       id: 4,
-      name: "Electric Bike Fast",
-      price: 1200,
-      image: "bike4.jpg",
+      name: "VanMoof S3 Electric Fast",
+      price: 85000000,
+      image: "https://images.unsplash.com/photo-1501147830916-ce44a6359892?auto=format&fit=crop&w=800&q=80",
     },
   ];
 
@@ -39,37 +39,37 @@ function HomePage() {
 
   const highlightItems = [
     {
-      title: "Xe nổi bật mỗi ngày",
-      description: "Bộ sưu tập được chọn lọc theo nhu cầu mua nhanh, xem gọn.",
+      title: "Ưu đãi độc quyền",
+      description: "Nhận thông báo về các chương trình giảm giá và mẫu xe mới nhất hàng tuần.",
     },
     {
-      title: "Thông tin rõ ràng",
-      description: "Giá, tình trạng và danh mục được trình bày trực quan hơn.",
+      title: "Cộng đồng đam mê",
+      description: "Tham gia cùng hơn 10.000 người yêu xe đạp trên khắp cả nước.",
     },
     {
-      title: "Kết nối nhanh",
-      description: "Theo dõi kênh mạng xã hội và cập nhật tin tức mới ngay cuối trang.",
+      title: "Dịch vụ tận tâm",
+      description: "Hỗ trợ kỹ thuật và tư vấn chọn xe phù hợp với nhu cầu của bạn 24/7.",
     },
   ];
 
   const newsItems = [
     {
-      category: "Tin mới",
-      title: "Xu hướng xe đạp đô thị đang quay lại mạnh mẽ",
+      category: "Cẩm nang",
+      title: "5 cung đường đạp xe đẹp nhất Việt Nam năm 2024",
       description:
-        "Người dùng ưu tiên khung nhẹ, thiết kế đẹp và dễ bảo trì cho di chuyển hàng ngày.",
+        "Từ đèo Hải Vân đến vùng cao Tây Bắc, những địa điểm không thể bỏ qua cho các 'phượt thủ' hai bánh.",
     },
     {
-      category: "Mẹo mua hàng",
-      title: "Cách xem nhanh một chiếc xe đã qua sử dụng",
+      category: "Kỹ thuật",
+      title: "Bảo dưỡng xích xe tại nhà: Đơn giản mà hiệu quả",
       description:
-        "Kiểm tra phanh, bánh, xích và khung trước khi đặt cọc để giảm rủi ro.",
+        "Chỉ với 15 phút mỗi tuần, bạn có thể kéo dài tuổi thọ của bộ truyền động lên gấp đôi.",
     },
     {
-      category: "Gợi ý chuyên nghiệp",
-      title: "Chụp ảnh sản phẩm rõ nền giúp tăng khả năng bán",
+      category: "Xu hướng",
+      title: "Xe đạp điện trợ lực: Tương lai của giao thông đô thị",
       description:
-        "Ảnh sáng, đủ góc chụp và mô tả ngắn gọn luôn tạo cảm giác tin cậy hơn.",
+        "Tại sao ngày càng nhiều người chọn E-bike để đi làm thay vì xe máy hay ô tô?",
     },
   ];
 
@@ -77,12 +77,12 @@ function HomePage() {
     <div className="home-page">
       <section className="home-hero">
         <div className="home-hero__content">
-          <p className="home-hero__eyebrow">Chợ xe đạp thông minh</p>
-          <h1>Khám phá, mua và bán xe đạp với trải nghiệm bắt mắt hơn.</h1>
+          <p className="home-hero__eyebrow">Chất lượng - Đam mê - Kết nối</p>
+          <h1>Nâng tầm trải nghiệm đạp xe của bạn cùng Bicycle Market.</h1>
           <p className="home-hero__subtitle">
-            Trang chủ mới tập trung vào những mẫu xe nổi bật, cách trình bày
-            rõ ràng hơn và phần thông tin cuối trang giúp giao diện chuyên
-            nghiệp, sinh động hơn ngay từ lần đầu mở.
+            Khám phá bộ sưu tập xe đạp đa dạng từ các thương hiệu hàng đầu thế giới. 
+            Dù bạn là tay đua chuyên nghiệp hay người mới bắt đầu, chúng tôi luôn có 
+            chiếc xe hoàn hảo dành riêng cho bạn.
           </p>
 
           <div className="home-hero__actions">
@@ -90,35 +90,34 @@ function HomePage() {
               onClick={handleExploreClick}
               className="primary-button home-hero__cta"
             >
-              Khám phá xe đạp
+              Bắt đầu hành trình ngay
             </button>
             <a href="#featured-bikes" className="home-hero__secondary-link">
-              Xem xe nổi bật
+              Khám phá bộ sưu tập
             </a>
           </div>
 
           <div className="home-hero__stats">
             <div>
-              <strong>100+</strong>
-              <span>Mẫu xe đa dạng</span>
+              <strong>500+</strong>
+              <span>Xe đạp có sẵn</span>
             </div>
             <div>
-              <strong>24h</strong>
-              <span>Cập nhật liên tục</span>
+              <strong>5k+</strong>
+              <span>Giao dịch thành công</span>
             </div>
             <div>
-              <strong>3 kênh</strong>
-              <span>Facebook, Zalo, liên hệ nhanh</span>
+              <strong>4.9/5</strong>
+              <span>Đánh giá từ khách hàng</span>
             </div>
           </div>
         </div>
 
         <div className="home-hero__panel">
-          <div className="home-hero__panel-badge">Gợi ý nhanh</div>
-          <h2>Một giao diện có chiều sâu hơn cho trang mở đầu</h2>
+          <div className="home-hero__panel-badge">Mới nhất</div>
+          <h2>Tại sao nên chọn chúng tôi?</h2>
           <p>
-            Bố cục này nhấn mạnh điểm nổi bật, giúp khách truy cập dễ quét thông
-            tin và có cảm giác như đang ở một marketplace thực thụ.
+            Chúng tôi mang đến sự minh bạch, tin cậy và giá trị thực chất trong từng giao dịch.
           </p>
           <div className="home-hero__panel-list">
             {highlightItems.map((item) => (
@@ -133,18 +132,17 @@ function HomePage() {
 
       <section className="home-section" id="featured-bikes">
         <div className="section-heading section-heading--center">
-          <p className="eyebrow">Xe đạp nổi bật</p>
-          <h2>Chọn nhanh những mẫu đang được quan tâm</h2>
+          <p className="eyebrow">Sản phẩm tiêu biểu</p>
+          <h2>Những mẫu xe khách hàng yêu thích nhất</h2>
           <p>
-            Dữ liệu hiện có vẫn giữ nguyên, chỉ thay đổi cách hiển thị để nhìn
-            sáng hơn và chuyên nghiệp hơn.
+            Được tuyển chọn kỹ lưỡng dựa trên tiêu chí chất lượng, độ bền và thiết kế vượt trội.
           </p>
         </div>
 
         <div className="featured-bike-grid">
           {featuredBikes.map((bike) => (
             <article key={bike.id} className="featured-bike-card">
-              <BikeCard bike={bike} />
+              <BikeCard bike={bike} linkTo="/bikes" />
             </article>
           ))}
         </div>
@@ -152,11 +150,10 @@ function HomePage() {
 
       <section className="home-section home-insights">
         <div className="section-heading section-heading--center">
-          <p className="eyebrow">Tin tức & mẹo hay</p>
-          <h2>Phần cuối trang có thêm nội dung đọc nhanh</h2>
+          <p className="eyebrow">Kiến thức & Tin tức</p>
+          <h2>Chia sẻ đam mê, lan tỏa lối sống xanh</h2>
           <p>
-            Khu vực này giúp trang chủ trông đầy đặn hơn, đồng thời tạo cảm giác
-            chuyên nghiệp trước khi người dùng bấm sang danh mục xe.
+            Cập nhật những xu hướng mới nhất và mẹo vặt hữu ích cho cộng đồng yêu xe đạp.
           </p>
         </div>
 
@@ -172,10 +169,9 @@ function HomePage() {
 
         <div className="social-strip">
           <div>
-            <p className="social-strip__title">Kết nối nhanh</p>
+            <p className="social-strip__title">Gia nhập cộng đồng Bicycle Market</p>
             <p>
-              Thêm liên kết mạng xã hội ở cuối trang để người xem cảm thấy ứng
-              dụng hoàn chỉnh hơn.
+              Theo dõi chúng tôi trên các nền tảng mạng xã hội để không bỏ lỡ bất kỳ ưu đãi nào.
             </p>
           </div>
           <div className="social-links">
@@ -200,7 +196,7 @@ function HomePage() {
               Zalo
             </a>
             <a
-              href="mailto:hello@bicycle-selling.local"
+              href="mailto:contact@bicyclemarket.vn"
               className="social-link"
               aria-label="Email"
             >

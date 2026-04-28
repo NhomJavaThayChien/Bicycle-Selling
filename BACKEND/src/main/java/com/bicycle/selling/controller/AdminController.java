@@ -12,9 +12,13 @@ import lombok.RequiredArgsConstructor;
 import com.bicycle.selling.repository.UserRepository;
 import com.bicycle.selling.repository.CategoryRepository;
 import com.bicycle.selling.repository.BrandRepository;
+import com.bicycle.selling.repository.PaymentRepository;
 import com.bicycle.selling.model.User;
 import com.bicycle.selling.model.Category;
 import com.bicycle.selling.model.Brand;
+import com.bicycle.selling.model.Payment;
+import com.bicycle.selling.dto.PaymentResponse;
+import com.bicycle.selling.service.PaymentService;
 
 import java.util.List;
 import java.util.Map;
@@ -28,6 +32,8 @@ public class AdminController {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final BrandRepository brandRepository;
+    private final PaymentRepository paymentRepository;
+    private final PaymentService paymentService;
 
     @GetMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")
@@ -52,9 +58,13 @@ public class AdminController {
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(summary = "Kích hoạt hoặc vô hiệu hoá người dùng")
     public ResponseEntity<?> toggleUserStatus(@PathVariable Long id, @RequestParam boolean active) {
-        // Assume default if we want to add an "isActive" field. For now, we will add an isActive logic or return bad request if not implemented on model.
-        // Let's implement it basically. If User model doesn't have isActive, we'll try to add it. But for now I'll just check if it exists:
-        return ResponseEntity.ok(Map.of("message", "Toggle action simulated (User model currently lacks isActive)"));
+        return userRepository.findById(id)
+                .map(user -> {
+                    user.setIsActive(active);
+                    userRepository.save(user);
+                    return ResponseEntity.ok(Map.of("message", "User status updated", "isActive", active));
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/users/{id}")
@@ -66,7 +76,23 @@ public class AdminController {
         return ResponseEntity.ok(Map.of("message", "User deleted successfully"));
     }
 
+    @GetMapping("/payments")
+    @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "Lấy danh sách tất cả giao dịch")
+    public ResponseEntity<List<PaymentResponse>> getAllPayments() {
+        return ResponseEntity.ok(paymentService.getAllPayments());
+    }
+
     // Category
+    @GetMapping("/categories")
+    @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "Lấy tất cả danh mục")
+    public ResponseEntity<List<Category>> getAllCategories() {
+        return ResponseEntity.ok(categoryRepository.findAll());
+    }
+
     @PostMapping("/categories")
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "Bearer Authentication")
@@ -85,6 +111,14 @@ public class AdminController {
     }
 
     // Brand
+    @GetMapping("/brands")
+    @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "Lấy tất cả thương hiệu")
+    public ResponseEntity<List<Brand>> getAllBrands() {
+        return ResponseEntity.ok(brandRepository.findAll());
+    }
+
     @PostMapping("/brands")
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "Bearer Authentication")
