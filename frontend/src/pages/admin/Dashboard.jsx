@@ -181,7 +181,7 @@ export default function Dashboard() {
               transition={{ delay: index * 0.1 }}
             >
               <Card 
-                bordered={false} 
+                variant="borderless" 
                 style={{ 
                   borderRadius: 16, 
                   background: card.bg,
@@ -223,7 +223,7 @@ export default function Dashboard() {
                 <span>Xu hướng doanh thu</span>
               </Space>
             }
-            bordered={false}
+            variant="borderless"
             style={{ borderRadius: 16, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}
           >
             <div style={{ height: 300 }}>
@@ -272,7 +272,7 @@ export default function Dashboard() {
                 <span>Tình trạng tranh chấp</span>
               </Space>
             }
-            bordered={false}
+            variant="borderless"
             style={{ borderRadius: 16, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}
           >
             <div style={{ height: 300, display: "flex", justifyContent: "center" }}>
@@ -312,7 +312,7 @@ export default function Dashboard() {
               </Space>
             }
             extra={<Link to="/admin/approvals">Xem tất cả</Link>}
-            bordered={false}
+            variant="borderless"
             style={{ borderRadius: 16, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}
           >
             <Table 
@@ -332,7 +332,7 @@ export default function Dashboard() {
                 <span>Số lượng đơn hàng hàng ngày</span>
               </Space>
             }
-            bordered={false}
+            variant="borderless"
             style={{ borderRadius: 16, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}
           >
             <div style={{ height: 250 }}>

@@ -70,7 +70,15 @@ export default function CheckoutPage() {
           getProvinces(),
         ]);
         setListing(listingRes.data);
-        setProvinces(Array.isArray(provinceRes.data) ? provinceRes.data : []);
+        const provinceItems = Array.isArray(provinceRes.data)
+          ? provinceRes.data
+              .map((item) => ({
+                provinceId: item?.provinceId ?? item?.ProvinceID,
+                provinceName: item?.provinceName ?? item?.ProvinceName,
+              }))
+              .filter((item) => item?.provinceId != null)
+          : [];
+        setProvinces(provinceItems);
       } catch (err) {
         message.error("Không thể tải thông tin thanh toán.");
         console.error(err);
@@ -92,7 +100,16 @@ export default function CheckoutPage() {
     setLoadingDistricts(true);
     try {
       const res = await getDistricts(value);
-      setDistricts(Array.isArray(res.data) ? res.data : []);
+      const districtItems = Array.isArray(res.data)
+        ? res.data
+            .map((item) => ({
+              districtId: item?.districtId ?? item?.DistrictID,
+              districtName: item?.districtName ?? item?.DistrictName,
+              provinceId: item?.provinceId ?? item?.ProvinceID,
+            }))
+            .filter((item) => item?.districtId != null)
+        : [];
+      setDistricts(districtItems);
     } catch (err) {
       message.error("Lỗi khi tải danh sách quận/huyện.");
     } finally {
@@ -110,7 +127,16 @@ export default function CheckoutPage() {
     setLoadingWards(true);
     try {
       const res = await getWards(value);
-      setWards(Array.isArray(res.data) ? res.data : []);
+      const wardItems = Array.isArray(res.data)
+        ? res.data
+            .map((item) => ({
+              wardCode: item?.wardCode ?? item?.WardCode,
+              wardName: item?.wardName ?? item?.WardName,
+              districtId: item?.districtId ?? item?.DistrictID,
+            }))
+            .filter((item) => item?.wardCode != null)
+        : [];
+      setWards(wardItems);
     } catch (err) {
       message.error("Lỗi khi tải danh sách phường/xã.");
     } finally {
@@ -205,7 +231,7 @@ export default function CheckoutPage() {
               <Col xs={24} lg={15}>
                 <Card 
                   title={<Space><MapPin size={18} /><span>Thông tin giao hàng</span></Space>}
-                  bordered={false}
+                  variant="borderless"
                   style={{ borderRadius: 16, boxShadow: "0 4px 12px rgba(0,0,0,0.05)", marginBottom: 24 }}
                 >
                   <Row gutter={16}>
@@ -267,7 +293,7 @@ export default function CheckoutPage() {
 
                 <Card 
                   title={<Space><CreditCard size={18} /><span>Phương thức thanh toán</span></Space>}
-                  bordered={false}
+                  variant="borderless"
                   style={{ borderRadius: 16, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}
                 >
                   <Form.Item name="paymentMethod" noStyle>
@@ -310,7 +336,7 @@ export default function CheckoutPage() {
 
               <Col xs={24} lg={9}>
                 <Card 
-                  bordered={false} 
+                  variant="borderless" 
                   style={{ borderRadius: 20, boxShadow: "0 8px 24px rgba(0,0,0,0.08)", position: "sticky", top: 24 }}
                 >
                   <Title level={4}>Tóm tắt đơn hàng</Title>

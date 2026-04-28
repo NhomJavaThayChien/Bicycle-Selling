@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { getListingById } from "../services/bikeService";
-import { getBuyerOrders } from "../services/orderService";
+import { completeOrder, getBuyerOrders } from "../services/orderService";
 import { createReview } from "../services/reviewService";
 import { formatPrice } from "../utils/formatPrice";
 
@@ -27,6 +27,7 @@ function OrderHistoryPage() {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [reviewMessage, setReviewMessage] = useState("");
   const [reviewedOrderIds, setReviewedOrderIds] = useState([]);
+  const [completingOrderId, setCompletingOrderId] = useState(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -101,6 +102,31 @@ function OrderHistoryPage() {
       setReviewMessage(serverError || "Khong the gui danh gia luc nay.");
     } finally {
       setSubmittingReview(false);
+    }
+  };
+
+  const handleCompleteOrder = async (orderId) => {
+    if (!orderId) {
+      return;
+    }
+
+    setCompletingOrderId(orderId);
+    setError("");
+    setReviewMessage("");
+
+    try {
+      await completeOrder(orderId);
+      setOrders((prev) =>
+        prev.map((order) =>
+          order.id === orderId ? { ...order, status: "COMPLETED" } : order,
+        ),
+      );
+      setReviewMessage("Da cap nhat trang thai da nhan hang.");
+    } catch (err) {
+      const serverError = err?.response?.data?.message || err?.response?.data?.error;
+      setError(serverError || "Khong the cap nhat trang thai luc nay.");
+    } finally {
+      setCompletingOrderId(null);
     }
   };
 
@@ -220,7 +246,38 @@ function OrderHistoryPage() {
                 <p style={{ margin: "4px 0" }}>
                   Agreed Price: {formatPrice(Number(order.agreedPrice || 0))}
                 </p>
-                <div style={{ marginTop: "10px" }}>
+                <div style={{ marginTop: "10px", display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    disabled={
+                      !["CONFIRMED", "DEPOSIT_PAID", "FULL_PAID", "SHIPPING"].includes(order.status) || 
+                      completingOrderId === order.id
+                    }
+                    onClick={() => handleCompleteOrder(order.id)}
+                    style={{
+                      border: "1px solid #d0d5dd",
+                      borderRadius: "8px",
+                      padding: "8px 10px",
+                      backgroundColor:
+                        !["CONFIRMED", "DEPOSIT_PAID", "FULL_PAID", "SHIPPING"].includes(order.status) 
+                          ? "#f2f4f7" 
+                          : "#0c6cf2",
+                      color: !["CONFIRMED", "DEPOSIT_PAID", "FULL_PAID", "SHIPPING"].includes(order.status) 
+                        ? "#344054" 
+                        : "#fff",
+                      cursor: !["CONFIRMED", "DEPOSIT_PAID", "FULL_PAID", "SHIPPING"].includes(order.status) 
+                        ? "not-allowed" 
+                        : "pointer",
+                    }}
+                  >
+                    {order.status === "COMPLETED"
+                      ? "Da nhan hang"
+                      : completingOrderId === order.id
+                        ? "Dang cap nhat..."
+                        : order.status === "PENDING"
+                          ? "Cho xac nhan"
+                          : "Da nhan hang"}
+                  </button>
                   <button
                     type="button"
                     disabled={order.status !== "COMPLETED" || reviewedOrderIds.includes(order.id)}

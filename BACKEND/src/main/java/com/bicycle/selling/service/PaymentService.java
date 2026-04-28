@@ -7,9 +7,11 @@ import com.bicycle.selling.model.Payment;
 import com.bicycle.selling.model.enums.OrderStatus;
 import com.bicycle.selling.model.enums.PaymentMethod;
 import com.bicycle.selling.model.enums.PaymentStatus;
+import com.bicycle.selling.model.enums.OrderStatus;
 import com.bicycle.selling.repository.OrderRepository;
 import com.bicycle.selling.repository.PaymentRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 
@@ -85,6 +87,32 @@ public class PaymentService {
         } catch (Exception e) {
             throw new RuntimeException("Error retrieving all payments: " + e.getMessage());
         }
+    }
+
+    @Transactional
+    public PaymentResponse markPaymentSuccess(Long paymentId) {
+        Payment payment = paymentRepository.findByIdForUpdate(paymentId)
+                .orElseThrow(() -> new RuntimeException("Payment not found"));
+
+        if (payment.getStatus() == PaymentStatus.SUCCESS) {
+            return mapToResponse(payment);
+        }
+
+        payment.setStatus(PaymentStatus.SUCCESS);
+        payment.setPaidAt(java.time.LocalDateTime.now());
+
+        Order order = payment.getOrder();
+        if (order != null) {
+            if (payment.isDeposit()) {
+                order.setStatus(OrderStatus.DEPOSIT_PAID);
+            } else {
+                order.setStatus(OrderStatus.FULL_PAID);
+            }
+            orderRepository.save(order);
+        }
+
+        Payment saved = paymentRepository.save(payment);
+        return mapToResponse(saved);
     }
 
     private PaymentResponse mapToResponse(Payment payment) {

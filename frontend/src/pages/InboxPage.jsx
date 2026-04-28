@@ -135,7 +135,7 @@ export default function InboxPage() {
         </div>
 
         <Card 
-          bordered={false} 
+          variant="borderless" 
           style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.05)", overflow: "hidden" }}
           bodyStyle={{ padding: 0 }}
         >

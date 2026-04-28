@@ -45,7 +45,7 @@ const StatisticsReport = () => {
         <Col xs={24} lg={12}>
           <Card
             title="Số xe đăng theo tuần"
-            bordered={false}
+            variant="borderless"
             style={{
               boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
               borderRadius: "10px",
@@ -99,7 +99,7 @@ const StatisticsReport = () => {
         <Col xs={24} lg={12}>
           <Card
             title="Doanh thu theo tháng (Triệu VNĐ)"
-            bordered={false}
+            variant="borderless"
             style={{
               boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
               borderRadius: "10px",

@@ -84,6 +84,14 @@ public class AdminController {
         return ResponseEntity.ok(paymentService.getAllPayments());
     }
 
+    @PostMapping("/payments/{paymentId}/success")
+    @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "Admin xác nhận thanh toán thành công")
+    public ResponseEntity<PaymentResponse> markPaymentSuccess(@PathVariable Long paymentId) {
+        return ResponseEntity.ok(paymentService.markPaymentSuccess(paymentId));
+    }
+
     // Category
     @GetMapping("/categories")
     @PreAuthorize("hasRole('ADMIN')")

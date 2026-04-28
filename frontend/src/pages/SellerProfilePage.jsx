@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getUserProfile } from "../services/userService";
 import { getListings } from "../services/bikeService";
+import { getReviewsBySeller } from "../services/reviewService";
 import { formatPrice } from "../utils/formatPrice";
 
 function SellerProfilePage() {
@@ -10,6 +11,7 @@ function SellerProfilePage() {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [reviews, setReviews] = useState([]);
 
   useEffect(() => {
     const loadSellerProfile = async () => {
@@ -17,9 +19,10 @@ function SellerProfilePage() {
       setError("");
 
       try {
-        const [profileRes, listingsRes] = await Promise.all([
+        const [profileRes, listingsRes, reviewsRes] = await Promise.all([
           getUserProfile(userId),
           getListings({ page: 0, size: 200 }),
+          getReviewsBySeller(userId, { page: 0, size: 20 }),
         ]);
 
         const allListings = Array.isArray(listingsRes.data?.content)
@@ -30,10 +33,12 @@ function SellerProfilePage() {
         setListings(
           allListings.filter((item) => String(item.sellerId) === String(userId)),
         );
+        setReviews(Array.isArray(reviewsRes.data) ? reviewsRes.data : []);
       } catch {
         setError("Khong tai duoc thong tin seller.");
         setProfile(null);
         setListings([]);
+        setReviews([]);
       } finally {
         setLoading(false);
       }
@@ -97,6 +102,42 @@ function SellerProfilePage() {
                   <p style={{ margin: "6px 0", color: "#64748b" }}>{item.status}</p>
                   <Link to={`/bikes/${item.id}`}>View detail</Link>
                 </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section style={{ marginTop: "32px" }}>
+        <h2 style={{ margin: 0 }}>Danh gia tu nguoi mua</h2>
+        {reviews.length === 0 ? (
+          <div
+            style={{
+              marginTop: "12px",
+              padding: "24px",
+              borderRadius: "16px",
+              background: "#f8fafc",
+              color: "#667085",
+              textAlign: "center",
+            }}
+          >
+            Chua co danh gia nao.
+          </div>
+        ) : (
+          <div style={{ display: "grid", gap: "16px", marginTop: "16px" }}>
+            {reviews.map((review) => (
+              <article key={review.id} style={reviewCardStyle}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
+                  <strong style={{ fontSize: "1rem" }}>
+                    {review?.reviewer?.username || "Nguoi dung an danh"}
+                  </strong>
+                  <span style={{ color: "#f59e0b", fontWeight: 800 }}>
+                    ⭐ {review.rating}/5
+                  </span>
+                </div>
+                <p style={{ marginTop: "10px", color: "#475467", lineHeight: 1.6 }}>
+                  {review.comment || "Nguoi dung khong de lai nhan xet."}
+                </p>
               </article>
             ))}
           </div>
@@ -167,6 +208,14 @@ const errorBoxStyle = {
   color: "#b42318",
   borderRadius: "10px",
   padding: "10px 12px",
+};
+
+const reviewCardStyle = {
+  border: "1px solid #e2e8f0",
+  borderRadius: "16px",
+  backgroundColor: "#fff",
+  padding: "18px",
+  boxShadow: "0 12px 30px rgba(15, 23, 42, 0.06)",
 };
 
 export default SellerProfilePage;

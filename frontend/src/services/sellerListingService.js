@@ -10,3 +10,13 @@ export const updateListing = (id, payload) =>
 export const deleteListing = (id) => api.delete(`/seller/listings/${id}`);
 
 export const getListingDetail = (id) => api.get(`/listings/${id}`);
+
+export const uploadListingImages = (listingId, files) => {
+  const formData = new FormData();
+  files.forEach((file) => {
+    formData.append("files", file);
+  });
+  return api.post(`/seller/listings/${listingId}/images`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};

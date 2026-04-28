@@ -1,123 +1,158 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
+  Form,
+  Input,
+  InputNumber,
+  Select,
+  Button,
+  Card,
+  Typography,
+  Row,
+  Col,
+  message,
+  Divider,
+} from "antd";
+import {
+  PlusCircle,
+  Image as ImageIcon,
+  Info,
+  Settings,
+  DollarSign,
+  MapPin,
+  X,
+  Upload as UploadIcon,
+} from "lucide-react";
+import {
   createListing,
   getListingDetail,
+  uploadListingImages,
   updateListing,
 } from "../services/sellerListingService";
+import "./CreateListingPage.css";
 
-const CONDITION_OPTIONS = ["NEW", "LIKE_NEW", "GOOD", "FAIR", "POOR"];
+const { Title, Paragraph, Text } = Typography;
+const { Option } = Select;
+const { TextArea } = Input;
 
-const defaultFormState = {
-  title: "",
-  description: "",
-  price: "",
-  brandId: "",
-  categoryId: "",
-  condition: "GOOD",
-  frameSize: "",
-  gearSystem: "",
-  location: "",
-};
+const CONDITION_OPTIONS = [
+  { label: "New (Mới 100%)", value: "NEW" },
+  { label: "Like New (Như mới)", value: "LIKE_NEW" },
+  { label: "Good (Tốt)", value: "GOOD" },
+  { label: "Fair (Khá)", value: "FAIR" },
+  { label: "Poor (Cũ)", value: "POOR" },
+];
 
 function CreateListingPage() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [form] = Form.useForm();
   const isEditMode = useMemo(() => Boolean(id), [id]);
 
-  const [form, setForm] = useState(defaultFormState);
   const [loading, setLoading] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
-  const [error, setError] = useState("");
+  const [images, setImages] = useState([]);
+  const [previewUrls, setPreviewUrls] = useState([]);
 
   useEffect(() => {
-    if (!isEditMode) {
-      return;
-    }
+    if (!isEditMode) return;
 
     const loadListingDetail = async () => {
       setLoadingDetail(true);
-      setError("");
-
       try {
         const response = await getListingDetail(id);
         const listing = response.data || {};
-
-        setForm({
-          title: listing.title || "",
-          description: listing.description || "",
-          price: listing.price != null ? String(listing.price) : "",
-          brandId: listing.brandId != null ? String(listing.brandId) : "",
-          categoryId:
-            listing.categoryId != null ? String(listing.categoryId) : "",
-          condition: listing.condition || "GOOD",
-          frameSize: listing.frameSize || "",
-          gearSystem: listing.gearSystem || "",
-          location: listing.location || "",
+        form.setFieldsValue({
+          ...listing,
+          price: listing.price,
+          brandId: listing.brandId,
+          categoryId: listing.categoryId,
+          yearOfManufacture: listing.yearOfManufacture,
+          weight: listing.weight,
         });
-      } catch {
-        setError("Khong tai duoc thong tin bai dang de chinh sua.");
+      } catch (err) {
+        message.error("Không thể tải thông tin bài đăng.");
       } finally {
         setLoadingDetail(false);
       }
     };
 
     loadListingDetail();
-  }, [id, isEditMode]);
+  }, [id, isEditMode, form]);
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleFiles = (files) => {
+    const selected = Array.from(files);
+    if (selected.length + images.length > 10) {
+      message.warning("Chỉ được chọn tối đa 10 ảnh.");
+      return;
+    }
+
+    const newImages = [...images, ...selected];
+    setImages(newImages);
+
+    // Create preview URLs
+    const newUrls = selected.map((file) => URL.createObjectURL(file));
+    setPreviewUrls([...previewUrls, ...newUrls]);
   };
 
-  const validate = () => {
-    if (!form.title.trim()) return "Title khong duoc de trong.";
-    if (!form.description.trim()) return "Description khong duoc de trong.";
-    if (!form.price || Number(form.price) <= 0) return "Price phai lon hon 0.";
-    if (!form.brandId || Number(form.brandId) <= 0)
-      return "Brand ID phai la so duong.";
-    if (!form.categoryId || Number(form.categoryId) <= 0)
-      return "Category ID phai la so duong.";
-    if (!form.location.trim()) return "Location khong duoc de trong.";
-
-    return "";
+  const handleImagesChange = (event) => {
+    handleFiles(event.target.files || []);
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const onDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
 
-    const validationError = validate();
-    if (validationError) {
-      setError(validationError);
+  const onDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const onDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    handleFiles(e.dataTransfer.files || []);
+  };
+
+  const removeImage = (index) => {
+    const newImages = [...images];
+    newImages.splice(index, 1);
+    setImages(newImages);
+
+    const newUrls = [...previewUrls];
+    URL.revokeObjectURL(newUrls[index]);
+    newUrls.splice(index, 1);
+    setPreviewUrls(newUrls);
+  };
+
+  const onFinish = async (values) => {
+    if (!images.length && !isEditMode) {
+      message.error("Vui lòng chọn ít nhất 1 ảnh.");
       return;
     }
 
     setLoading(true);
-    setError("");
-
-    const payload = {
-      title: form.title.trim(),
-      description: form.description.trim(),
-      price: Number(form.price),
-      brandId: Number(form.brandId),
-      categoryId: Number(form.categoryId),
-      condition: form.condition,
-      frameSize: form.frameSize.trim() || null,
-      gearSystem: form.gearSystem.trim() || null,
-      location: form.location.trim(),
-    };
-
     try {
+      let listingId = id;
       if (isEditMode) {
-        await updateListing(id, payload);
+        await updateListing(id, values);
+        message.success("Đã cập nhật bài đăng thành công!");
       } else {
-        await createListing(payload);
+        const res = await createListing(values);
+        listingId = res.data?.id;
+        message.success("Đã tạo bài đăng mới thành công!");
+      }
+
+      if (images.length && listingId) {
+        await uploadListingImages(listingId, images);
       }
 
       navigate("/seller/dashboard");
     } catch (err) {
       const serverMessage = err?.response?.data?.message;
-      setError(serverMessage || "Khong the luu bai dang. Vui long thu lai.");
+      message.error(serverMessage || "Không thể lưu bài đăng. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
@@ -125,204 +160,264 @@ function CreateListingPage() {
 
   if (loadingDetail) {
     return (
-      <main style={{ maxWidth: "760px", margin: "24px auto", padding: "0 16px" }}>
-        <p>Dang tai du lieu bai dang...</p>
-      </main>
+      <div className="create-listing-container" style={{ textAlign: "center", paddingTop: "100px" }}>
+        <Title level={4}>Đang tải dữ liệu bài đăng...</Title>
+      </div>
     );
   }
 
   return (
-    <main style={{ maxWidth: "760px", margin: "24px auto", padding: "0 16px" }}>
-      <h1 style={{ marginBottom: "8px" }}>
-        {isEditMode ? "Edit Listing" : "Create New Listing"}
-      </h1>
-      <p style={{ marginTop: 0, marginBottom: "20px", color: "#475467" }}>
-        Dien thong tin bai dang, sau do gui len backend seller API.
-      </p>
+    <div className="create-listing-container">
+      <div style={{ marginBottom: "32px" }}>
+        <Title level={2} style={{ margin: 0, color: "#0f172a" }}>
+          {isEditMode ? "Chỉnh sửa bài đăng" : "Tạo bài đăng mới"}
+        </Title>
+        <Paragraph type="secondary" style={{ fontSize: "1.05rem" }}>
+          Chia sẻ thông tin chi tiết về chiếc xe của bạn để tiếp cận hàng ngàn người mua tiềm năng.
+        </Paragraph>
+      </div>
 
-      {error && (
-        <div
-          style={{
-            marginBottom: "14px",
-            border: "1px solid #fecdca",
-            backgroundColor: "#fef3f2",
-            color: "#b42318",
-            borderRadius: "8px",
-            padding: "10px 12px",
-          }}
+      <Card className="create-listing-card">
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={onFinish}
+          className="create-listing-form"
+          initialValues={{ condition: "GOOD" }}
         >
-          {error}
-        </div>
-      )}
+          {/* SECTION 1: BASIC INFO */}
+          <div className="form-section">
+            <div className="form-section-title">
+              <Info size={20} color="#0c6cf2" />
+              <span>Thông tin cơ bản</span>
+            </div>
+            <Row gutter={24}>
+              <Col xs={24} lg={16}>
+                <Form.Item
+                  name="title"
+                  label="Tiêu đề bài đăng"
+                  rules={[{ required: true, message: "Vui lòng nhập tiêu đề" }]}
+                >
+                  <Input placeholder="Ví dụ: Xe đạp địa hình Trek Marlin 7 đời 2023" size="large" />
+                </Form.Item>
+              </Col>
+              <Col xs={24} lg={8}>
+                <Form.Item
+                  name="condition"
+                  label="Tình trạng xe"
+                  rules={[{ required: true }]}
+                >
+                  <Select size="large">
+                    {CONDITION_OPTIONS.map((opt) => (
+                      <Option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={24}>
+              <Col xs={24} md={12} lg={8}>
+                <Form.Item
+                  name="brandId"
+                  label="Mã thương hiệu"
+                  rules={[{ required: true, message: "Vui lòng nhập mã hãng" }]}
+                >
+                  <InputNumber style={{ width: "100%" }} size="large" placeholder="Ví dụ: 1" />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={12} lg={8}>
+                <Form.Item
+                  name="categoryId"
+                  label="Mã danh mục"
+                  rules={[{ required: true, message: "Vui lòng nhập mã loại xe" }]}
+                >
+                  <InputNumber style={{ width: "100%" }} size="large" placeholder="Ví dụ: 3" />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={24} lg={8}>
+                <Form.Item
+                  name="location"
+                  label="Khu vực bán"
+                  rules={[{ required: true, message: "Vui lòng nhập địa chỉ" }]}
+                >
+                  <Input prefix={<MapPin size={16} />} size="large" placeholder="Ví dụ: Quận 1, TP.HCM" />
+                </Form.Item>
+              </Col>
+            </Row>
+          </div>
 
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: "14px",
-          border: "1px solid #eaecf0",
-          borderRadius: "12px",
-          padding: "16px",
-          backgroundColor: "#fcfcfd",
-        }}
-      >
-        <Field label="Title" required>
-          <input name="title" value={form.title} onChange={handleChange} />
-        </Field>
+          <Divider style={{ margin: "32px 0" }} />
 
-        <Field label="Price" required>
-          <input
-            type="number"
-            min="1"
-            name="price"
-            value={form.price}
-            onChange={handleChange}
-          />
-        </Field>
+          {/* SECTION 2: TECHNICAL SPECS */}
+          <div className="form-section">
+            <div className="form-section-title">
+              <Settings size={20} color="#0c6cf2" />
+              <span>Thông số kỹ thuật</span>
+            </div>
+            <Row gutter={16}>
+              <Col xs={12} md={8}>
+                <Form.Item name="frameSize" label="Size khung">
+                  <Input placeholder="VD: M, 52cm" />
+                </Form.Item>
+              </Col>
+              <Col xs={12} md={8}>
+                <Form.Item name="frameMaterial" label="Chất liệu khung">
+                  <Input placeholder="VD: Nhôm, Carbon" />
+                </Form.Item>
+              </Col>
+              <Col xs={12} md={8}>
+                <Form.Item name="wheelSize" label="Kích thước bánh">
+                  <Input placeholder="VD: 700c, 29 inch" />
+                </Form.Item>
+              </Col>
+              <Col xs={12} md={8}>
+                <Form.Item name="gearSystem" label="Hệ thống truyền động">
+                  <Input placeholder="VD: Shimano 105" />
+                </Form.Item>
+              </Col>
+              <Col xs={12} md={8}>
+                <Form.Item name="brakeType" label="Loại phanh">
+                  <Input placeholder="VD: Phanh đĩa cơ" />
+                </Form.Item>
+              </Col>
+              <Col xs={12} md={8}>
+                <Form.Item name="yearOfManufacture" label="Năm sản xuất">
+                  <InputNumber style={{ width: "100%" }} min={1900} max={new Date().getFullYear()} />
+                </Form.Item>
+              </Col>
+              <Col xs={12} md={8}>
+                <Form.Item name="color" label="Màu sắc">
+                  <Input placeholder="VD: Đen nhám" />
+                </Form.Item>
+              </Col>
+              <Col xs={12} md={8}>
+                <Form.Item name="weight" label="Trọng lượng (kg)">
+                  <InputNumber style={{ width: "100%" }} step={0.1} min={0} />
+                </Form.Item>
+              </Col>
+            </Row>
+          </div>
 
-        <Field label="Brand ID" required>
-          <input
-            type="number"
-            min="1"
-            name="brandId"
-            value={form.brandId}
-            onChange={handleChange}
-          />
-        </Field>
+          <Divider style={{ margin: "32px 0" }} />
 
-        <Field label="Category ID" required>
-          <input
-            type="number"
-            min="1"
-            name="categoryId"
-            value={form.categoryId}
-            onChange={handleChange}
-          />
-        </Field>
+          {/* SECTION 3: PRICING & DESCRIPTION */}
+          <div className="form-section">
+            <div className="form-section-title">
+              <DollarSign size={20} color="#0c6cf2" />
+              <span>Giá cả & Mô tả</span>
+            </div>
+            <Row gutter={24}>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  name="price"
+                  label="Giá bán (VNĐ)"
+                  rules={[{ required: true, message: "Vui lòng nhập giá" }]}
+                >
+                  <InputNumber
+                    size="large"
+                    style={{ width: "100%" }}
+                    formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                    parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
+                    placeholder="Nhập giá bán mong muốn"
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={12}>
+                <Form.Item name="reasonForSelling" label="Lý do bán">
+                  <Input placeholder="Ví dụ: Lên đời xe mới" size="large" />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Form.Item name="additionalAccessories" label="Phụ kiện đi kèm">
+              <Input placeholder="Ví dụ: Đèn hậu, túi sườn, gọng nước" size="large" />
+            </Form.Item>
+            <Form.Item
+              name="description"
+              label="Mô tả chi tiết"
+              rules={[{ required: true, message: "Vui lòng nhập mô tả" }]}
+            >
+              <TextArea
+                rows={6}
+                placeholder="Mô tả chi tiết tình trạng xe, các nâng cấp (nếu có) hoặc các vết trầy xước..."
+                style={{ borderRadius: "12px" }}
+              />
+            </Form.Item>
+          </div>
 
-        <Field label="Condition" required>
-          <select name="condition" value={form.condition} onChange={handleChange}>
-            {CONDITION_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </Field>
+          <Divider style={{ margin: "32px 0" }} />
 
-        <Field label="Frame Size">
-          <input
-            name="frameSize"
-            value={form.frameSize}
-            onChange={handleChange}
-            placeholder="VD: M"
-          />
-        </Field>
+          {/* SECTION 4: IMAGES */}
+          <div className="form-section">
+            <div className="form-section-title">
+              <ImageIcon size={20} color="#0c6cf2" />
+              <span>Hình ảnh sản phẩm</span>
+            </div>
+            <label 
+              className={`upload-area ${isDragging ? "dragging" : ""}`}
+              onDragOver={onDragOver}
+              onDragLeave={onDragLeave}
+              onDrop={onDrop}
+            >
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleImagesChange}
+                style={{ display: "none" }}
+              />
+              <UploadIcon size={40} color={isDragging ? "#0c6cf2" : "#64748b"} />
+              <div style={{ textAlign: "center" }}>
+                <Text strong style={{ fontSize: "1.1rem", display: "block" }}>
+                  {isDragging ? "Thả ảnh vào đây ngay!" : "Nhấn để tải lên hoặc kéo thả ảnh vào đây"}
+                </Text>
+                <Text type="secondary" style={{ display: "block", marginTop: "4px" }}>
+                  Tải lên tối đa 10 ảnh (PNG, JPG). Hình ảnh rõ nét giúp bán nhanh hơn.
+                </Text>
+              </div>
+            </label>
 
-        <Field label="Gear System">
-          <input
-            name="gearSystem"
-            value={form.gearSystem}
-            onChange={handleChange}
-            placeholder="VD: Shimano 11-speed"
-          />
-        </Field>
+            {previewUrls.length > 0 && (
+              <div className="image-preview-grid">
+                {previewUrls.map((url, index) => (
+                  <div key={index} className="image-preview-item">
+                    <img src={url} alt={`preview-${index}`} />
+                    <button type="button" className="remove-btn" onClick={() => removeImage(index)}>
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
-        <Field label="Location" required>
-          <input
-            name="location"
-            value={form.location}
-            onChange={handleChange}
-            placeholder="VD: Ho Chi Minh"
-          />
-        </Field>
-
-        <Field label="Description" required fullWidth>
-          <textarea
-            rows={5}
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            placeholder="Mo ta chi tiet tinh trang xe..."
-          />
-        </Field>
-
-        <div
-          style={{
-            gridColumn: "1 / -1",
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: "10px",
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => navigate("/seller/dashboard")}
-            style={secondaryBtnStyle}
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
+          <div
             style={{
-              ...primaryBtnStyle,
-              opacity: loading ? 0.7 : 1,
-              cursor: loading ? "not-allowed" : "pointer",
+              marginTop: "48px",
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: "16px",
             }}
           >
-            {loading
-              ? isEditMode
-                ? "Saving..."
-                : "Creating..."
-              : isEditMode
-                ? "Save Changes"
-                : "Create Listing"}
-          </button>
-        </div>
-      </form>
-    </main>
+            <Button size="large" onClick={() => navigate("/seller/dashboard")} style={{ borderRadius: "12px" }}>
+              Hủy bỏ
+            </Button>
+            <Button
+              type="primary"
+              size="large"
+              htmlType="submit"
+              loading={loading}
+              icon={<PlusCircle size={18} />}
+              style={{ minWidth: "180px" }}
+            >
+              {isEditMode ? "Lưu thay đổi" : "Đăng tin ngay"}
+            </Button>
+          </div>
+        </Form>
+      </Card>
+    </div>
   );
 }
-
-function Field({ label, required, fullWidth = false, children }) {
-  return (
-    <label
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "6px",
-        fontWeight: 600,
-        fontSize: "0.9rem",
-        color: "#344054",
-        gridColumn: fullWidth ? "1 / -1" : "auto",
-      }}
-    >
-      <span>
-        {label}
-        {required ? " *" : ""}
-      </span>
-      {children}
-    </label>
-  );
-}
-
-const primaryBtnStyle = {
-  border: "none",
-  borderRadius: "8px",
-  padding: "10px 14px",
-  backgroundColor: "#0c6cf2",
-  color: "#fff",
-  fontWeight: 600,
-};
-
-const secondaryBtnStyle = {
-  border: "1px solid #d0d5dd",
-  borderRadius: "8px",
-  padding: "10px 14px",
-  backgroundColor: "#fff",
-  color: "#344054",
-};
 
 export default CreateListingPage;

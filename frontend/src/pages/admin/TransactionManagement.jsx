@@ -20,6 +20,24 @@ export default function TransactionManagement() {
     }
   };
 
+  const handleMarkSuccess = async (paymentId) => {
+    if (!paymentId) {
+      return;
+    }
+
+    try {
+      const res = await API.post(`/admin/payments/${paymentId}/success`);
+      setTransactions((prev) =>
+        prev.map((tx) => (tx.id === paymentId ? { ...tx, ...res.data } : tx)),
+      );
+      message.success("Da cap nhat trang thai thanh cong.");
+    } catch (err) {
+      console.error(err);
+      const serverError = err?.response?.data?.message || err?.response?.data?.error;
+      message.error(serverError || "Khong the cap nhat thanh toan.");
+    }
+  };
+
   useEffect(() => {
     fetchTransactions();
   }, []);
@@ -60,6 +78,27 @@ export default function TransactionManagement() {
         <Tag color={status === "COMPLETED" || status === "SUCCESS" ? "success" : "warning"}>
           {status}
         </Tag>
+      ),
+    },
+    {
+      title: "Hành động",
+      dataIndex: "id",
+      render: (id, record) => (
+        <button
+          type="button"
+          onClick={() => handleMarkSuccess(id)}
+          disabled={record.status === "SUCCESS"}
+          style={{
+            border: "1px solid #d0d5dd",
+            borderRadius: "8px",
+            padding: "6px 10px",
+            backgroundColor: record.status === "SUCCESS" ? "#f2f4f7" : "#0c6cf2",
+            color: record.status === "SUCCESS" ? "#344054" : "#fff",
+            cursor: record.status === "SUCCESS" ? "not-allowed" : "pointer",
+          }}
+        >
+          {record.status === "SUCCESS" ? "Da xac nhan" : "Xac nhan"}
+        </button>
       ),
     },
   ];

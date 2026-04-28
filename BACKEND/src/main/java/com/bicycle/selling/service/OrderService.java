@@ -158,8 +158,11 @@ public class OrderService {
             throw new RuntimeException("Access denied: you are not the buyer of this order");
         }
 
-        // Logic check: có thể chuyển từ CONFIRMED -> COMPLETED
-        if (order.getStatus() != OrderStatus.CONFIRMED && order.getStatus() != OrderStatus.DEPOSIT_PAID) {
+        // Logic check: có thể chuyển từ CONFIRMED, DEPOSIT_PAID, FULL_PAID, SHIPPING -> COMPLETED
+        if (order.getStatus() != OrderStatus.CONFIRMED && 
+            order.getStatus() != OrderStatus.DEPOSIT_PAID &&
+            order.getStatus() != OrderStatus.FULL_PAID &&
+            order.getStatus() != OrderStatus.SHIPPING) {
             throw new RuntimeException("Order cannot be completed from status: " + order.getStatus());
         }
 
