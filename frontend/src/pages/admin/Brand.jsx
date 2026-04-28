@@ -28,8 +28,6 @@ const Brand = () => {
   const handleSubmit = async (values) => {
     try {
       if (editingId) {
-        // Backend hiện tại chưa có PUT /brands/{id}, ta có thể thêm hoặc dùng POST nếu backend save có logic merge
-        // Tuy nhiên theo AdminController.java chỉ có POST (save)
         await API.post("/admin/brands", { ...values, id: editingId });
         message.success("Đã cập nhật thương hiệu!");
       } else {
