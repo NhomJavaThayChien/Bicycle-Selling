@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { formatPrice } from "../utils/formatPrice";
 
 function BikeCard({ bike }) {
@@ -6,18 +7,15 @@ function BikeCard({ bike }) {
   const imageUrl = bike?.primaryImageUrl || bike?.image || "";
 
   return (
-    <div>
+    <div className="bike-card">
       {imageUrl && (
-        <img
-          src={imageUrl}
-          alt={title}
-          style={{
-            width: "100%",
-            height: "160px",
-            objectFit: "cover",
-            borderRadius: "6px",
-          }}
-        />
+        bike?.id ? (
+          <Link to={`/bikes/${bike.id}`} className="bike-card__image-link" aria-label={`Xem chi tiết ${title}`}>
+            <img src={imageUrl} alt={title} className="bike-card__image" />
+          </Link>
+        ) : (
+          <img src={imageUrl} alt={title} className="bike-card__image" />
+        )
       )}
       <h3>{title}</h3>
       <p>{formatPrice(price)}</p>
