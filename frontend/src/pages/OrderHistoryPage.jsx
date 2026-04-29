@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { getListingById } from "../services/bikeService";
+import { createDispute } from "../services/disputeService";
 import { completeOrder, getBuyerOrders } from "../services/orderService";
 import { createFullPayment } from "../services/paymentService";
 import { createReview } from "../services/reviewService";
@@ -30,6 +31,13 @@ function OrderHistoryPage() {
   const [reviewedOrderIds, setReviewedOrderIds] = useState([]);
   const [completingOrderId, setCompletingOrderId] = useState(null);
   const [payingFullOrderId, setPayingFullOrderId] = useState(null);
+
+  // Dispute state
+  const [disputeOrder, setDisputeOrder]         = useState(null); // order đang mở form
+  const [disputeReason, setDisputeReason]       = useState("");
+  const [disputeDesc, setDisputeDesc]           = useState("");
+  const [submittingDispute, setSubmittingDispute] = useState(false);
+  const [disputedOrderIds, setDisputedOrderIds] = useState([]);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -153,6 +161,35 @@ function OrderHistoryPage() {
       setError(serverError || "Không thể tạo phiên thanh toán lúc này.");
     } finally {
       setPayingFullOrderId(null);
+    }
+  };
+
+  // Buyer gửi tranh chấp
+  const handleSubmitDispute = async () => {
+    if (!disputeOrder) return;
+    if (!disputeReason.trim()) {
+      setError("Điền lý do tranh chấp.");
+      return;
+    }
+    setSubmittingDispute(true);
+    setError("");
+    setReviewMessage("");
+    try {
+      await createDispute({
+        orderId: disputeOrder.id,
+        reason: disputeReason.trim(),
+        description: disputeDesc.trim() || undefined,
+      });
+      setDisputedOrderIds((prev) => [...new Set([...prev, disputeOrder.id])]);
+      setReviewMessage(`Đã gửi báo tranh chấp cho đơn hàng #${disputeOrder.id}. Admin sẽ xử lý trong vòng 24h.`);
+      setDisputeOrder(null);
+      setDisputeReason("");
+      setDisputeDesc("");
+    } catch (err) {
+      const serverError = err?.response?.data?.message || err?.response?.data?.error;
+      setError(serverError || "Không thể gửi tranh chấp lúc này.");
+    } finally {
+      setSubmittingDispute(false);
     }
   };
 
@@ -357,6 +394,42 @@ function OrderHistoryPage() {
                         ? "Đánh giá"
                         : "Đánh giá (sau khi hoàn thành)"}
                   </button>
+                  {/* Nút báo tranh chấp — hiện khi đơn đang active hoặc đã hoàn thành, chưa báo */}
+                  {["DEPOSIT_PAID", "FULL_PAID", "CONFIRMED", "SHIPPING", "COMPLETED"].includes(order.status) &&
+                    !disputedOrderIds.includes(order.id) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDisputeOrder(order);
+                        setDisputeReason("");
+                        setDisputeDesc("");
+                        setError("");
+                      }}
+                      style={{
+                        border: "1px solid #fecdca",
+                        borderRadius: "8px",
+                        padding: "8px 10px",
+                        backgroundColor: "#fff2f0",
+                        color: "#b42318",
+                        cursor: "pointer",
+                        fontSize: "0.875rem",
+                      }}
+                    >
+                      ⚠️ Báo tranh chấp
+                    </button>
+                  )}
+                  {disputedOrderIds.includes(order.id) && (
+                    <span style={{
+                      fontSize: "0.8rem",
+                      color: "#5925dc",
+                      border: "1px solid #d9d6fe",
+                      background: "#f4f3ff",
+                      borderRadius: 6,
+                      padding: "4px 8px",
+                    }}>
+                      ⚠️ Đã báo tranh chấp
+                    </span>
+                  )}
                 </div>
               </article>
             );
@@ -364,6 +437,7 @@ function OrderHistoryPage() {
         </div>
       )}
 
+      {/* Form đánh giá */}
       {selectedOrder && (
         <section
           style={{
@@ -423,6 +497,99 @@ function OrderHistoryPage() {
                   setSelectedOrder(null);
                   setComment("");
                   setRating("5");
+                }}
+              >
+                Hủy
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Form báo tranh chấp */}
+      {disputeOrder && (
+        <section
+          style={{
+            marginTop: "16px",
+            border: "1px solid #fecdca",
+            borderRadius: "12px",
+            padding: "16px",
+            backgroundColor: "#fff2f0",
+          }}
+        >
+          <h3 style={{ marginTop: 0, color: "#b42318" }}>
+            ⚠️ Báo tranh chấp — Đơn hàng #{disputeOrder.id}
+          </h3>
+          <p style={{ margin: "0 0 12px", color: "#6b2a1f", fontSize: 13 }}>
+            Khi gửi tranh chấp, Admin sẽ tiếp nhận và xử lý trong vòng 24h. Bạn chỉ có thể gửi 1 tranh chấp cho mỗi đơn hàng.
+          </p>
+
+          <div style={{ display: "grid", gap: 10, maxWidth: 480 }}>
+            <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <span style={{ fontWeight: 600 }}>Lý do tranh chấp <span style={{ color: "red" }}>*</span></span>
+              <select
+                value={disputeReason}
+                onChange={(e) => setDisputeReason(e.target.value)}
+                style={{
+                  padding: "9px 12px",
+                  borderRadius: 8,
+                  border: "1px solid #fecdca",
+                  fontSize: 14,
+                  background: "#fff",
+                }}
+              >
+                <option value="">-- Chọn lý do --</option>
+                <option value="Hàng không đúng mô tả">Hàng không đúng mô tả</option>
+                <option value="Không nhận được hàng">Không nhận được hàng</option>
+                <option value="Xe bị hư hỏng khi giao">Xe bị hư hỏng khi giao</option>
+                <option value="Người bán không hợp tác">Người bán không hợp tác</option>
+                <option value="Khác">Khác</option>
+              </select>
+            </label>
+
+            <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <span style={{ fontWeight: 600 }}>Mô tả chi tiết</span>
+              <textarea
+                rows={4}
+                value={disputeDesc}
+                onChange={(e) => setDisputeDesc(e.target.value)}
+                placeholder="Mô tả vấn đề cụ thể (điều kiện xe, bằng chứng, …)"
+                style={{
+                  padding: "9px 12px",
+                  borderRadius: 8,
+                  border: "1px solid #fecdca",
+                  fontSize: 14,
+                  resize: "vertical",
+                }}
+              />
+            </label>
+
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                type="button"
+                onClick={handleSubmitDispute}
+                disabled={submittingDispute || !disputeReason}
+                style={{
+                  background: submittingDispute || !disputeReason ? "#d1d5db" : "#b42318",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "10px 20px",
+                  fontWeight: 700,
+                  cursor: submittingDispute || !disputeReason ? "not-allowed" : "pointer",
+                }}
+              >
+                {submittingDispute ? "Đang gửi..." : "Gửi tranh chấp"}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setDisputeOrder(null); setError(""); }}
+                style={{
+                  background: "#fff",
+                  border: "1px solid #fecdca",
+                  borderRadius: 8,
+                  padding: "10px 20px",
+                  cursor: "pointer",
                 }}
               >
                 Hủy
