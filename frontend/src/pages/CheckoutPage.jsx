@@ -41,9 +41,12 @@ import { formatPrice } from "../utils/formatPrice";
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
-
-const DEFAULT_FROM_DISTRICT_ID = 1450;
-const DEFAULT_FROM_WARD_CODE = "21211";
+// TODO: Backend chưa lưu GHN districtId/wardCode của seller trong BicycleListing.
+// Field `location` chỉ là text tự do (VD: "Hà Nội"), không phải GHN code.
+// Cần thêm field `fromDistrictId` và `fromWardCode` vào BicycleListing khi seller đăng tin.
+// Hiện tại dùng kho mặc định (Q.Nam Từ Liêm, Hà Nội) như địa chỉ gửi hàng để tính phí ship.
+const DEFAULT_FROM_DISTRICT_ID = 1450; // Quận Nam Từ Liêm, Hà Nội (kho mặc định)
+const DEFAULT_FROM_WARD_CODE = "21211"; // Phường Cầu Diễn
 
 export default function CheckoutPage() {
   const { id } = useParams();
@@ -183,7 +186,8 @@ export default function CheckoutPage() {
         agreedPrice: listing.price,
         shippingAddress,
         note: values.note,
-        paymentMethod: values.paymentMethod,
+        // paymentMethod không được gửi vào createOrder — backend không dùng field này
+        // Payment method được xử lý riêng ở bước sau
       });
 
       const orderId = orderRes.data?.id;
@@ -315,8 +319,8 @@ export default function CheckoutPage() {
                             <Space align="start">
                               <CardIcon size={20} style={{ color: "#1890ff" }} />
                               <div>
-                                <div style={{ fontWeight: 600 }}>Thẻ tín dụng (Stripe)</div>
-                                <div style={{ fontSize: 12, color: "#8c8c8c" }}>Thanh toán an toàn qua cổng Stripe</div>
+                                <div style={{ fontWeight: 600 }}>Đặt cọc qua Stripe</div>
+                                <div style={{ fontSize: 12, color: "#8c8c8c" }}>Thanh toán đặt cọc 20% qua Stripe (an toàn)</div>
                               </div>
                             </Space>
                           </Radio.Button>
@@ -343,10 +347,11 @@ export default function CheckoutPage() {
                   <Divider style={{ margin: "16px 0" }} />
                   
                   <div style={{ display: "flex", gap: 16, marginBottom: 24 }}>
-                    <img 
-                      src={listing.primaryImageUrl || "https://via.placeholder.com/100"} 
-                      alt="bike" 
-                      style={{ width: 80, height: 80, borderRadius: 12, objectFit: "cover" }} 
+                    <img
+                      src={listing.primaryImageUrl || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' rx='12' fill='%23f0f5ff'/%3E%3Ctext x='40' y='48' text-anchor='middle' font-size='32' fill='%231890ff'%3E🚲%3C/text%3E%3C/svg%3E`}
+                      alt="bike"
+                      style={{ width: 80, height: 80, borderRadius: 12, objectFit: "cover" }}
+                      onError={(e) => { e.target.onerror = null; e.target.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' rx='12' fill='%23f0f5ff'/%3E%3Ctext x='40' y='48' text-anchor='middle' font-size='32' fill='%231890ff'%3E🚲%3C/text%3E%3C/svg%3E`; }}
                     />
                     <div>
                       <Text strong style={{ display: "block", fontSize: 16 }}>{listing.title}</Text>
@@ -358,19 +363,37 @@ export default function CheckoutPage() {
                     <Text type="secondary">Giá xe</Text>
                     <Text strong>{formatPrice(listing.price)}</Text>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
                     <Text type="secondary">Phí vận chuyển (GHN)</Text>
                     <Text strong>
                       {calculatingFee ? <Spin size="small" /> : (shippingFee !== null ? formatPrice(shippingFee) : "Chưa tính")}
                     </Text>
                   </div>
+                  {shippingFee !== null && (
+                    <div style={{ marginBottom: 12 }}>
+                      <Text type="secondary" style={{ fontSize: 11, color: "#faad14" }}>
+                        ⚠️ Phí ước tính từ kho Hà Nội. Có thể chênh lệch nếu seller ở tỉnh khác.
+                      </Text>
+                    </div>
+                  )}
                   
                   <Divider />
                   
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 24 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                     <Title level={4} style={{ margin: 0 }}>Tổng cộng</Title>
                     <Title level={4} style={{ margin: 0, color: "#1890ff" }}>{formatPrice(totalAmount)}</Title>
                   </div>
+                  <Form.Item noStyle shouldUpdate={(prev, cur) => prev.paymentMethod !== cur.paymentMethod}>
+                    {({ getFieldValue }) =>
+                      getFieldValue("paymentMethod") === "STRIPE" ? (
+                        <div style={{ background: "#fff7e6", border: "1px solid #ffd591", borderRadius: 8, padding: "10px 14px", marginBottom: 16 }}>
+                          <Text style={{ fontSize: 13, color: "#d48806" }}>
+                            ⚠️ Stripe sẽ thu <strong>{formatPrice(Math.round(totalAmount * 0.2))}</strong> (20% đặt cọc). Phần còn lại thanh toán khi nhận hàng.
+                          </Text>
+                        </div>
+                      ) : null
+                    }
+                  </Form.Item>
 
                   <Button 
                     type="primary" 

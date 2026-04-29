@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { getListingById } from "../services/bikeService";
 import { completeOrder, getBuyerOrders } from "../services/orderService";
+import { createFullPayment } from "../services/paymentService";
 import { createReview } from "../services/reviewService";
 import { formatPrice } from "../utils/formatPrice";
 
@@ -28,6 +29,7 @@ function OrderHistoryPage() {
   const [reviewMessage, setReviewMessage] = useState("");
   const [reviewedOrderIds, setReviewedOrderIds] = useState([]);
   const [completingOrderId, setCompletingOrderId] = useState(null);
+  const [payingFullOrderId, setPayingFullOrderId] = useState(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -55,7 +57,7 @@ function OrderHistoryPage() {
         setListingLookup(Object.fromEntries(listingEntries));
       } catch (err) {
         const serverError = err?.response?.data?.error || err?.response?.data?.message;
-        setError(serverError || "Khong tai duoc lich su don hang.");
+        setError(serverError || "Không tải được lịch sử đơn hàng.");
         setOrders([]);
       } finally {
         setLoading(false);
@@ -77,7 +79,7 @@ function OrderHistoryPage() {
 
     const numericRating = Number(rating);
     if (!numericRating || numericRating < 1 || numericRating > 5) {
-      setReviewMessage("Rating phai trong khoang 1-5.");
+      setReviewMessage("Rating phải trong khoảng 1-5.");
       return;
     }
 
@@ -93,13 +95,13 @@ function OrderHistoryPage() {
       });
 
       setReviewedOrderIds((prev) => [...new Set([...prev, selectedOrder.id])]);
-      setReviewMessage("Danh gia thanh cong.");
+      setReviewMessage("Đánh giá thành công.");
       setSelectedOrder(null);
       setComment("");
       setRating("5");
     } catch (err) {
       const serverError = err?.response?.data?.message || err?.response?.data?.error;
-      setReviewMessage(serverError || "Khong the gui danh gia luc nay.");
+      setReviewMessage(serverError || "Không thể gửi đánh giá lúc này.");
     } finally {
       setSubmittingReview(false);
     }
@@ -121,19 +123,43 @@ function OrderHistoryPage() {
           order.id === orderId ? { ...order, status: "COMPLETED" } : order,
         ),
       );
-      setReviewMessage("Da cap nhat trang thai da nhan hang.");
+      setReviewMessage("Đã cập nhật trạng thái đã nhận hàng.");
     } catch (err) {
       const serverError = err?.response?.data?.message || err?.response?.data?.error;
-      setError(serverError || "Khong the cap nhat trang thai luc nay.");
+      setError(serverError || "Không thể cập nhật trạng thái lúc này.");
     } finally {
       setCompletingOrderId(null);
+    }
+  };
+
+  const handleFullPayment = async (order) => {
+    if (!order?.id) return;
+
+    setPayingFullOrderId(order.id);
+    setError("");
+    setReviewMessage("");
+
+    try {
+      // 80% còn lại = agreedPrice - depositAmount (backend tính 20% deposit)
+      const res = await createFullPayment(order.id);
+      const stripeUrl = res.data?.checkoutSession;
+      if (stripeUrl) {
+        window.location.href = stripeUrl;
+        return;
+      }
+      setError("Không nhận được đường dẫn thanh toán. Vui lòng thử lại.");
+    } catch (err) {
+      const serverError = err?.response?.data?.message || err?.response?.data?.error;
+      setError(serverError || "Không thể tạo phiên thanh toán lúc này.");
+    } finally {
+      setPayingFullOrderId(null);
     }
   };
 
   if (loading) {
     return (
       <main style={{ maxWidth: "920px", margin: "24px auto", padding: "0 16px" }}>
-        <p>Dang tai lich su don hang...</p>
+        <p>Đang tải lịch sử đơn hàng...</p>
       </main>
     );
   }
@@ -141,9 +167,9 @@ function OrderHistoryPage() {
   return (
     <main style={{ maxWidth: "920px", margin: "24px auto", padding: "0 16px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
-        <h1 style={{ marginTop: 0 }}>Order History</h1>
+        <h1 style={{ marginTop: 0 }}>Lịch sử đơn hàng</h1>
         <Link to="/bikes" style={{ color: "#175cd3", fontWeight: 600 }}>
-          Continue shopping
+          Tiếp tục mua sắm
         </Link>
       </div>
 
@@ -187,7 +213,7 @@ function OrderHistoryPage() {
             backgroundColor: "#fcfcfd",
           }}
         >
-          <p style={{ marginTop: 0 }}>Ban chua co don hang nao.</p>
+          <p style={{ marginTop: 0 }}>Bạn chưa có đơn hàng nào.</p>
           <Link to="/bikes" style={{ color: "#175cd3", fontWeight: 600 }}>
             Mua xe ngay
           </Link>
@@ -241,16 +267,41 @@ function OrderHistoryPage() {
                   </span>
                 </div>
 
-                <p style={{ margin: "4px 0" }}>Bike: {bikeTitle}</p>
-                <p style={{ margin: "4px 0" }}>Listing ID: {order.listingId}</p>
+                <p style={{ margin: "4px 0" }}>Xe: {bikeTitle}</p>
+                <p style={{ margin: "4px 0" }}>Mã tin đăng: #{order.listingId}</p>
                 <p style={{ margin: "4px 0" }}>
-                  Agreed Price: {formatPrice(Number(order.agreedPrice || 0))}
+                  Giá thoả thuận: {formatPrice(Number(order.agreedPrice || 0))}
                 </p>
-                <div style={{ marginTop: "10px", display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                <div style={{ marginTop: "10px", display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+                  {/* Nút thanh toán 80% còn lại — chỉ hiện khi DEPOSIT_PAID */}
+                  {order.status === "DEPOSIT_PAID" && (
+                    <button
+                      type="button"
+                      disabled={payingFullOrderId === order.id}
+                      onClick={() => handleFullPayment(order)}
+                      style={{
+                        border: "none",
+                        borderRadius: "8px",
+                        padding: "8px 14px",
+                        backgroundColor: payingFullOrderId === order.id ? "#d1d5db" : "#0d9488",
+                        color: "#fff",
+                        cursor: payingFullOrderId === order.id ? "not-allowed" : "pointer",
+                        fontWeight: 600,
+                        fontSize: "0.875rem",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      {payingFullOrderId === order.id
+                        ? "Đang xử lý..."
+                        : `💳 Thanh toán 80% còn lại (${formatPrice(Math.round(Number(order.agreedPrice || 0) * 0.8))})`}
+                    </button>
+                  )}
                   <button
                     type="button"
                     disabled={
-                      !["CONFIRMED", "DEPOSIT_PAID", "FULL_PAID", "SHIPPING"].includes(order.status) || 
+                      !["CONFIRMED", "DEPOSIT_PAID", "FULL_PAID", "SHIPPING"].includes(order.status) ||
                       completingOrderId === order.id
                     }
                     onClick={() => handleCompleteOrder(order.id)}
@@ -259,24 +310,24 @@ function OrderHistoryPage() {
                       borderRadius: "8px",
                       padding: "8px 10px",
                       backgroundColor:
-                        !["CONFIRMED", "DEPOSIT_PAID", "FULL_PAID", "SHIPPING"].includes(order.status) 
-                          ? "#f2f4f7" 
+                        !["CONFIRMED", "DEPOSIT_PAID", "FULL_PAID", "SHIPPING"].includes(order.status)
+                          ? "#f2f4f7"
                           : "#0c6cf2",
-                      color: !["CONFIRMED", "DEPOSIT_PAID", "FULL_PAID", "SHIPPING"].includes(order.status) 
-                        ? "#344054" 
+                      color: !["CONFIRMED", "DEPOSIT_PAID", "FULL_PAID", "SHIPPING"].includes(order.status)
+                        ? "#344054"
                         : "#fff",
-                      cursor: !["CONFIRMED", "DEPOSIT_PAID", "FULL_PAID", "SHIPPING"].includes(order.status) 
-                        ? "not-allowed" 
+                      cursor: !["CONFIRMED", "DEPOSIT_PAID", "FULL_PAID", "SHIPPING"].includes(order.status)
+                        ? "not-allowed"
                         : "pointer",
                     }}
                   >
                     {order.status === "COMPLETED"
-                      ? "Da nhan hang"
+                      ? "Đã nhận hàng"
                       : completingOrderId === order.id
-                        ? "Dang cap nhat..."
+                        ? "Đang cập nhật..."
                         : order.status === "PENDING"
-                          ? "Cho xac nhan"
-                          : "Da nhan hang"}
+                          ? "Chờ xác nhận"
+                          : "Xác nhận đã nhận hàng"}
                   </button>
                   <button
                     type="button"
@@ -301,10 +352,10 @@ function OrderHistoryPage() {
                     }}
                   >
                     {reviewedOrderIds.includes(order.id)
-                      ? "Reviewed"
+                      ? "Đã đánh giá"
                       : order.status === "COMPLETED"
-                        ? "Review"
-                        : "Review (available after completed)"}
+                        ? "Đánh giá"
+                        : "Đánh giá (sau khi hoàn thành)"}
                   </button>
                 </div>
               </article>
@@ -323,11 +374,11 @@ function OrderHistoryPage() {
             backgroundColor: "#fcfcfd",
           }}
         >
-          <h3 style={{ marginTop: 0 }}>Write Review for Order #{selectedOrder.id}</h3>
+          <h3 style={{ marginTop: 0 }}>Viết đánh giá cho đơn hàng #{selectedOrder.id}</h3>
 
           <div style={{ display: "grid", gap: "10px", maxWidth: "420px" }}>
             <label style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              <span>Rating</span>
+              <span>Số sao</span>
               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
@@ -353,18 +404,18 @@ function OrderHistoryPage() {
             </label>
 
             <label style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              <span>Comment</span>
+              <span>Nhận xét</span>
               <textarea
                 rows={4}
                 value={comment}
                 onChange={(event) => setComment(event.target.value)}
-                placeholder="Chia se trai nghiem cua ban"
+                placeholder="Chia sẻ trải nghiệm của bạn"
               />
             </label>
 
             <div style={{ display: "flex", gap: "8px" }}>
               <button type="button" onClick={handleSubmitReview} disabled={submittingReview}>
-                {submittingReview ? "Submitting..." : "Submit"}
+                {submittingReview ? "Đang gửi..." : "Gửi đánh giá"}
               </button>
               <button
                 type="button"
@@ -374,7 +425,7 @@ function OrderHistoryPage() {
                   setRating("5");
                 }}
               >
-                Cancel
+                Hủy
               </button>
             </div>
           </div>
