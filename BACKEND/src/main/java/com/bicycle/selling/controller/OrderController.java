@@ -44,30 +44,28 @@ public class OrderController {
     }
 
     @GetMapping("/{orderId}")
-    public OrderResponse getOrderDetails(
+    public ResponseEntity<?> getOrderDetails(
             @PathVariable Long orderId,
             @AuthenticationPrincipal UserDetailsImpl user) {
-            Order order = orderService.getOrderById(orderId);
-
-            // Bug fix #2: Ownership check — chỉ buyer của đơn hoặc seller của listing mới xem được
-            Long buyerId = order.getBuyer().getId();
-            Long sellerId = order.getListing().getSeller().getId();
+        try {
             boolean isAdmin = user.getAuthorities().stream()
                     .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-            if (!isAdmin && !user.getId().equals(buyerId) && !user.getId().equals(sellerId)) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+            if (isAdmin) {
+                // Admin bypass: load trực tiếp qua service mà không cần ownership check
+                Order order = orderService.getOrderById(orderId);
+                // Dùng buyer id cố định để bypass check (admin xem được tất cả)
+                return ResponseEntity.ok(orderService.getOrderResponseById(orderId, order.getBuyer().getId()));
             }
 
-        OrderResponse response = new OrderResponse(
-                order.getId(),
-                order.getBuyer().getId(),
-                order.getListing().getId(),
-                order.getAgreedPrice(),
-                order.getShippingFee(),
-                order.getStatus().name());
-
-        return response;
+            OrderResponse response = orderService.getOrderResponseById(orderId, user.getId());
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            if (e.getMessage().equals("Access denied")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Access denied"));
+            }
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        }
     }
 
     @PutMapping("/{orderId}/cancel")

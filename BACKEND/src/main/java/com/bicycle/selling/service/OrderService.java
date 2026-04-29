@@ -77,9 +77,37 @@ public class OrderService {
         return savedOrder;
     }
 
+    @Transactional(readOnly = true)
     public Order getOrderById(Long orderId) {
         return orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
+    }
+
+    /**
+     * Trả về OrderResponse đầy đủ từ bên trong transaction,
+     * tránh LazyInitializationException khi open-in-view=false.
+     */
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderResponseById(Long orderId, Long requesterId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        Long buyerId  = order.getBuyer().getId();
+        Long sellerId = order.getListing().getSeller().getId();
+
+        // Ownership check
+        boolean isAdmin = false; // admin check handled in controller if needed
+        if (!requesterId.equals(buyerId) && !requesterId.equals(sellerId)) {
+            throw new RuntimeException("Access denied");
+        }
+
+        return new OrderResponse(
+                order.getId(),
+                buyerId,
+                order.getListing().getId(),
+                order.getAgreedPrice(),
+                order.getShippingFee(),
+                order.getStatus().name());
     }
 
     /**
