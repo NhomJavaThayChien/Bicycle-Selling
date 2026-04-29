@@ -46,8 +46,7 @@ public class InspectionService {
     public InspectionResponse submitInspection(
             Long reportId,
             SubmitInspectionRequest request,
-            Long inspectorId
-    ) {
+            Long inspectorId) {
         try {
             System.out.println(">>> [TRANSACTION START] Submitting inspection for reportId: " + reportId);
             InspectionReport report = inspectionReportRepository.findById(reportId)
@@ -106,6 +105,7 @@ public class InspectionService {
                     listingRepository.save(listing);
                 }
             } else {
+                // Nếu như điểm trung bình dưới 7, coi như failed và reject listing
                 report.setStatus(InspectionStatus.FAILED);
                 if (listing != null) {
                     listing.setInspected(false);
@@ -137,7 +137,7 @@ public class InspectionService {
         }
 
         if (report.getStatus() == InspectionStatus.PASSED ||
-            report.getStatus() == InspectionStatus.FAILED) {
+                report.getStatus() == InspectionStatus.FAILED) {
             throw new RuntimeException("Cannot cancel completed inspection");
         }
 
@@ -154,8 +154,7 @@ public class InspectionService {
     public InspectionResponse getByListing(Long listingId) {
         return mapToResponse(
                 inspectionReportRepository.findByListingId(listingId)
-                        .orElseThrow(() -> new RuntimeException("Inspection not found"))
-        );
+                        .orElseThrow(() -> new RuntimeException("Inspection not found")));
     }
 
     // List all
@@ -172,8 +171,9 @@ public class InspectionService {
     }
 
     private InspectionResponse mapToResponse(InspectionReport report) {
-        if (report == null) return null;
-        
+        if (report == null)
+            return null;
+
         Long listingId = null;
         if (report.getListing() != null) {
             listingId = report.getListing().getId();
