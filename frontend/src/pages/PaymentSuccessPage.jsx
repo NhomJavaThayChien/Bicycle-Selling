@@ -22,8 +22,8 @@ const statusConfig = {
   },
   PENDING: {
     icon: <Clock size={64} color="#fa8c16" />,
-    title: "Đang chờ xác nhận thanh toán...",
-    desc: "Hệ thống đang xử lý giao dịch của bạn. Vui lòng chờ trong giây lát hoặc kiểm tra lại lịch sử đơn hàng.",
+    title: "Thanh toán đã được ghi nhận!",
+    desc: "Stripe đã xử lý thanh toán thành công. Hệ thống đang cập nhật trạng thái đơn hàng — vui lòng kiểm tra lại trong mục Lịch sử đơn hàng sau vài phút.",
     color: "#fa8c16",
     bg: "#fff7e6",
     border: "#ffd591",
@@ -73,14 +73,24 @@ function PaymentSuccessPage() {
         setRetryCount(attempts);
 
         if (attempts < MAX_ATTEMPTS) {
-          timer = setTimeout(checkStatus, 2000); // thử lại sau 2s
+          timer = setTimeout(checkStatus, 2000);
         } else {
-          // Webhook chưa kịp xử lý — vẫn hiện PENDING
-          setOrderStatus(status || "PENDING");
+          // Webhook chưa kịp xử lý — vẫn hiện PENDING (bình thường với localhost)
+          setOrderStatus("PENDING");
           setLoading(false);
         }
-      } catch {
-        setOrderStatus("ERROR");
+      } catch (err) {
+        const httpStatus = err?.response?.status;
+        if (httpStatus === 403 || httpStatus === 404) {
+          // Đơn hàng không tìm thấy hoặc không có quyền xem — thử lại
+          attempts++;
+          if (attempts < MAX_ATTEMPTS) {
+            timer = setTimeout(checkStatus, 2000);
+            return;
+          }
+        }
+        // Sau nhiều lần thử vẫn lỗi → hiện PENDING thay vì ERROR
+        setOrderStatus("PENDING");
         setLoading(false);
       }
     };

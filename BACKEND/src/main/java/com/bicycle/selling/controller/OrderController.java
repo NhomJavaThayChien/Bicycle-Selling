@@ -7,10 +7,8 @@ import org.springframework.web.bind.annotation.*;
 
 import com.bicycle.selling.dto.CreateOrderRequest;
 import com.bicycle.selling.dto.OrderResponse;
-import com.bicycle.selling.model.Order;
 import com.bicycle.selling.service.OrderService;
 
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;
@@ -28,19 +26,11 @@ public class OrderController {
     final OrderService orderService;
 
     @PostMapping
-    public OrderResponse createOrder(
+    public ResponseEntity<OrderResponse> createOrder(
             @RequestBody CreateOrderRequest request,
             @AuthenticationPrincipal UserDetailsImpl user) {
-        Order order = orderService.createOrder(request, user.getId());
-        OrderResponse response = new OrderResponse(
-                order.getId(),
-                order.getBuyer().getId(),
-                order.getListing().getId(),
-                order.getAgreedPrice(),
-                order.getShippingFee(),
-                order.getStatus().name());
-
-        return response;
+        OrderResponse response = orderService.createOrderResponse(request, user.getId());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{orderId}")
@@ -52,10 +42,9 @@ public class OrderController {
                     .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
             if (isAdmin) {
-                // Admin bypass: load trực tiếp qua service mà không cần ownership check
-                Order order = orderService.getOrderById(orderId);
-                // Dùng buyer id cố định để bypass check (admin xem được tất cả)
-                return ResponseEntity.ok(orderService.getOrderResponseById(orderId, order.getBuyer().getId()));
+                // Admin dùng method riêng — mọi lazy access nằm trong transaction
+                OrderResponse response = orderService.getOrderResponseByIdForAdmin(orderId);
+                return ResponseEntity.ok(response);
             }
 
             OrderResponse response = orderService.getOrderResponseById(orderId, user.getId());

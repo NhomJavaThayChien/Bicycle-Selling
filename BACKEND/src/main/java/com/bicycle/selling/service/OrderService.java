@@ -77,6 +77,22 @@ public class OrderService {
         return savedOrder;
     }
 
+    /**
+     * Wrapper trả về OrderResponse trực tiếp từ trong @Transactional
+     * để Controller không cần truy cập lazy fields trên entity đã detach.
+     */
+    @Transactional
+    public OrderResponse createOrderResponse(CreateOrderRequest request, Long buyerId) {
+        Order order = createOrder(request, buyerId);
+        return new OrderResponse(
+                order.getId(),
+                order.getBuyer().getId(),
+                order.getListing().getId(),
+                order.getAgreedPrice(),
+                order.getShippingFee(),
+                order.getStatus().name());
+    }
+
     @Transactional(readOnly = true)
     public Order getOrderById(Long orderId) {
         return orderRepository.findById(orderId)
@@ -104,6 +120,20 @@ public class OrderService {
         return new OrderResponse(
                 order.getId(),
                 buyerId,
+                order.getListing().getId(),
+                order.getAgreedPrice(),
+                order.getShippingFee(),
+                order.getStatus().name());
+    }
+
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderResponseByIdForAdmin(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        return new OrderResponse(
+                order.getId(),
+                order.getBuyer().getId(),
                 order.getListing().getId(),
                 order.getAgreedPrice(),
                 order.getShippingFee(),
