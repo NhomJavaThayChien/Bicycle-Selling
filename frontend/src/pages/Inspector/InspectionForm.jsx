@@ -3,53 +3,87 @@ import {
   Form,
   Input,
   InputNumber,
-  Select,
   Button,
   Card,
   Row,
   Col,
-  Upload,
   message,
   Divider,
   Typography,
+  Alert,
+  Statistic,
 } from "antd";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   SaveOutlined,
   ArrowLeftOutlined,
-  InboxOutlined,
   CheckCircleOutlined,
+  CloseCircleOutlined,
 } from "@ant-design/icons";
 import { inspectionService } from "../../services/inspectionService";
 
 const { TextArea } = Input;
 const { Title } = Typography;
 
+const SCORE_FIELDS = [
+  { name: "frameScore", label: "Khung sườn" },
+  { name: "brakeScore", label: "Hệ thống phanh" },
+  { name: "drivetrainScore", label: "Bộ truyền động" },
+  { name: "wheelsScore", label: "Bánh xe / Lốp" },
+  { name: "handlebarSaddleScore", label: "Yên / Tay lái" },
+];
+
 const InspectionForm = () => {
   const { reportId } = useParams();
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [scores, setScores] = useState({});
+
+  // Tính điểm trung bình theo các field đã điền
+  const filledScores = Object.values(scores).filter(
+    (v) => v !== null && v !== undefined && v !== ""
+  );
+  const avg =
+    filledScores.length > 0
+      ? filledScores.reduce((a, b) => a + b, 0) / filledScores.length
+      : null;
+  const isPassed = avg !== null && avg >= 7;
+
+  const handleScoreChange = (fieldName, value) => {
+    setScores((prev) => ({ ...prev, [fieldName]: value }));
+  };
 
   const onFinish = async (values) => {
+    // Kiểm tra ít nhất 1 field có giá trị
+    const hasAtLeastOne = SCORE_FIELDS.some(
+      (f) => values[f.name] !== null && values[f.name] !== undefined
+    );
+    if (!hasAtLeastOne) {
+      message.error("Vui lòng nhập ít nhất một hạng mục điểm!");
+      return;
+    }
+
     setLoading(true);
     try {
-      // Chỉ gửi các trường dữ liệu JSON mà Backend hỗ trợ
       const submitData = {
-        frameScore: values.frameScore,
-        brakeScore: values.brakeScore,
-        drivetrainScore: values.drivetrainScore,
-        wheelsScore: values.wheelsScore,
-        handlebarSaddleScore: values.handlebarSaddleScore,
-        summary: values.summary
+        frameScore: values.frameScore ?? null,
+        brakeScore: values.brakeScore ?? null,
+        drivetrainScore: values.drivetrainScore ?? null,
+        wheelsScore: values.wheelsScore ?? null,
+        handlebarSaddleScore: values.handlebarSaddleScore ?? null,
+        summary: values.summary ?? null,
+        recommendations: values.recommendations ?? null,
       };
-      
+
       await inspectionService.submit(reportId, submitData);
       message.success("Đã hoàn tất báo cáo kiểm định!");
       navigate("/inspector/dashboard");
     } catch (err) {
       console.error("Submission error:", err);
-      message.error("Lỗi khi gửi báo cáo! Vui lòng thử lại.");
+      const errMsg =
+        err?.response?.data?.message || "Lỗi khi gửi báo cáo! Vui lòng thử lại.";
+      message.error(errMsg);
     } finally {
       setLoading(false);
     }
@@ -74,124 +108,91 @@ const InspectionForm = () => {
       >
         <Title level={3} style={{ textAlign: "center", marginBottom: 30 }}>
           <CheckCircleOutlined style={{ color: "#52c41a", marginRight: 10 }} />
-          CHI TIẾT KIỂM ĐỊNH # {reportId}
+          CHI TIẾT KIỂM ĐỊNH #{reportId}
         </Title>
 
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={onFinish}
-          initialValues={{
-            status: "PASSED",
-            frameScore: 10,
-            brakeScore: 10,
-            drivetrainScore: 10,
-            wheelsScore: 10,
-            handlebarSaddleScore: 10,
-          }}
-        >
+        <Form form={form} layout="vertical" onFinish={onFinish}>
           <Divider orientation="left">
-            1. Đánh giá từng hạng mục (1 - 10 điểm)
+            1. Đánh giá từng hạng mục (1–10 điểm, bỏ trống nếu không kiểm)
           </Divider>
+
           <Row gutter={[24, 16]}>
-            <Col span={8}>
-              <Form.Item
-                label="Khung sườn"
-                name="frameScore"
-                rules={[{ required: true }]}
-              >
-                <InputNumber
-                  min={1}
-                  max={10}
-                  style={{ width: "100%" }}
-                  placeholder="Điểm khung"
-                />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                label="Hệ thống phanh"
-                name="brakeScore"
-                rules={[{ required: true }]}
-              >
-                <InputNumber
-                  min={1}
-                  max={10}
-                  style={{ width: "100%" }}
-                  placeholder="Điểm phanh"
-                />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                label="Bộ truyền động"
-                name="drivetrainScore"
-                rules={[{ required: true }]}
-              >
-                <InputNumber
-                  min={1}
-                  max={10}
-                  style={{ width: "100%" }}
-                  placeholder="Điểm xích/líp"
-                />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                label="Bánh xe/Lốp"
-                name="wheelsScore"
-                rules={[{ required: true }]}
-              >
-                <InputNumber
-                  min={1}
-                  max={10}
-                  style={{ width: "100%" }}
-                  placeholder="Điểm bánh"
-                />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                label="Yên / Tay lái"
-                name="handlebarSaddleScore"
-                rules={[{ required: true }]}
-              >
-                <InputNumber
-                  min={1}
-                  max={10}
-                  style={{ width: "100%" }}
-                  placeholder="Điểm yên/tay"
-                />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                label="Kết luận chung"
-                name="status"
-                rules={[{ required: true }]}
-              >
-                <Select
-                  size="large"
-                  style={{ border: "1px solid #d9d9d9", borderRadius: "4px" }}
+            {SCORE_FIELDS.map((field) => (
+              <Col span={8} key={field.name}>
+                <Form.Item
+                  label={field.label}
+                  name={field.name}
+                  // optional — không required
                 >
-                  <Select.Option value="PASSED">ĐẠT (PASSED)</Select.Option>
-                  <Select.Option value="FAILED">
-                    KHÔNG ĐẠT (FAILED)
-                  </Select.Option>
-                </Select>
-              </Form.Item>
-            </Col>
+                  <InputNumber
+                    min={1}
+                    max={10}
+                    style={{ width: "100%" }}
+                    placeholder="Bỏ trống nếu không kiểm"
+                    onChange={(val) => handleScoreChange(field.name, val)}
+                  />
+                </Form.Item>
+              </Col>
+            ))}
           </Row>
 
+          {/* Preview điểm trung bình */}
+          {avg !== null && (
+            <Card
+              style={{
+                marginBottom: 24,
+                borderRadius: 8,
+                border: `1px solid ${isPassed ? "#b7eb8f" : "#ffadd2"}`,
+                backgroundColor: isPassed ? "#f6ffed" : "#fff0f6",
+              }}
+            >
+              <Row align="middle" gutter={24}>
+                <Col>
+                  <Statistic
+                    title="Điểm trung bình"
+                    value={avg.toFixed(2)}
+                    suffix="/ 10"
+                    valueStyle={{ color: isPassed ? "#389e0d" : "#c41d7f" }}
+                  />
+                </Col>
+                <Col>
+                  {isPassed ? (
+                    <Alert
+                      message="Dự kiến: ĐẠT (PASSED)"
+                      description={`Điểm ${avg.toFixed(2)} ≥ 7 → Sẽ tự động APPROVED`}
+                      type="success"
+                      icon={<CheckCircleOutlined />}
+                      showIcon
+                    />
+                  ) : (
+                    <Alert
+                      message="Dự kiến: KHÔNG ĐẠT (FAILED)"
+                      description={`Điểm ${avg.toFixed(2)} < 7 → Sẽ tự động REJECTED`}
+                      type="error"
+                      icon={<CloseCircleOutlined />}
+                      showIcon
+                    />
+                  )}
+                </Col>
+              </Row>
+            </Card>
+          )}
+
           <Divider orientation="left">2. Ghi chú bổ sung</Divider>
-          <Form.Item name="summary">
+          <Form.Item name="summary" label="Nhận xét tổng quan">
             <TextArea
-              rows={4}
-              placeholder="Nhập chi tiết tình trạng xe nếu có hư hỏng..."
+              rows={3}
+              placeholder="Nhập nhận xét tổng quan về tình trạng xe..."
+            />
+          </Form.Item>
+          <Form.Item name="recommendations" label="Khuyến nghị sửa chữa">
+            <TextArea
+              rows={2}
+              placeholder="Ghi các hạng mục nên sửa chữa (nếu có)..."
             />
           </Form.Item>
 
-          <Form.Item style={{ marginTop: 40 }}>
+          <Form.Item style={{ marginTop: 24 }}>
             <Button
               type="primary"
               htmlType="submit"
@@ -199,9 +200,19 @@ const InspectionForm = () => {
               loading={loading}
               block
               size="large"
-              style={{ height: "50px", borderRadius: "8px", fontSize: "16px" }}
+              style={{
+                height: "50px",
+                borderRadius: "8px",
+                fontSize: "16px",
+                backgroundColor: avg !== null && !isPassed ? "#ff4d4f" : undefined,
+                borderColor: avg !== null && !isPassed ? "#ff4d4f" : undefined,
+              }}
             >
-              XÁC NHẬN VÀ XUẤT BÁO CÁO
+              {avg !== null
+                ? isPassed
+                  ? "XÁC NHẬN — ĐẠT KIỂM ĐỊNH"
+                  : "XÁC NHẬN — TỪ CHỐI LISTING"
+                : "XÁC NHẬN VÀ XUẤT BÁO CÁO"}
             </Button>
           </Form.Item>
         </Form>

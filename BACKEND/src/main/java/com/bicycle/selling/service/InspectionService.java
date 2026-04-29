@@ -56,34 +56,63 @@ public class InspectionService {
             User inspector = userRepository.findById(inspectorId)
                     .orElseThrow(() -> new RuntimeException("Inspector not found with ID: " + inspectorId));
 
-            // Đảm bảo không có giá trị null
-            int fScore = request.getFrameScore() != null ? request.getFrameScore() : 10;
-            int bScore = request.getBrakeScore() != null ? request.getBrakeScore() : 10;
-            int dScore = request.getDrivetrainScore() != null ? request.getDrivetrainScore() : 10;
-            int wScore = request.getWheelsScore() != null ? request.getWheelsScore() : 10;
-            int hScore = request.getHandlebarSaddleScore() != null ? request.getHandlebarSaddleScore() : 10;
+            // Tính trung bình chỉ từ các điểm được điền (optional fields)
+            int totalScore = 0;
+            int count = 0;
 
-            report.setFrameScore(fScore);
-            report.setBrakeScore(bScore);
-            report.setDrivetrainScore(dScore);
-            report.setWheelsScore(wScore);
-            report.setHandlebarSaddleScore(hScore);
+            if (request.getFrameScore() != null) {
+                report.setFrameScore(request.getFrameScore());
+                totalScore += request.getFrameScore();
+                count++;
+            }
+            if (request.getBrakeScore() != null) {
+                report.setBrakeScore(request.getBrakeScore());
+                totalScore += request.getBrakeScore();
+                count++;
+            }
+            if (request.getDrivetrainScore() != null) {
+                report.setDrivetrainScore(request.getDrivetrainScore());
+                totalScore += request.getDrivetrainScore();
+                count++;
+            }
+            if (request.getWheelsScore() != null) {
+                report.setWheelsScore(request.getWheelsScore());
+                totalScore += request.getWheelsScore();
+                count++;
+            }
+            if (request.getHandlebarSaddleScore() != null) {
+                report.setHandlebarSaddleScore(request.getHandlebarSaddleScore());
+                totalScore += request.getHandlebarSaddleScore();
+                count++;
+            }
+
+            if (count == 0) {
+                throw new RuntimeException("Phải nhập ít nhất một hạng mục điểm");
+            }
+
             report.setSummary(request.getSummary());
             report.setRecommendations(request.getRecommendations());
 
-            double avg = (fScore + bScore + dScore + wScore + hScore) / 5.0;
+            double avg = (double) totalScore / count;
             report.setOverallScore(avg);
 
+            BicycleListing listing = report.getListing();
             if (avg >= 7) {
                 report.setStatus(InspectionStatus.PASSED);
-                BicycleListing listing = report.getListing();
                 if (listing != null) {
                     listing.setInspected(true);
                     listing.setStatus(com.bicycle.selling.model.enums.ListingStatus.APPROVED);
+                    listing.setRejectionReason(null);
                     listingRepository.save(listing);
                 }
             } else {
                 report.setStatus(InspectionStatus.FAILED);
+                if (listing != null) {
+                    listing.setInspected(false);
+                    listing.setStatus(com.bicycle.selling.model.enums.ListingStatus.REJECTED);
+                    listing.setRejectionReason(String.format("Không đạt kiểm định (Điểm trung bình: %.2f)", avg));
+                    listingRepository.save(listing);
+                }
             }
 
             report.setInspector(inspector);

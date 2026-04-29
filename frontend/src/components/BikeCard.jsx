@@ -38,6 +38,26 @@ function BikeCard({ bike, linkTo }) {
             onError={handleImgError}
           />
         )}
+        {bike.inspectionStatus === 'PASSED' && (
+          <div style={{
+            position: 'absolute',
+            top: '8px',
+            right: '8px',
+            backgroundColor: '#067647',
+            color: '#fff',
+            fontSize: '0.65rem',
+            fontWeight: 700,
+            padding: '2px 6px',
+            borderRadius: '4px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '2px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            zIndex: 1
+          }}>
+            ✓ Đã kiểm định
+          </div>
+        )}
       </div>
       <div className="bike-card__info">
         <h3 style={{ 

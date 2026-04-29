@@ -291,7 +291,7 @@ public class ListingService {
                 .price(listing.getPrice())
                 .condition(listing.getCondition())
                 .status(listing.getStatus())
-                .inspectionStatus(listing.isInspected() ? com.bicycle.selling.model.enums.InspectionStatus.PASSED : null)
+                .inspectionStatus(listing.getInspectionReport() != null ? listing.getInspectionReport().getStatus() : null)
                 .brandName(listing.getBrand() != null ? listing.getBrand().getName() : null)
                 .categoryName(listing.getCategory() != null ? listing.getCategory().getName() : null)
                 .frameSize(listing.getFrameSize())

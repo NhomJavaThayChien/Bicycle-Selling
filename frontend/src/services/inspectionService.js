@@ -45,4 +45,14 @@ export const inspectionService = {
     );
     return response.data;
   },
+
+  // POST /api/inspections (Seller yêu cầu kiểm định)
+  request: async (listingId) => {
+    const response = await axios.post(
+      API_URL,
+      { listingId },
+      getAuthHeader(),
+    );
+    return response.data;
+  },
 };

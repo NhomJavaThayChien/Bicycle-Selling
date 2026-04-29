@@ -5,6 +5,7 @@ import {
   getMyListings,
 } from "../services/sellerListingService";
 import { formatPrice } from "../utils/formatPrice";
+import { inspectionService } from "../services/inspectionService";
 
 const statusStyleMap = {
   ACTIVE: { backgroundColor: "#ecfdf3", color: "#067647", border: "#abefc6" },
@@ -13,12 +14,19 @@ const statusStyleMap = {
   REJECTED: { backgroundColor: "#fef3f2", color: "#b42318", border: "#fecdca" },
 };
 
+const inspectionStatusStyleMap = {
+  PASSED: { backgroundColor: "#ecfdf3", color: "#027a48", border: "#abefc6", label: "Đã kiểm định" },
+  FAILED: { backgroundColor: "#fef3f2", color: "#b42318", border: "#fecdca", label: "Không đạt" },
+  REQUESTED: { backgroundColor: "#eff8ff", color: "#175cd3", border: "#b2ddff", label: "Đang chờ" },
+};
+
 function SellerDashboardPage() {
   const navigate = useNavigate();
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState(null);
+  const [requestingId, setRequestingId] = useState(null);
 
   const sortedListings = useMemo(
     () =>
@@ -64,6 +72,20 @@ function SellerDashboardPage() {
       setError("Khong the xoa bai dang. Vui long thu lai.");
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleRequestInspection = async (listingId) => {
+    try {
+      setRequestingId(listingId);
+      await inspectionService.request(listingId);
+      // Refresh list to show new status
+      await loadMyListings();
+      alert("Đã gửi yêu cầu kiểm định thành công!");
+    } catch (err) {
+      setError(err?.response?.data?.message || "Không thể yêu cầu kiểm định.");
+    } finally {
+      setRequestingId(null);
     }
   };
 
@@ -156,6 +178,7 @@ function SellerDashboardPage() {
                 <th style={thStyle}>Title</th>
                 <th style={thStyle}>Price</th>
                 <th style={thStyle}>Status</th>
+                <th style={thStyle}>Inspection</th>
                 <th style={thStyle}>Created Date</th>
                 <th style={thStyle}>Actions</th>
               </tr>
@@ -187,6 +210,39 @@ function SellerDashboardPage() {
                       >
                         {listing.status || "UNKNOWN"}
                       </span>
+                    </td>
+                    <td style={tdStyle}>
+                      {listing.inspectionStatus ? (
+                        <span
+                          style={{
+                            display: "inline-block",
+                            padding: "4px 8px",
+                            borderRadius: "999px",
+                            border: `1px solid ${inspectionStatusStyleMap[listing.inspectionStatus]?.border || "#d0d5dd"}`,
+                            backgroundColor: inspectionStatusStyleMap[listing.inspectionStatus]?.backgroundColor || "#f2f4f7",
+                            color: inspectionStatusStyleMap[listing.inspectionStatus]?.color || "#344054",
+                            fontSize: "0.82rem",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {inspectionStatusStyleMap[listing.inspectionStatus]?.label || listing.inspectionStatus}
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleRequestInspection(listing.id)}
+                          disabled={requestingId === listing.id}
+                          style={{
+                            ...secondaryBtnStyle,
+                            fontSize: "0.82rem",
+                            padding: "4px 8px",
+                            backgroundColor: "#f9fafb",
+                            borderColor: "#d0d5dd"
+                          }}
+                        >
+                          {requestingId === listing.id ? "Đang gửi..." : "Yêu cầu kiểm định"}
+                        </button>
+                      )}
                     </td>
                     <td style={tdStyle}>
                       {listing.createdAt

@@ -254,9 +254,9 @@ function BikeDetailPage() {
           </p>
 
           <div className="bike-badges">
-            {listing.inspectionStatus && (
+            {listing.inspectionStatus === 'PASSED' && (
               <span className="badge-detail badge-inspected">
-                ✓ Đã kiểm định: {inspectionMap[listing.inspectionStatus] || listing.inspectionStatus}
+                ✓ Đã kiểm định: ĐẠT
               </span>
             )}
             {listing.condition && (
