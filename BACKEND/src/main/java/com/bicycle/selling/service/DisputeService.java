@@ -7,6 +7,7 @@ import com.bicycle.selling.repository.*;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,6 +23,7 @@ public class DisputeService {
     // ==============================
     // Buyer mở tranh chấp
     // ==============================
+    @Transactional
     public DisputeResponse createDispute(CreateDisputeRequest request, Long userId) {
         Order order = orderRepository.findById(request.getOrderId())
                 .orElseThrow(() -> new RuntimeException("Order not found"));
@@ -55,6 +57,7 @@ public class DisputeService {
     // ==============================
     // Admin nhận xử lý
     // ==============================
+    @Transactional
     public DisputeResponse takeDispute(Long disputeId, Long adminId) {
         Dispute dispute = getEntity(disputeId);
 
@@ -74,6 +77,7 @@ public class DisputeService {
     // ==============================
     // Resolve dispute
     // ==============================
+    @Transactional
     public DisputeResponse resolveDispute(
             Long disputeId,
             ResolveDisputeRequest request,
@@ -95,6 +99,7 @@ public class DisputeService {
     // ==============================
     // Close dispute
     // ==============================
+    @Transactional
     public DisputeResponse closeDispute(Long disputeId) {
         Dispute dispute = getEntity(disputeId);
 
@@ -106,6 +111,7 @@ public class DisputeService {
     // ==============================
     // Get by id
     // ==============================
+    @Transactional(readOnly = true)
     public DisputeResponse getById(Long id) {
         return mapToResponse(getEntity(id));
     }
@@ -113,6 +119,7 @@ public class DisputeService {
     // ==============================
     // Get all
     // ==============================
+    @Transactional(readOnly = true)
     public List<DisputeResponse> getAll() {
         return disputeRepository.findAll()
                 .stream()

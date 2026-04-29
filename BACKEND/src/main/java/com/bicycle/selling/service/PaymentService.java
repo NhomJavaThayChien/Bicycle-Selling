@@ -138,14 +138,16 @@ public class PaymentService {
                 throw new RuntimeException("Access denied: only the buyer of this order can payment");
             }
 
-            BigDecimal amount = order.getAgreedPrice();
+            BigDecimal amount = order.getAgreedPrice().subtract(
+                    order.getDepositAmount() != null ? order.getDepositAmount() : BigDecimal.ZERO
+            );
 
             if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new IllegalArgumentException("Invalid deposit amount");
+                throw new IllegalArgumentException("Số tiền còn lại không hợp lệ");
             }
 
-            if (order.getStatus() != OrderStatus.PENDING) {
-                throw new IllegalStateException("Order is not in a valid state for full paid");
+            if (order.getStatus() != OrderStatus.DEPOSIT_PAID) {
+                throw new IllegalStateException("Đơn hàng phải ở trạng thái ĐÃ ĐẶT CỌC mới có thể thanh toán phần còn lại");
             }
 
             Session checkoutSession = stripeService.createCheckoutSession(amount, currency, orderId, false);
