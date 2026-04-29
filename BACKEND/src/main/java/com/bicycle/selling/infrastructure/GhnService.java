@@ -5,6 +5,8 @@ import com.bicycle.selling.dto.GhnProvince;
 import com.bicycle.selling.dto.GhnResponse;
 import com.bicycle.selling.dto.GhnWard;
 import com.bicycle.selling.model.BicycleListing;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -13,7 +15,6 @@ import java.util.Map;
 
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -27,7 +28,6 @@ import org.springframework.web.client.RestTemplate;
 public class GhnService {
     // GHN API integration for fetching provinces, districts, and wards
     @Autowired
-    @Qualifier("ghnRestTemplate")
     private RestTemplate restTemplate;
 
     // Default dimensions and weight for bike shipments
@@ -228,8 +228,13 @@ public class GhnService {
             throw new RuntimeException("Invalid GHN response: data is not a map");
         }
 
-        Map<String, Object> data = (Map<String, Object>) dataObj;
+        ObjectMapper mapper = new ObjectMapper();
 
+        Map<String, Object> data = mapper.convertValue(
+                dataObj,
+                new TypeReference<Map<String, Object>>() {
+                });
+        
         System.out.println("GHN API response data: " + data);
 
         Object feeObj = data.get("total");
@@ -314,7 +319,12 @@ public class GhnService {
             throw new RuntimeException("Failed to create GHN order");
         }
 
-        Map<String, Object> data = (Map<String, Object>) responseBody.get("data");
+        ObjectMapper mapper = new ObjectMapper();
+        
+        Map<String, Object> data = mapper.convertValue(
+                responseBody.get("data"),
+                new TypeReference<Map<String, Object>>() {
+                });
 
         String orderCode = (String) data.get("order_code");
         Number totalFee = (Number) data.get("total_fee");
