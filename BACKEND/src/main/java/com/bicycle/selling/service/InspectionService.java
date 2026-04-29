@@ -83,7 +83,14 @@ public class InspectionService {
                     listingRepository.save(listing);
                 }
             } else {
+                // Nếu như điểm trung bình dưới 7, coi như failed và reject listing
                 report.setStatus(InspectionStatus.FAILED);
+                BicycleListing listing = report.getListing();
+                if (listing != null) {
+                    listing.setInspected(false);
+                    listing.setStatus(com.bicycle.selling.model.enums.ListingStatus.REJECTED);
+                    listingRepository.save(listing);
+                }
             }
 
             report.setInspector(inspector);
