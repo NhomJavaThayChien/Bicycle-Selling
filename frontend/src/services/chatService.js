@@ -75,6 +75,23 @@ export const createOrGetConversation = async ({
   return payload;
 };
 
+export const getUserConversations = async () => {
+  const response = await api.get("/conservation");
+  const conversations = response.data || [];
+  
+  // Cập nhật cache từ dữ liệu backend
+  conversations.forEach(convo => {
+    upsertCachedConversation({
+      conversationId: convo.conversationId,
+      otherUserId: convo.otherUserId,
+      otherUsername: convo.otherUsername,
+      updatedAt: new Date().toISOString(), // Hoặc lấy từ backend nếu có
+    });
+  });
+  
+  return conversations;
+};
+
 export const getMessages = (conversationId) =>
   api.get(`/chat/conversations/${conversationId}/messages`);
 

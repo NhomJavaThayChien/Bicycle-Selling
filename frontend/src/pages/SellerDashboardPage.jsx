@@ -108,21 +108,38 @@ function SellerDashboardPage() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => navigate("/seller/create")}
-          style={{
-            border: "none",
-            borderRadius: "8px",
-            padding: "10px 14px",
-            backgroundColor: "#0c6cf2",
-            color: "#fff",
-            fontWeight: 600,
-            cursor: "pointer",
-          }}
-        >
-          Create New Listing
-        </button>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button
+            type="button"
+            onClick={() => navigate("/inbox")}
+            style={{
+              border: "1px solid #d0d5dd",
+              borderRadius: "8px",
+              padding: "10px 14px",
+              backgroundColor: "#fff",
+              color: "#344054",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            Messages
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/seller/create")}
+            style={{
+              border: "none",
+              borderRadius: "8px",
+              padding: "10px 14px",
+              backgroundColor: "#0c6cf2",
+              color: "#fff",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            Create New Listing
+          </button>
+        </div>
       </section>
 
       {error && (

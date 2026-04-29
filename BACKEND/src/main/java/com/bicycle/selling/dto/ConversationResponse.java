@@ -9,6 +9,7 @@ public class ConversationResponse {
     private Long conversationId;
     private Long buyerId;
     private Long sellerId;
-    private String buyerUsername;
-    private String buyerAvatarUrl;
+    private Long otherUserId;
+    private String otherUsername;
+    private String otherAvatarUrl;
 }

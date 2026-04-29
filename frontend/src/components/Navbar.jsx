@@ -58,6 +58,14 @@ function Navbar() {
         >
           Profile
         </NavLink>
+        <NavLink
+          to="/inbox"
+          className={({ isActive }) =>
+            isActive ? "nav-link active" : "nav-link"
+          }
+        >
+          Inbox
+        </NavLink>
         {user?.role === "SELLER" && (
           <NavLink
             to="/seller/dashboard"

@@ -25,6 +25,7 @@ import { motion } from "framer-motion";
 import useAuth from "../hooks/useAuth";
 import {
   getCachedConversations,
+  getUserConversations,
   getMessages,
   upsertCachedConversation,
 } from "../services/chatService";
@@ -44,6 +45,9 @@ export default function InboxPage() {
     else setLoading(true);
 
     try {
+      // Đầu tiên lấy từ backend để đồng bộ những cuộc hội thoại mới (ví dụ người khác nhắn cho mình)
+      await getUserConversations();
+      
       const cachedItems = getCachedConversations();
 
       const enrichedItems = await Promise.all(
