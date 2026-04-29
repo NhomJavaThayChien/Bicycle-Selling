@@ -22,6 +22,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                     o.buyer.id,
                     o.listing.id,
                     o.agreedPrice,
+                    o.shippingFee,
                     o.status
                 )
                 FROM Order o
@@ -35,6 +36,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                     o.buyer.id,
                     o.listing.id,
                     o.agreedPrice,
+                    o.shippingFee,
                     o.status
                 )
                 FROM Order o

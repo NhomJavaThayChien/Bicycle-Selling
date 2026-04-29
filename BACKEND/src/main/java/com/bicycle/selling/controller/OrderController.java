@@ -37,6 +37,7 @@ public class OrderController {
                 order.getBuyer().getId(),
                 order.getListing().getId(),
                 order.getAgreedPrice(),
+                order.getShippingFee(),
                 order.getStatus().name());
 
         return response;
@@ -58,12 +59,13 @@ public class OrderController {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
             }
 
-            OrderResponse response = new OrderResponse(
-                    order.getId(),
-                    order.getBuyer().getId(),
-                    order.getListing().getId(),
-                    order.getAgreedPrice(),
-                    order.getStatus().name());
+        OrderResponse response = new OrderResponse(
+                order.getId(),
+                order.getBuyer().getId(),
+                order.getListing().getId(),
+                order.getAgreedPrice(),
+                order.getShippingFee(),
+                order.getStatus().name());
 
         return response;
     }

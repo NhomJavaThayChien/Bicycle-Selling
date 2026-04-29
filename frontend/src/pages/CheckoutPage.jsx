@@ -183,21 +183,21 @@ export default function CheckoutPage() {
 
       const orderRes = await createOrder({
         listingId: listing.id,
-        agreedPrice: listing.price,
+        agreedPrice: listing.price,    // Giá xe gốc (backend dùng để tính deposit 20%)
+        shippingFee: shippingFee || 0, // Phí ship được tính từ GHN
         shippingAddress,
         note: values.note,
-        // paymentMethod không được gửi vào createOrder — backend không dùng field này
-        // Payment method được xử lý riêng ở bước sau
       });
 
       const orderId = orderRes.data?.id;
+      if (!orderId) throw new Error("Không nhận được ID đơn hàng từ server.");
+
       if (values.paymentMethod === "STRIPE") {
         const payRes = await createDepositPayment(orderId);
         const stripeUrl = payRes.data?.checkoutSession;
-        if (stripeUrl) {
-          window.location.href = stripeUrl;
-          return;
-        }
+        if (!stripeUrl) throw new Error("Không nhận được URL thanh toán từ Stripe.");
+        window.location.href = stripeUrl;
+        return;
       } else {
         await createCashPayment(orderId);
       }
@@ -217,6 +217,8 @@ export default function CheckoutPage() {
     </div>
   );
 
+  // Deposit = 20% giá xe (backend tính theo agreedPrice, KHÔNG bao gồm ship)
+  const depositAmount = Math.round((listing?.price || 0) * 0.2);
   const totalAmount = (listing?.price || 0) + (shippingFee || 0);
 
   return (
@@ -388,7 +390,7 @@ export default function CheckoutPage() {
                       getFieldValue("paymentMethod") === "STRIPE" ? (
                         <div style={{ background: "#fff7e6", border: "1px solid #ffd591", borderRadius: 8, padding: "10px 14px", marginBottom: 16 }}>
                           <Text style={{ fontSize: 13, color: "#d48806" }}>
-                            ⚠️ Stripe sẽ thu <strong>{formatPrice(Math.round(totalAmount * 0.2))}</strong> (20% đặt cọc). Phần còn lại thanh toán khi nhận hàng.
+                            ⚠️ Stripe sẽ thu <strong>{formatPrice(depositAmount)}</strong> (20% giá xe đặt cọc). Phí ship <strong>{shippingFee !== null ? formatPrice(shippingFee) : "chưa tính"}</strong> thanh toán khi nhận hàng.
                           </Text>
                         </div>
                       ) : null

@@ -41,6 +41,10 @@ public class Order {
     @Builder.Default
     private BigDecimal depositAmount = BigDecimal.ZERO;
 
+    @Column(name = "shipping_fee", columnDefinition = "DECIMAL(12,0)")
+    @Builder.Default
+    private BigDecimal shippingFee = BigDecimal.ZERO;
+
     // Ghi chú của buyer
     @Column(columnDefinition = "TEXT")
     private String note;

@@ -65,6 +65,7 @@ public class OrderService {
                 .listing(listing)
                 .agreedPrice(agreedPrice)
                 .depositAmount(deposit)
+                .shippingFee(request.getShippingFee() != null ? request.getShippingFee() : BigDecimal.ZERO)
                 .note(request.getNote())
                 .shippingAddress(request.getShippingAddress())
                 .build();
