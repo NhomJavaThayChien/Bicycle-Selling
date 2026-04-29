@@ -13,10 +13,9 @@ import org.apache.hc.core5.util.Timeout;
 @Configuration
 public class RestTemplateConfig {
 
-    @Bean(name = "ghnRestTemplate")
+    @Bean
     public RestTemplate ghnRestTemplate() {
-
-        RequestConfig requestConfig = RequestConfig.custom()
+         RequestConfig requestConfig = RequestConfig.custom()
                 .setResponseTimeout(Timeout.ofSeconds(5))
                 .setConnectionRequestTimeout(Timeout.ofSeconds(3))
                 .build();
@@ -25,10 +24,10 @@ public class RestTemplateConfig {
                 .setDefaultRequestConfig(requestConfig)
                 .build();
 
-        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(client);
+        HttpComponentsClientHttpRequestFactory factory =
+                new HttpComponentsClientHttpRequestFactory(client);
 
         factory.setConnectionRequestTimeout(3000);
-
         return new RestTemplate(factory);
     }
 }
