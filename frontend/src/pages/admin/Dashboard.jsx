@@ -84,6 +84,7 @@ export default function Dashboard() {
     {
       title: "Người dùng",
       value: stats?.totalUsers || 0,
+      subtitle: "Tổng tài khoản đã đăng ký",
       icon: <Users size={24} />,
       color: "#1890ff",
       bg: "linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%)"
@@ -91,13 +92,15 @@ export default function Dashboard() {
     {
       title: "Đơn hàng",
       value: stats?.totalOrders || 0,
+      subtitle: "Tổng số đơn đã tạo",
       icon: <ShoppingCart size={24} />,
       color: "#52c41a",
       bg: "linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%)"
     },
     {
-      title: "Doanh thu",
-      value: (stats?.totalRevenue || 0).toLocaleString() + " đ",
+      title: "Doanh thu thực thu",
+      value: (stats?.totalRevenue || 0).toLocaleString("vi-VN") + " đ",
+      subtitle: "Tiền đã nhận từ Stripe",
       icon: <DollarSign size={24} />,
       color: "#faad14",
       bg: "linear-gradient(135deg, #fffbe6 0%, #fff1b8 100%)"
@@ -105,6 +108,7 @@ export default function Dashboard() {
     {
       title: "Tranh chấp",
       value: stats?.totalDisputes || 0,
+      subtitle: "Tổng số tranh chấp",
       icon: <AlertCircle size={24} />,
       color: "#f5222d",
       bg: "linear-gradient(135deg, #fff1f0 0%, #ffccc7 100%)"
@@ -190,8 +194,11 @@ export default function Dashboard() {
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
-                    <Text type="secondary" style={{ fontSize: 14, textTransform: "uppercase", fontWeight: 600 }}>{card.title}</Text>
+                    <Text type="secondary" style={{ fontSize: 12, textTransform: "uppercase", fontWeight: 600 }}>{card.title}</Text>
                     <div style={{ fontSize: 24, fontWeight: 700, marginTop: 4 }}>{card.value}</div>
+                    {card.subtitle && (
+                      <Text type="secondary" style={{ fontSize: 11, marginTop: 2 }}>{card.subtitle}</Text>
+                    )}
                   </div>
                   <div style={{ 
                     width: 48, 

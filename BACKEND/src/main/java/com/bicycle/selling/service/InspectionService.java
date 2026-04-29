@@ -79,6 +79,7 @@ public class InspectionService {
                 BicycleListing listing = report.getListing();
                 if (listing != null) {
                     listing.setInspected(true);
+                    listing.setStatus(com.bicycle.selling.model.enums.ListingStatus.APPROVED);
                     listingRepository.save(listing);
                 }
             } else {

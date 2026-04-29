@@ -49,6 +49,29 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             """)
     Double getTotalRevenue();
 
+    // Tính tiền thực đã thu từ Stripe:
+    // - DEPOSIT_PAID: chỉ thu 20%
+    // - FULL_PAID / CONFIRMED / SHIPPING / COMPLETED: thu 100%
+    @Query("""
+                SELECT COALESCE(
+                    SUM(
+                        CASE
+                            WHEN o.status = com.bicycle.selling.model.enums.OrderStatus.DEPOSIT_PAID
+                                THEN o.agreedPrice * 0.2
+                            ELSE o.agreedPrice
+                        END
+                    ), 0)
+                FROM Order o
+                WHERE o.status IN (
+                    com.bicycle.selling.model.enums.OrderStatus.DEPOSIT_PAID,
+                    com.bicycle.selling.model.enums.OrderStatus.FULL_PAID,
+                    com.bicycle.selling.model.enums.OrderStatus.CONFIRMED,
+                    com.bicycle.selling.model.enums.OrderStatus.SHIPPING,
+                    com.bicycle.selling.model.enums.OrderStatus.COMPLETED
+                )
+            """)
+    Double getTotalCollectedRevenue();
+
     @Query("""
                 SELECT FUNCTION('DATE', o.createdAt) as date, COUNT(o) as total
                 FROM Order o

@@ -16,7 +16,7 @@ function BikeListPage() {
   const [selectedBrand, setSelectedBrand] = useState("ALL");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [selectedCondition, setSelectedCondition] = useState("all");
-  const [priceRange, setPriceRange] = useState({ min: 0, max: 20000000 });
+  const [priceRange, setPriceRange] = useState({ min: 0, max: 500000000 });
   const [sortBy, setSortBy] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
@@ -55,7 +55,7 @@ function BikeListPage() {
           condition:
             selectedCondition !== "all" ? selectedCondition : undefined,
           priceMin: priceRange.min > 0 ? priceRange.min : undefined,
-          priceMax: priceRange.max < 20000000 ? priceRange.max : undefined,
+          priceMax: priceRange.max < 500000000 ? priceRange.max : undefined,
           sortBy: sortConfig.sortBy,
           sortDir: sortConfig.sortDir,
           page: 0,
@@ -144,7 +144,7 @@ function BikeListPage() {
     setSelectedBrand("ALL");
     setSelectedCategory("ALL");
     setSelectedCondition("all");
-    setPriceRange({ min: 0, max: 20000000 });
+    setPriceRange({ min: 0, max: 500000000 });
     setSortBy("newest");
     setCurrentPage(1);
   };
@@ -225,7 +225,7 @@ function BikeListPage() {
             />
           </div>
           <span className="price-display">
-            {`${priceRange.min.toLocaleString()} - ${priceRange.max.toLocaleString()} VND`}
+            {`${priceRange.min.toLocaleString()} - ${priceRange.max.toLocaleString()} ₫`}
           </span>
         </div>
 

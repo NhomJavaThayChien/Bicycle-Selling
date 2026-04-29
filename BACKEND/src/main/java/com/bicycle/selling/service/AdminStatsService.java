@@ -17,9 +17,12 @@ public class AdminStatsService {
 
     public AdminDashboardResponse getDashboard() {
         return AdminDashboardResponse.builder()
+                // Đếm toàn bộ user đã đăng ký trong bảng users
                 .totalUsers(userRepository.count())
                 .totalOrders(orderRepository.count())
-                .totalRevenue(orderRepository.getTotalRevenue() != null ? orderRepository.getTotalRevenue() : 0.0)
+                // Tiền đã thu thực tế từ Stripe (DEPOSIT×20% + phần còn lại×100%)
+                .totalRevenue(orderRepository.getTotalCollectedRevenue() != null
+                        ? orderRepository.getTotalCollectedRevenue() : 0.0)
                 .totalDisputes(disputeRepository.count())
                 .build();
     }

@@ -1,153 +1,202 @@
-import React from "react";
-import { Card, Row, Col, Typography } from "antd";
+import React, { useEffect, useState } from "react";
+import { Card, Row, Col, Typography, Spin, Alert, Radio } from "antd";
 import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
+  BarChart, Bar,
+  LineChart, Line,
+  XAxis, YAxis,
+  CartesianGrid, Tooltip,
+  Legend, ResponsiveContainer,
 } from "recharts";
+import API from "../../services/api";
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
-// Mock data: Số xe đăng theo tuần (trong tháng)
-const bikePostData = [
-  { week: "Tuần 1", bikes: 45 },
-  { week: "Tuần 2", bikes: 52 },
-  { week: "Tuần 3", bikes: 38 },
-  { week: "Tuần 4", bikes: 65 },
-];
+// Gộp dữ liệu đơn hàng theo tuần
+const groupByWeek = (data) => {
+  const weeks = {};
+  data.forEach(({ date, count }) => {
+    const d = new Date(date);
+    // Tuần 1-4 trong tháng
+    const week = `Tuần ${Math.ceil(d.getDate() / 7)}`;
+    weeks[week] = (weeks[week] || 0) + Number(count);
+  });
+  return Object.entries(weeks)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([week, bikes]) => ({ week, bikes }));
+};
 
-// Mock data: Doanh thu theo tháng (triệu VNĐ)
-const revenueData = [
-  { month: "Thg 1", revenue: 120 },
-  { month: "Thg 2", revenue: 150 },
-  { month: "Thg 3", revenue: 180 },
-  { month: "Thg 4", revenue: 210 },
-  { month: "Thg 5", revenue: 190 },
-  { month: "Thg 6", revenue: 250 },
-];
+// Gộp doanh thu theo tháng
+const groupByMonth = (data) => {
+  const months = {};
+  data.forEach(({ date, revenue }) => {
+    const d = new Date(date);
+    const key = `Thg ${d.getMonth() + 1}/${d.getFullYear()}`;
+    months[key] = (months[key] || 0) + Number(revenue);
+  });
+  return Object.entries(months)
+    .sort(([a], [b]) => {
+      // Sort by year then month
+      const [ma, ya] = a.replace("Thg ", "").split("/").map(Number);
+      const [mb, yb] = b.replace("Thg ", "").split("/").map(Number);
+      return ya !== yb ? ya - yb : ma - mb;
+    })
+    .map(([month, revenue]) => ({
+      month: month.split("/")[0], // Chỉ hiện "Thg X"
+      revenue: Math.round(revenue / 1_000_000), // Đổi sang Triệu VNĐ
+    }));
+};
 
 const StatisticsReport = () => {
+  const [orderData, setOrderData]     = useState([]);
+  const [revenueData, setRevenueData] = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState("");
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const [orderRes, revenueRes] = await Promise.all([
+          API.get("/admin/stats/orders-chart"),
+          API.get("/admin/stats/revenue-chart"),
+        ]);
+        setOrderData(groupByWeek(orderRes.data || []));
+        setRevenueData(groupByMonth(revenueRes.data || []));
+      } catch (err) {
+        console.error(err);
+        setError("Không thể tải dữ liệu thống kê. Vui lòng thử lại.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  const tooltipStyle = {
+    borderRadius: "8px",
+    border: "none",
+    boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+  };
+
+  if (loading) {
+    return (
+      <div style={{ padding: 24, display: "flex", justifyContent: "center", alignItems: "center", minHeight: 400 }}>
+        <Spin size="large" tip="Đang tải dữ liệu thống kê..." />
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: "24px" }}>
-      <Title level={3} style={{ marginBottom: "24px", color: "#1f2937" }}>
-        Báo Cáo Thống Kê
-      </Title>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <Title level={3} style={{ margin: 0, color: "#1f2937" }}>
+          Báo Cáo Thống Kê
+        </Title>
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          Dữ liệu thực từ hệ thống
+        </Text>
+      </div>
+
+      {error && (
+        <Alert
+          type="error"
+          message={error}
+          showIcon
+          style={{ marginBottom: 24 }}
+        />
+      )}
 
       <Row gutter={[24, 24]}>
-        {/* Biểu đồ số xe đăng */}
+        {/* Biểu đồ số xe đăng theo tuần */}
         <Col xs={24} lg={12}>
           <Card
-            title="Số xe đăng theo tuần"
+            title={
+              <span>
+                Số đơn hàng theo tuần
+                <Text type="secondary" style={{ fontSize: 11, marginLeft: 8 }}>
+                  (tháng hiện tại)
+                </Text>
+              </span>
+            }
             variant="borderless"
-            style={{
-              boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
-              borderRadius: "10px",
-            }}
+            style={{ boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)", borderRadius: 10 }}
           >
-            <div style={{ width: "100%", height: 350 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={bikePostData}
-                  margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke="#e5e7eb"
-                  />
-                  <XAxis
-                    dataKey="week"
-                    tick={{ fill: "#6b7280" }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fill: "#6b7280" }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: "8px",
-                      border: "none",
-                      boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-                    }}
-                    formatter={(value) => [`${value} xe`, "Số lượng"]}
-                  />
-                  <Legend wrapperStyle={{ paddingTop: "20px" }} />
-                  <Bar
-                    dataKey="bikes"
-                    name="Số lượng xe đăng mới"
-                    fill="#3b82f6"
-                    radius={[6, 6, 0, 0]}
-                    barSize={40}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {orderData.length === 0 ? (
+              <div style={{ height: 350, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Text type="secondary">Chưa có dữ liệu</Text>
+              </div>
+            ) : (
+              <div style={{ width: "100%", height: 350 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={orderData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                    <XAxis dataKey="week" tick={{ fill: "#6b7280" }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: "#6b7280" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} đơn`, "Số đơn"]} />
+                    <Legend wrapperStyle={{ paddingTop: 20 }} />
+                    <Bar
+                      dataKey="bikes"
+                      name="Số đơn hàng"
+                      fill="#3b82f6"
+                      radius={[6, 6, 0, 0]}
+                      barSize={40}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </Card>
         </Col>
 
-        {/* Biểu đồ doanh thu */}
+        {/* Biểu đồ doanh thu theo tháng */}
         <Col xs={24} lg={12}>
           <Card
-            title="Doanh thu theo tháng (Triệu VNĐ)"
+            title={
+              <span>
+                Doanh thu theo tháng
+                <Text type="secondary" style={{ fontSize: 11, marginLeft: 8 }}>
+                  (Triệu VNĐ, tiền đã thu thực tế)
+                </Text>
+              </span>
+            }
             variant="borderless"
-            style={{
-              boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
-              borderRadius: "10px",
-            }}
+            style={{ boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)", borderRadius: 10 }}
           >
-            <div style={{ width: "100%", height: 350 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={revenueData}
-                  margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke="#e5e7eb"
-                  />
-                  <XAxis
-                    dataKey="month"
-                    tick={{ fill: "#6b7280" }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fill: "#6b7280" }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: "8px",
-                      border: "none",
-                      boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-                    }}
-                    formatter={(value) => [`${value} Tr VNĐ`, "Doanh thu"]}
-                  />
-                  <Legend wrapperStyle={{ paddingTop: "20px" }} />
-                  <Line
-                    type="monotone"
-                    dataKey="revenue"
-                    name="Doanh thu"
-                    stroke="#10b981"
-                    strokeWidth={4}
-                    dot={{ r: 4, strokeWidth: 2, fill: "#fff" }}
-                    activeDot={{ r: 8 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            {revenueData.length === 0 ? (
+              <div style={{ height: 350, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Text type="secondary">Chưa có dữ liệu doanh thu</Text>
+              </div>
+            ) : (
+              <div style={{ width: "100%", height: 350 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={revenueData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                    <XAxis dataKey="month" tick={{ fill: "#6b7280" }} axisLine={false} tickLine={false} />
+                    <YAxis
+                      tick={{ fill: "#6b7280" }}
+                      axisLine={false}
+                      tickLine={false}
+                      tickFormatter={(v) => `${v}M`}
+                    />
+                    <Tooltip
+                      contentStyle={tooltipStyle}
+                      formatter={(v) => [`${v} Triệu VNĐ`, "Doanh thu"]}
+                    />
+                    <Legend wrapperStyle={{ paddingTop: 20 }} />
+                    <Line
+                      type="monotone"
+                      dataKey="revenue"
+                      name="Doanh thu"
+                      stroke="#10b981"
+                      strokeWidth={3}
+                      dot={{ r: 4, strokeWidth: 2, fill: "#fff" }}
+                      activeDot={{ r: 8 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </Card>
         </Col>
       </Row>

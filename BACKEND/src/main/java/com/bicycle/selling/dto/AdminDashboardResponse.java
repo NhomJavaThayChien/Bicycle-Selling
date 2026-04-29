@@ -7,8 +7,8 @@ import lombok.Data;
 @Builder
 public class AdminDashboardResponse {
 
-    private long totalUsers;
-    private long totalOrders;
-    private double totalRevenue;
+    private long totalUsers;        // Tất cả user đã đăng ký trong bảng users
+    private long totalOrders;       // Tất cả đơn hàng
+    private double totalRevenue;    // Tiền đã thu thực tế (DEPOSIT_PAID×20% + còn lại×100%)
     private long totalDisputes;
 }

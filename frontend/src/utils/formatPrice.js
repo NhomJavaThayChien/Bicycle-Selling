@@ -1,10 +1,12 @@
 export const formatPrice = (value) => {
-  if (typeof value !== 'number') {
-    return '0 VND';
+  const numericValue = typeof value === 'string' ? parseFloat(value) : value;
+
+  if (isNaN(numericValue) || numericValue === null || numericValue === undefined) {
+    return '0 ₫';
   }
 
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency',
     currency: 'VND',
-  }).format(value);
+  }).format(numericValue);
 };
