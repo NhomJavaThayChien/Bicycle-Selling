@@ -8,14 +8,21 @@ import { createReview } from "../services/reviewService";
 import { formatPrice } from "../utils/formatPrice";
 
 const statusStyleMap = {
-  PENDING: { background: "#fffaeb", color: "#b54708", border: "#fedf89" },
-  DEPOSIT_PAID: { background: "#eef4ff", color: "#3538cd", border: "#c7d7fe" },
-  FULL_PAID: { background: "#ecfdf3", color: "#067647", border: "#abefc6" },
-  CONFIRMED: { background: "#ecfdf3", color: "#027a48", border: "#a6f4c5" },
-  SHIPPING: { background: "#eff8ff", color: "#175cd3", border: "#b2ddff" },
-  COMPLETED: { background: "#ecfdf3", color: "#027a48", border: "#abefc6" },
-  CANCELLED: { background: "#fef3f2", color: "#b42318", border: "#fecdca" },
-  DISPUTED: { background: "#f4f3ff", color: "#5925dc", border: "#d9d6fe" },
+  PENDING: { background: "#fffaeb", color: "#b54708", border: "#fedf89", label: "Chờ xác nhận" },
+  DEPOSIT_PAID: { background: "#eef4ff", color: "#3538cd", border: "#c7d7fe", label: "Đã đặt cọc" },
+  FULL_PAID: { background: "#ecfdf3", color: "#067647", border: "#abefc6", label: "Đã thanh toán" },
+  CONFIRMED: { background: "#ecfdf3", color: "#027a48", border: "#a6f4c5", label: "Đã xác nhận" },
+  SHIPPING: { background: "#eff8ff", color: "#175cd3", border: "#b2ddff", label: "Đang giao hàng" },
+  COMPLETED: { background: "#ecfdf3", color: "#027a48", border: "#abefc6", label: "Hoàn thành" },
+  CANCELLED: { background: "#fef3f2", color: "#b42318", border: "#fecdca", label: "Đã hủy" },
+  DISPUTED: { background: "#f4f3ff", color: "#5925dc", border: "#d9d6fe", label: "Tranh chấp" },
+};
+
+const getStatusInfo = (status) => statusStyleMap[status] || {
+  background: "#f2f4f7",
+  color: "#344054",
+  border: "#d0d5dd",
+  label: status
 };
 
 function OrderHistoryPage() {
@@ -300,7 +307,7 @@ function OrderHistoryPage() {
                       fontWeight: 700,
                     }}
                   >
-                    {order.status}
+                    {getStatusInfo(order.status).label}
                   </span>
                 </div>
 

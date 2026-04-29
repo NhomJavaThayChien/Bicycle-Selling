@@ -40,7 +40,18 @@ function BikeCard({ bike, linkTo }) {
         )}
       </div>
       <div className="bike-card__info">
-        <h3>{title}</h3>
+        <h3 style={{ 
+          display: '-webkit-box', 
+          WebkitLineClamp: 2, 
+          WebkitBoxOrient: 'vertical', 
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          height: '2.8em',
+          lineHeight: '1.4em',
+          margin: '0 0 8px 0'
+        }}>
+          {title}
+        </h3>
         <p className="bike-card__price">{formatPrice(price)}</p>
       </div>
     </div>

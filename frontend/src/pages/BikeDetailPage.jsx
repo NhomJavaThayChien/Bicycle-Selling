@@ -12,6 +12,20 @@ import {
 } from "../services/wishlistService";
 import { formatPrice } from "../utils/formatPrice";
 
+const conditionMap = {
+  NEW: "Mới 100%",
+  LIKE_NEW: "Như mới",
+  GOOD: "Tốt",
+  FAIR: "Khá",
+  POOR: "Cũ",
+};
+
+const inspectionMap = {
+  PASSED: "ĐẠT",
+  FAILED: "KHÔNG ĐẠT",
+  REQUESTED: "ĐANG CHỜ",
+};
+
 function BikeDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -242,12 +256,12 @@ function BikeDetailPage() {
           <div className="bike-badges">
             {listing.inspectionStatus && (
               <span className="badge-detail badge-inspected">
-                ✓ Đã kiểm định: {listing.inspectionStatus}
+                ✓ Đã kiểm định: {inspectionMap[listing.inspectionStatus] || listing.inspectionStatus}
               </span>
             )}
             {listing.condition && (
               <span className="badge-detail badge-condition">
-                Tình trạng: {listing.condition}
+                Tình trạng: {conditionMap[listing.condition] || listing.condition}
               </span>
             )}
             {listing.status && (

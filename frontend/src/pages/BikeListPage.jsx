@@ -3,6 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { getListings } from "../services/bikeService";
 import BikeCard from "../components/BikeCard";
 
+const conditionMap = {
+  NEW: "Mới 100%",
+  LIKE_NEW: "Như mới",
+  GOOD: "Tốt",
+  FAIR: "Khá",
+  POOR: "Cũ",
+};
+
 function BikeListPage() {
   const navigate = useNavigate();
   const [allListings, setAllListings] = useState([]);
@@ -201,7 +209,7 @@ function BikeListPage() {
           <select value={selectedCondition} onChange={handleConditionChange}>
             {conditions.map((condition) => (
               <option key={condition} value={condition}>
-                {condition === "all" ? "Mọi tình trạng" : condition}
+                {condition === "all" ? "Mọi tình trạng" : (conditionMap[condition] || condition)}
               </option>
             ))}
           </select>
@@ -288,7 +296,7 @@ function BikeListPage() {
                   <div className="bike-meta">
                     <div className="bike-tags">
                       <span className="tag tag-location">{bike.location || 'N/A'}</span>
-                      <span className="tag tag-condition">{bike.condition}</span>
+                      <span className="tag tag-condition">{conditionMap[bike.condition] || bike.condition}</span>
                     </div>
                     <button
                       className="view-detail-btn"
