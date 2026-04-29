@@ -193,7 +193,14 @@ function SellerDashboardPage() {
 
                 return (
                   <tr key={listing.id} style={{ borderTop: "1px solid #eaecf0" }}>
-                    <td style={tdStyle}>{listing.title}</td>
+                    <td style={tdStyle}>
+                      <div>{listing.title}</div>
+                      {listing.status === 'REJECTED' && listing.rejectionReason && (
+                        <div style={{ color: '#b42318', fontSize: '0.8rem', marginTop: '4px' }}>
+                          Lý do: {listing.rejectionReason}
+                        </div>
+                      )}
+                    </td>
                     <td style={tdStyle}>{formatPrice(Number(listing.price))}</td>
                     <td style={tdStyle}>
                       <span

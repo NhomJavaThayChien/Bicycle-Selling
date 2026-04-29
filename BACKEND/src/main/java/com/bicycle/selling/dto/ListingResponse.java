@@ -46,6 +46,7 @@ public class ListingResponse {
     // Additional info
     private String additionalAccessories;
     private String reasonForSelling;
+    private String rejectionReason;
     
     // Stats
     private Integer viewCount;

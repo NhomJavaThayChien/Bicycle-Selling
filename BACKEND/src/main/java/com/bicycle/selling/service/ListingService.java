@@ -305,6 +305,7 @@ public class ListingService {
                 .location(listing.getLocation())
                 .additionalAccessories(listing.getAccessories())
                 .reasonForSelling(listing.getReasonForSelling())
+                .rejectionReason(listing.getRejectionReason())
                 .viewCount(listing.getViewCount())
                 .likeCount((int) wishlistRepository.countByListingId(listing.getId()))
                 .sellerId(seller.getId())
