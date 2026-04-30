@@ -7,7 +7,6 @@ import com.bicycle.selling.model.Payment;
 import com.bicycle.selling.model.enums.OrderStatus;
 import com.bicycle.selling.model.enums.PaymentMethod;
 import com.bicycle.selling.model.enums.PaymentStatus;
-import com.bicycle.selling.model.enums.OrderStatus;
 import com.bicycle.selling.repository.OrderRepository;
 import com.bicycle.selling.repository.PaymentRepository;
 import org.springframework.stereotype.Service;
@@ -29,7 +28,11 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
 
-    public String PaymentDeposit(Long orderId, String currency, Long requesterId) {
+    /**
+     * Tạo phiên Stripe Checkout — thanh toán toàn bộ 100% giá trị đơn hàng.
+     * Đơn hàng phải đang ở trạng thái PENDING.
+     */
+    public String createStripePayment(Long orderId, String currency, Long requesterId) {
         try {
             Order order = orderRepository.findById(orderId)
                     .orElseThrow(() -> new IllegalArgumentException("Order not found"));
@@ -37,32 +40,32 @@ public class PaymentService {
             Long buyer = order.getBuyer().getId();
 
             if (!Objects.equals(buyer, requesterId)) {
-                throw new RuntimeException("Access denied: only the buyer of this order can payment");
-            }
-
-            BigDecimal depositAmount = order.getDepositAmount();
-
-            if (depositAmount == null || depositAmount.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new IllegalArgumentException("Invalid deposit amount");
+                throw new RuntimeException("Access denied: only the buyer of this order can make a payment");
             }
 
             if (order.getStatus() != OrderStatus.PENDING) {
-                throw new IllegalStateException("Order is not in a valid state for deposit");
+                throw new IllegalStateException("Đơn hàng phải ở trạng thái PENDING để thanh toán");
             }
 
-            Session checkoutSession = stripeService.createCheckoutSession(depositAmount, currency, orderId, true);
+            BigDecimal amount = order.getAgreedPrice();
 
-            Payment depositPayment = Payment.builder()
+            if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException("Số tiền thanh toán không hợp lệ");
+            }
+
+            Session checkoutSession = stripeService.createCheckoutSession(amount, currency, orderId, false);
+
+            Payment payment = Payment.builder()
                     .order(order)
-                    .amount(depositAmount)
+                    .amount(amount)
                     .currency("VND")
                     .method(PaymentMethod.STRIPE)
                     .status(PaymentStatus.PENDING)
-                    .isDeposit(true)
+                    .isDeposit(false)
                     .paidAt(null)
                     .build();
 
-            paymentRepository.save(depositPayment);
+            paymentRepository.save(payment);
             return checkoutSession.getUrl();
         } catch (StripeException e) {
             throw new RuntimeException("Stripe error: " + e.getMessage());
@@ -103,11 +106,7 @@ public class PaymentService {
 
         Order order = payment.getOrder();
         if (order != null) {
-            if (payment.isDeposit()) {
-                order.setStatus(OrderStatus.DEPOSIT_PAID);
-            } else {
-                order.setStatus(OrderStatus.FULL_PAID);
-            }
+            order.setStatus(OrderStatus.FULL_PAID);
             orderRepository.save(order);
         }
 
@@ -127,49 +126,7 @@ public class PaymentService {
                 payment.getUpdatedAt() != null ? payment.getUpdatedAt().toString() : null);
     }
 
-    public String fullPayment(Long orderId, String currency, Long requesterId) {
-        try {
-            Order order = orderRepository.findById(orderId)
-                    .orElseThrow(() -> new IllegalArgumentException("Order not found"));
 
-            Long buyer = order.getBuyer().getId();
-            
-            if (!Objects.equals(buyer, requesterId)) {
-                throw new RuntimeException("Access denied: only the buyer of this order can payment");
-            }
-
-            BigDecimal amount = order.getAgreedPrice().subtract(
-                    order.getDepositAmount() != null ? order.getDepositAmount() : BigDecimal.ZERO
-            );
-
-            if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new IllegalArgumentException("Số tiền còn lại không hợp lệ");
-            }
-
-            if (order.getStatus() != OrderStatus.DEPOSIT_PAID) {
-                throw new IllegalStateException("Đơn hàng phải ở trạng thái ĐÃ ĐẶT CỌC mới có thể thanh toán phần còn lại");
-            }
-
-            Session checkoutSession = stripeService.createCheckoutSession(amount, currency, orderId, false);
-
-            Payment fullPaid = Payment.builder()
-                    .order(order)
-                    .amount(amount)
-                    .currency("VND")
-                    .method(PaymentMethod.STRIPE)
-                    .status(PaymentStatus.PENDING)
-                    .isDeposit(false)
-                    .paidAt(null)
-                    .build();
-
-            paymentRepository.save(fullPaid);
-            return checkoutSession.getUrl();
-        } catch (StripeException e) {
-            throw new RuntimeException("Stripe error: " + e.getMessage());
-        } catch (Exception e) {
-            throw new RuntimeException("Error processing payment: " + e.getMessage());
-        }
-    }
 
     public PaymentResponse createCashPayment(Long orderId, String currency) {
         try {

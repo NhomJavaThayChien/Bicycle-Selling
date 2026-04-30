@@ -5,8 +5,8 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemi
 const SYSTEM_PROMPT = `Bạn là trợ lý AI của BikeMarket — nền tảng mua bán xe đạp cũ tại Việt Nam.
 Nhiệm vụ của bạn là hỗ trợ người dùng với các vấn đề liên quan đến:
 - Tìm kiếm và xem thông tin xe đạp (trang /bikes)
-- Quy trình đặt hàng và thanh toán (COD hoặc đặt cọc 20% qua Stripe)
-- Theo dõi đơn hàng (trang /orders) với các trạng thái: PENDING → DEPOSIT_PAID → CONFIRMED → SHIPPING → COMPLETED
+- Quy trình đặt hàng và thanh toán (COD hoặc thanh toán 100% qua Stripe)
+- Theo dõi đơn hàng (trang /orders) với các trạng thái: PENDING → FULL_PAID → CONFIRMED → SHIPPING → COMPLETED
 - Chat với người bán (trang /inbox)
 - Đánh giá người bán sau khi đơn hàng COMPLETED
 - Đăng bán xe đạp (trang /seller/create)
@@ -23,7 +23,7 @@ const mockReply = (question) => {
   const lower = question.toLowerCase();
 
   if (lower.includes("checkout") || lower.includes("thanh toán") || lower.includes("mua")) {
-    return "Bạn có thể vào trang Checkout, chọn COD (tiền mặt khi nhận hàng) hoặc đặt cọc 20% qua Stripe, sau đó xác nhận đặt hàng.";
+    return "Bạn có thể vào trang Checkout, chọn COD (tiền mặt khi nhận hàng) hoặc thanh toán 100% qua Stripe, sau đó xác nhận đặt hàng.";
   }
   if (lower.includes("review") || lower.includes("đánh giá")) {
     return "Bạn chỉ có thể đánh giá người bán sau khi đơn hàng đã chuyển sang trạng thái COMPLETED (đã nhận hàng).";

@@ -24,28 +24,18 @@ import lombok.RequiredArgsConstructor;
 public class PaymentController {
     final PaymentService paymentService;
 
-    @PostMapping("/deposit")
-    public PaymentStripeResponse createDepositPayment(
-        @RequestBody PaymentRequest request, 
-        @AuthenticationPrincipal UserDetailsImpl user) {
-        if (request.currency == null) {
-            request.currency = "vnd";
-        }
-        String checkoutSession = paymentService.PaymentDeposit(request.orderId, request.currency, user.getId());
-        PaymentStripeResponse response = new PaymentStripeResponse(checkoutSession);
-        return response;
-    }
-
-    @PostMapping("/full-paid")
-    public PaymentStripeResponse createFullPayment(
+    /**
+     * Tạo phiên thanh toán Stripe — trả toàn bộ 100% giá trị đơn hàng.
+     */
+    @PostMapping("/stripe")
+    public PaymentStripeResponse createStripePayment(
         @RequestBody PaymentRequest request,
         @AuthenticationPrincipal UserDetailsImpl user) {
         if (request.currency == null) {
             request.currency = "vnd";
         }
-        String checkoutSession = paymentService.fullPayment(request.orderId, request.currency, user.getId());
-        PaymentStripeResponse response = new PaymentStripeResponse(checkoutSession);
-        return response;
+        String checkoutSession = paymentService.createStripePayment(request.orderId, request.currency, user.getId());
+        return new PaymentStripeResponse(checkoutSession);
     }
 
     @PostMapping("/cash")

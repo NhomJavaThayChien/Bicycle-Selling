@@ -57,7 +57,8 @@ public class OrderService {
 
         BigDecimal agreedPrice = request.getAgreedPrice() != null ? request.getAgreedPrice() : listing.getPrice();
 
-        BigDecimal deposit = agreedPrice.multiply(BigDecimal.valueOf(0.2));
+        // Không đặt cọc — depositAmount mặc định 0
+        BigDecimal deposit = BigDecimal.ZERO;
 
         Order order = Order.builder()
                 .orderCode(generateOrderCode())
@@ -217,9 +218,8 @@ public class OrderService {
             throw new RuntimeException("Access denied: you are not the buyer of this order");
         }
 
-        // Logic check: có thể chuyển từ CONFIRMED, DEPOSIT_PAID, FULL_PAID, SHIPPING -> COMPLETED
+        // Logic check: có thể chuyển từ CONFIRMED, FULL_PAID, SHIPPING -> COMPLETED
         if (order.getStatus() != OrderStatus.CONFIRMED && 
-            order.getStatus() != OrderStatus.DEPOSIT_PAID &&
             order.getStatus() != OrderStatus.FULL_PAID &&
             order.getStatus() != OrderStatus.SHIPPING) {
             throw new RuntimeException("Order cannot be completed from status: " + order.getStatus());

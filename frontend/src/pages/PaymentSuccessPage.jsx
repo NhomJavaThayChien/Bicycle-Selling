@@ -4,18 +4,10 @@ import { getOrderById } from "../services/orderService";
 import { CheckCircle, Clock, XCircle, ShoppingBag, ArrowRight } from "lucide-react";
 
 const statusConfig = {
-  DEPOSIT_PAID: {
-    icon: <CheckCircle size={64} color="#52c41a" />,
-    title: "Đặt cọc thành công!",
-    desc: "Stripe đã ghi nhận khoản đặt cọc 20% của bạn. Người bán sẽ xác nhận đơn hàng sớm nhất.",
-    color: "#52c41a",
-    bg: "#f6ffed",
-    border: "#b7eb8f",
-  },
   FULL_PAID: {
     icon: <CheckCircle size={64} color="#1890ff" />,
-    title: "Thanh toán toàn bộ thành công!",
-    desc: "Đơn hàng đã được thanh toán đầy đủ. Vui lòng chờ xác nhận từ người bán.",
+    title: "Thanh toán thành công!",
+    desc: "Đơn hàng đã được thanh toán đầy đủ 100%. Vui lòng chờ xác nhận từ người bán.",
     color: "#1890ff",
     bg: "#e6f7ff",
     border: "#91d5ff",
@@ -63,8 +55,8 @@ function PaymentSuccessPage() {
         const res = await getOrderById(orderId);
         const status = res.data?.status;
 
-        if (status === "DEPOSIT_PAID" || status === "FULL_PAID" || status === "CONFIRMED") {
-          setOrderStatus(status === "CONFIRMED" ? "DEPOSIT_PAID" : status);
+        if (status === "FULL_PAID" || status === "CONFIRMED") {
+          setOrderStatus("FULL_PAID");
           setLoading(false);
           return;
         }

@@ -30,7 +30,7 @@ import {
 import { motion } from "framer-motion";
 import { getListingById } from "../services/bikeService";
 import { createOrder } from "../services/orderService";
-import { createCashPayment, createDepositPayment } from "../services/paymentService";
+import { createCashPayment, createStripePayment } from "../services/paymentService";
 import {
   calculateShippingFee,
   getDistricts,
@@ -193,7 +193,7 @@ export default function CheckoutPage() {
       if (!orderId) throw new Error("Không nhận được ID đơn hàng từ server.");
 
       if (values.paymentMethod === "STRIPE") {
-        const payRes = await createDepositPayment(orderId);
+        const payRes = await createStripePayment(orderId);
         const stripeUrl = payRes.data?.checkoutSession;
         if (!stripeUrl) throw new Error("Không nhận được URL thanh toán từ Stripe.");
         window.location.href = stripeUrl;
@@ -217,8 +217,6 @@ export default function CheckoutPage() {
     </div>
   );
 
-  // Deposit = 20% giá xe (backend tính theo agreedPrice, KHÔNG bao gồm ship)
-  const depositAmount = Math.round((listing?.price || 0) * 0.2);
   const totalAmount = (listing?.price || 0) + (shippingFee || 0);
 
   return (
@@ -321,8 +319,8 @@ export default function CheckoutPage() {
                             <Space align="start">
                               <CardIcon size={20} style={{ color: "#1890ff" }} />
                               <div>
-                                <div style={{ fontWeight: 600 }}>Đặt cọc qua Stripe</div>
-                                <div style={{ fontSize: 12, color: "#8c8c8c" }}>Thanh toán đặt cọc 20% qua Stripe (an toàn)</div>
+                                <div style={{ fontWeight: 600 }}>Thanh toán qua Stripe</div>
+                                <div style={{ fontSize: 12, color: "#8c8c8c" }}>Thanh toán toàn bộ 100% qua Stripe (an toàn)</div>
                               </div>
                             </Space>
                           </Radio.Button>
@@ -388,9 +386,9 @@ export default function CheckoutPage() {
                   <Form.Item noStyle shouldUpdate={(prev, cur) => prev.paymentMethod !== cur.paymentMethod}>
                     {({ getFieldValue }) =>
                       getFieldValue("paymentMethod") === "STRIPE" ? (
-                        <div style={{ background: "#fff7e6", border: "1px solid #ffd591", borderRadius: 8, padding: "10px 14px", marginBottom: 16 }}>
-                          <Text style={{ fontSize: 13, color: "#d48806" }}>
-                            ⚠️ Stripe sẽ thu <strong>{formatPrice(depositAmount)}</strong> (20% giá xe đặt cọc). Phí ship <strong>{shippingFee !== null ? formatPrice(shippingFee) : "chưa tính"}</strong> thanh toán khi nhận hàng.
+                        <div style={{ background: "#e6f7ff", border: "1px solid #91d5ff", borderRadius: 8, padding: "10px 14px", marginBottom: 16 }}>
+                          <Text style={{ fontSize: 13, color: "#096dd9" }}>
+                            💳 Stripe sẽ thu <strong>{formatPrice(totalAmount)}</strong> (toàn bộ: giá xe + phí ship). Thanh toán 100% an toàn, có thể hoàn tiền nếu tranh chấp.
                           </Text>
                         </div>
                       ) : null

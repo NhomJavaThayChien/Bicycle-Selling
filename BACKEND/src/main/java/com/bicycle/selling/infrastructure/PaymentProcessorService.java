@@ -68,11 +68,8 @@ public class PaymentProcessorService {
         payment.setStatus(PaymentStatus.SUCCESS);
         paymentRepository.save(payment);
 
-        if (isDeposit) {
-            order.setStatus(OrderStatus.DEPOSIT_PAID);
-        } else {
-            order.setStatus(OrderStatus.FULL_PAID);
-        }
+        // Luôn set FULL_PAID — không còn luồng đặt cọc
+        order.setStatus(OrderStatus.FULL_PAID);
         orderRepository.save(order);
     }
 

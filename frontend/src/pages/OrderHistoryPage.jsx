@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { getListingById } from "../services/bikeService";
 import { createDispute } from "../services/disputeService";
 import { completeOrder, getBuyerOrders } from "../services/orderService";
-import { createFullPayment } from "../services/paymentService";
 import { createReview } from "../services/reviewService";
 import { formatPrice } from "../utils/formatPrice";
 
@@ -37,7 +36,6 @@ function OrderHistoryPage() {
   const [reviewMessage, setReviewMessage] = useState("");
   const [reviewedOrderIds, setReviewedOrderIds] = useState([]);
   const [completingOrderId, setCompletingOrderId] = useState(null);
-  const [payingFullOrderId, setPayingFullOrderId] = useState(null);
 
   // Dispute state
   const [disputeOrder, setDisputeOrder]         = useState(null); // order đang mở form
@@ -144,30 +142,6 @@ function OrderHistoryPage() {
       setError(serverError || "Không thể cập nhật trạng thái lúc này.");
     } finally {
       setCompletingOrderId(null);
-    }
-  };
-
-  const handleFullPayment = async (order) => {
-    if (!order?.id) return;
-
-    setPayingFullOrderId(order.id);
-    setError("");
-    setReviewMessage("");
-
-    try {
-      // 80% còn lại = agreedPrice - depositAmount (backend tính 20% deposit)
-      const res = await createFullPayment(order.id);
-      const stripeUrl = res.data?.checkoutSession;
-      if (stripeUrl) {
-        window.location.href = stripeUrl;
-        return;
-      }
-      setError("Không nhận được đường dẫn thanh toán. Vui lòng thử lại.");
-    } catch (err) {
-      const serverError = err?.response?.data?.message || err?.response?.data?.error;
-      setError(serverError || "Không thể tạo phiên thanh toán lúc này.");
-    } finally {
-      setPayingFullOrderId(null);
     }
   };
 
@@ -317,35 +291,10 @@ function OrderHistoryPage() {
                   Giá thoả thuận: {formatPrice(Number(order.agreedPrice || 0))}
                 </p>
                 <div style={{ marginTop: "10px", display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
-                  {/* Nút thanh toán 80% còn lại — chỉ hiện khi DEPOSIT_PAID */}
-                  {order.status === "DEPOSIT_PAID" && (
-                    <button
-                      type="button"
-                      disabled={payingFullOrderId === order.id}
-                      onClick={() => handleFullPayment(order)}
-                      style={{
-                        border: "none",
-                        borderRadius: "8px",
-                        padding: "8px 14px",
-                        backgroundColor: payingFullOrderId === order.id ? "#d1d5db" : "#0d9488",
-                        color: "#fff",
-                        cursor: payingFullOrderId === order.id ? "not-allowed" : "pointer",
-                        fontWeight: 600,
-                        fontSize: "0.875rem",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 4,
-                      }}
-                    >
-                      {payingFullOrderId === order.id
-                        ? "Đang xử lý..."
-                        : `💳 Thanh toán 80% còn lại (${formatPrice(Math.round(Number(order.agreedPrice || 0) * 0.8))})`}
-                    </button>
-                  )}
                   <button
                     type="button"
                     disabled={
-                      !["CONFIRMED", "DEPOSIT_PAID", "FULL_PAID", "SHIPPING"].includes(order.status) ||
+                      !["CONFIRMED", "FULL_PAID", "SHIPPING"].includes(order.status) ||
                       completingOrderId === order.id
                     }
                     onClick={() => handleCompleteOrder(order.id)}
@@ -354,13 +303,13 @@ function OrderHistoryPage() {
                       borderRadius: "8px",
                       padding: "8px 10px",
                       backgroundColor:
-                        !["CONFIRMED", "DEPOSIT_PAID", "FULL_PAID", "SHIPPING"].includes(order.status)
+                        !["CONFIRMED", "FULL_PAID", "SHIPPING"].includes(order.status)
                           ? "#f2f4f7"
                           : "#0c6cf2",
-                      color: !["CONFIRMED", "DEPOSIT_PAID", "FULL_PAID", "SHIPPING"].includes(order.status)
+                      color: !["CONFIRMED", "FULL_PAID", "SHIPPING"].includes(order.status)
                         ? "#344054"
                         : "#fff",
-                      cursor: !["CONFIRMED", "DEPOSIT_PAID", "FULL_PAID", "SHIPPING"].includes(order.status)
+                      cursor: !["CONFIRMED", "FULL_PAID", "SHIPPING"].includes(order.status)
                         ? "not-allowed"
                         : "pointer",
                     }}
@@ -402,7 +351,7 @@ function OrderHistoryPage() {
                         : "Đánh giá (sau khi hoàn thành)"}
                   </button>
                   {/* Nút báo tranh chấp — hiện khi đơn đang active hoặc đã hoàn thành, chưa báo */}
-                  {["DEPOSIT_PAID", "FULL_PAID", "CONFIRMED", "SHIPPING", "COMPLETED"].includes(order.status) &&
+                  {["FULL_PAID", "CONFIRMED", "SHIPPING", "COMPLETED"].includes(order.status) &&
                     !disputedOrderIds.includes(order.id) && (
                     <button
                       type="button"
