@@ -126,8 +126,6 @@ public class PaymentService {
                 payment.getUpdatedAt() != null ? payment.getUpdatedAt().toString() : null);
     }
 
-
-
     public PaymentResponse createCashPayment(Long orderId, String currency) {
         try {
             Order order = orderRepository.findById(orderId)
