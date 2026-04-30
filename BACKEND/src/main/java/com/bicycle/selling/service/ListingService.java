@@ -269,6 +269,16 @@ public class ListingService {
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
+
+    @Transactional(readOnly = true)
+    public List<Brand> getAllBrands() {
+        return brandRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Category> getAllCategories() {
+        return categoryRepository.findAll();
+    }
     
     public ListingResponse mapToResponse(BicycleListing listing) {
         User seller = listing.getSeller();

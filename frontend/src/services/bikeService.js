@@ -16,3 +16,7 @@ export const getListings = (params = {}) => {
 };
 
 export const getListingById = (id) => api.get(`/listings/${id}`);
+
+export const getBrands = () => api.get("/brands");
+
+export const getCategories = () => api.get("/categories");

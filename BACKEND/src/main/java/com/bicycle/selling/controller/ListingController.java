@@ -6,6 +6,8 @@ import com.bicycle.selling.dto.ListingSearchRequest;
 import com.bicycle.selling.service.ImageService;
 import com.bicycle.selling.service.ListingService;
 import com.bicycle.selling.model.BicycleListing;
+import com.bicycle.selling.model.Brand;
+import com.bicycle.selling.model.Category;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -71,6 +73,18 @@ public class ListingController {
     public ResponseEntity<ListingResponse> getListingById(@PathVariable Long id) {
         ListingResponse listing = listingService.getListingById(id);
         return ResponseEntity.ok(listing);
+    }
+
+    @GetMapping("/brands")
+    @Operation(summary = "Lấy tất cả thương hiệu", description = "Public API")
+    public ResponseEntity<List<Brand>> getAllBrands() {
+        return ResponseEntity.ok(listingService.getAllBrands());
+    }
+
+    @GetMapping("/categories")
+    @Operation(summary = "Lấy tất cả danh mục", description = "Public API")
+    public ResponseEntity<List<Category>> getAllCategories() {
+        return ResponseEntity.ok(listingService.getAllCategories());
     }
     
     // ========== SELLER ENDPOINTS ==========

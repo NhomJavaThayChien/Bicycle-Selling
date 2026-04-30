@@ -29,6 +29,7 @@ import {
   uploadListingImages,
   updateListing,
 } from "../services/sellerListingService";
+import { getBrands, getCategories } from "../services/bikeService";
 import "./CreateListingPage.css";
 
 const { Title, Paragraph, Text } = Typography;
@@ -53,6 +54,21 @@ function CreateListingPage() {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [images, setImages] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
+  const [brands, setBrands] = useState([]);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    const fetchMetadata = async () => {
+      try {
+        const [brandsRes, catsRes] = await Promise.all([getBrands(), getCategories()]);
+        setBrands(brandsRes.data || []);
+        setCategories(catsRes.data || []);
+      } catch (err) {
+        console.error("Lỗi khi tải thương hiệu/danh mục:", err);
+      }
+    };
+    fetchMetadata();
+  }, []);
 
   useEffect(() => {
     if (!isEditMode) return;
@@ -221,19 +237,31 @@ function CreateListingPage() {
               <Col xs={24} md={12} lg={8}>
                 <Form.Item
                   name="brandId"
-                  label="Mã thương hiệu"
-                  rules={[{ required: true, message: "Vui lòng nhập mã hãng" }]}
+                  label="Thương hiệu"
+                  rules={[{ required: true, message: "Vui lòng chọn hãng" }]}
                 >
-                  <InputNumber style={{ width: "100%" }} size="large" placeholder="Ví dụ: 1" />
+                  <Select size="large" placeholder="Chọn thương hiệu" showSearch filterOption={(input, option) => (option?.children ?? "").toLowerCase().includes(input.toLowerCase())}>
+                    {brands.map((brand) => (
+                      <Option key={brand.id} value={brand.id}>
+                        {brand.name}
+                      </Option>
+                    ))}
+                  </Select>
                 </Form.Item>
               </Col>
               <Col xs={24} md={12} lg={8}>
                 <Form.Item
                   name="categoryId"
-                  label="Mã danh mục"
-                  rules={[{ required: true, message: "Vui lòng nhập mã loại xe" }]}
+                  label="Danh mục xe"
+                  rules={[{ required: true, message: "Vui lòng chọn loại xe" }]}
                 >
-                  <InputNumber style={{ width: "100%" }} size="large" placeholder="Ví dụ: 3" />
+                  <Select size="large" placeholder="Chọn danh mục" showSearch filterOption={(input, option) => (option?.children ?? "").toLowerCase().includes(input.toLowerCase())}>
+                    {categories.map((cat) => (
+                      <Option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </Option>
+                    ))}
+                  </Select>
                 </Form.Item>
               </Col>
               <Col xs={24} md={24} lg={8}>
