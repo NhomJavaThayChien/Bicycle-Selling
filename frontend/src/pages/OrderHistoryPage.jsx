@@ -5,6 +5,22 @@ import { createDispute, getMyDisputedOrderIds } from "../services/disputeService
 import { completeOrder, getBuyerOrders } from "../services/orderService";
 import { createReview, getMyReviewedOrderIds } from "../services/reviewService";
 import { formatPrice } from "../utils/formatPrice";
+import {
+  Modal,
+  Button,
+  Rate,
+  Form,
+  Input,
+  Select,
+  Alert,
+  message as antdMessage,
+  Typography,
+  Space,
+} from "antd";
+import { AlertTriangle, Star, CheckCircle } from "lucide-react";
+
+const { TextArea } = Input;
+const { Title, Text, Paragraph } = Typography;
 
 const statusStyleMap = {
   PENDING: { background: "#fffaeb", color: "#b54708", border: "#fedf89", label: "Chờ xác nhận" },
@@ -128,13 +144,14 @@ function OrderHistoryPage() {
       });
 
       setReviewedOrderIds((prev) => [...new Set([...prev, selectedOrder.id])]);
-      setReviewMessage("Đánh giá thành công.");
+      antdMessage.success("Cảm ơn bạn đã gửi đánh giá!");
+      
       setSelectedOrder(null);
       setComment("");
-      setRating("5");
+      setRating(5); // antd Rate uses numbers
     } catch (err) {
       const serverError = err?.response?.data?.message || err?.response?.data?.error;
-      setReviewMessage(serverError || "Không thể gửi đánh giá lúc này.");
+      antdMessage.error(serverError || "Không thể gửi đánh giá lúc này.");
     } finally {
       setSubmittingReview(false);
     }
@@ -156,7 +173,7 @@ function OrderHistoryPage() {
           order.id === orderId ? { ...order, status: "COMPLETED" } : order,
         ),
       );
-      setReviewMessage("Đã cập nhật trạng thái đã nhận hàng.");
+      antdMessage.success("Đã xác nhận đã nhận hàng.");
     } catch (err) {
       const serverError = err?.response?.data?.message || err?.response?.data?.error;
       setError(serverError || "Không thể cập nhật trạng thái lúc này.");
@@ -182,13 +199,21 @@ function OrderHistoryPage() {
         description: disputeDesc.trim() || undefined,
       });
       setDisputedOrderIds((prev) => [...new Set([...prev, disputeOrder.id])]);
-      setReviewMessage(`Đã gửi báo tranh chấp cho đơn hàng #${disputeOrder.id}. Admin sẽ xử lý trong vòng 24h.`);
+      
+      // Cập nhật trạng thái đơn hàng trong list ngay lập tức
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === disputeOrder.id ? { ...o, status: "DISPUTED" } : o
+        )
+      );
+
+      antdMessage.warning(`Đã gửi báo tranh chấp cho đơn hàng #${disputeOrder.id}.`);
       setDisputeOrder(null);
       setDisputeReason("");
       setDisputeDesc("");
     } catch (err) {
       const serverError = err?.response?.data?.message || err?.response?.data?.error;
-      setError(serverError || "Không thể gửi tranh chấp lúc này.");
+      antdMessage.error(serverError || "Không thể gửi tranh chấp lúc này.");
     } finally {
       setSubmittingDispute(false);
     }
@@ -413,167 +438,139 @@ function OrderHistoryPage() {
         </div>
       )}
 
-      {/* Form đánh giá */}
-      {selectedOrder && (
-        <section
-          style={{
-            marginTop: "16px",
-            border: "1px solid #eaecf0",
-            borderRadius: "12px",
-            padding: "14px",
-            backgroundColor: "#fcfcfd",
-          }}
-        >
-          <h3 style={{ marginTop: 0 }}>Viết đánh giá cho đơn hàng #{selectedOrder.id}</h3>
+      {/* Modal đánh giá */}
+      <Modal
+        title={
+          <Space>
+            <Star color="#fadb14" fill="#fadb14" size={20} />
+            <span>Đánh giá đơn hàng #{selectedOrder?.id}</span>
+          </Space>
+        }
+        open={!!selectedOrder}
+        onCancel={() => {
+          setSelectedOrder(null);
+          setComment("");
+          setRating(5);
+        }}
+        footer={[
+          <Button key="back" onClick={() => setSelectedOrder(null)}>
+            Hủy bỏ
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            loading={submittingReview}
+            onClick={handleSubmitReview}
+            style={{ backgroundColor: "#0c6cf2" }}
+          >
+            Gửi đánh giá
+          </Button>,
+        ]}
+        centered
+        width={500}
+      >
+        <div style={{ padding: "10px 0" }}>
+          <Form layout="vertical">
+            <Form.Item label="Số sao (Chất lượng sản phẩm & dịch vụ)" required>
+              <Rate
+                value={Number(rating)}
+                onChange={(val) => setRating(val)}
+                style={{ fontSize: 28 }}
+              />
+              {rating > 0 && (
+                <span style={{ marginLeft: 16, fontWeight: 600, color: "#faad14" }}>
+                  {rating} / 5 sao
+                </span>
+              )}
+            </Form.Item>
 
-          <div style={{ display: "grid", gap: "10px", maxWidth: "420px" }}>
-            <label style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              <span>Số sao</span>
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setRating(String(star))}
-                    style={{
-                      width: "46px",
-                      height: "46px",
-                      borderRadius: "12px",
-                      border: rating === String(star) ? "1px solid #0c6cf2" : "1px solid #d0d5dd",
-                      backgroundColor: rating === String(star) ? "#eff8ff" : "#fff",
-                      color: rating === String(star) ? "#0c6cf2" : "#344054",
-                      fontSize: "1rem",
-                      fontWeight: 800,
-                      cursor: "pointer",
-                    }}
-                  >
-                    {star}★
-                  </button>
-                ))}
-              </div>
-            </label>
-
-            <label style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              <span>Nhận xét</span>
-              <textarea
+            <Form.Item label="Nhận xét chi tiết" required>
+              <TextArea
                 rows={4}
                 value={comment}
-                onChange={(event) => setComment(event.target.value)}
-                placeholder="Chia sẻ trải nghiệm của bạn"
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Chia sẻ trải nghiệm của bạn về chiếc xe và người bán..."
+                maxLength={500}
+                showCount
               />
-            </label>
+            </Form.Item>
+          </Form>
+          <Alert
+            message="Đánh giá của bạn giúp cộng đồng BikeMarket phát triển minh bạch hơn."
+            type="info"
+            showIcon
+            style={{ marginTop: 16 }}
+          />
+        </div>
+      </Modal>
 
-            <div style={{ display: "flex", gap: "8px" }}>
-              <button type="button" onClick={handleSubmitReview} disabled={submittingReview}>
-                {submittingReview ? "Đang gửi..." : "Gửi đánh giá"}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedOrder(null);
-                  setComment("");
-                  setRating("5");
-                }}
-              >
-                Hủy
-              </button>
-            </div>
-          </div>
-        </section>
-      )}
+      {/* Modal báo tranh chấp */}
+      <Modal
+        title={
+          <Space>
+            <AlertTriangle color="#ff4d4f" size={20} />
+            <span style={{ color: "#ff4d4f" }}>Báo tranh chấp — Đơn hàng #{disputeOrder?.id}</span>
+          </Space>
+        }
+        open={!!disputeOrder}
+        onCancel={() => setDisputeOrder(null)}
+        footer={[
+          <Button key="back" onClick={() => setDisputeOrder(null)}>
+            Hủy
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            danger
+            loading={submittingDispute}
+            disabled={!disputeReason}
+            onClick={handleSubmitDispute}
+          >
+            Gửi báo cáo
+          </Button>,
+        ]}
+        centered
+        width={520}
+      >
+        <div style={{ padding: "10px 0" }}>
+          <Paragraph type="secondary" style={{ marginBottom: 20 }}>
+            Lưu ý: Khi gửi tranh chấp, đội ngũ Admin sẽ tiếp nhận và xử lý trong vòng 24h làm việc. Bạn chỉ có thể gửi tranh chấp 01 lần duy nhất cho mỗi đơn hàng.
+          </Paragraph>
 
-      {/* Form báo tranh chấp */}
-      {disputeOrder && (
-        <section
-          style={{
-            marginTop: "16px",
-            border: "1px solid #fecdca",
-            borderRadius: "12px",
-            padding: "16px",
-            backgroundColor: "#fff2f0",
-          }}
-        >
-          <h3 style={{ marginTop: 0, color: "#b42318" }}>
-            ⚠️ Báo tranh chấp — Đơn hàng #{disputeOrder.id}
-          </h3>
-          <p style={{ margin: "0 0 12px", color: "#6b2a1f", fontSize: 13 }}>
-            Khi gửi tranh chấp, Admin sẽ tiếp nhận và xử lý trong vòng 24h. Bạn chỉ có thể gửi 1 tranh chấp cho mỗi đơn hàng.
-          </p>
-
-          <div style={{ display: "grid", gap: 10, maxWidth: 480 }}>
-            <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <span style={{ fontWeight: 600 }}>Lý do tranh chấp <span style={{ color: "red" }}>*</span></span>
-              <select
+          <Form layout="vertical">
+            <Form.Item label="Lý do tranh chấp" required>
+              <Select
                 value={disputeReason}
-                onChange={(e) => setDisputeReason(e.target.value)}
-                style={{
-                  padding: "9px 12px",
-                  borderRadius: 8,
-                  border: "1px solid #fecdca",
-                  fontSize: 14,
-                  background: "#fff",
-                }}
+                onChange={(val) => setDisputeReason(val)}
+                placeholder="Chọn lý do chính..."
+                size="large"
               >
-                <option value="">-- Chọn lý do --</option>
-                <option value="Hàng không đúng mô tả">Hàng không đúng mô tả</option>
-                <option value="Không nhận được hàng">Không nhận được hàng</option>
-                <option value="Xe bị hư hỏng khi giao">Xe bị hư hỏng khi giao</option>
-                <option value="Người bán không hợp tác">Người bán không hợp tác</option>
-                <option value="Khác">Khác</option>
-              </select>
-            </label>
+                <Select.Option value="Hàng không đúng mô tả">Hàng không đúng mô tả</Select.Option>
+                <Select.Option value="Không nhận được hàng">Không nhận được hàng</Select.Option>
+                <Select.Option value="Xe bị hư hỏng khi giao">Xe bị hư hỏng khi giao</Select.Option>
+                <Select.Option value="Người bán không hợp tác">Người bán không hợp tác</Select.Option>
+                <Select.Option value="Khác">Khác</Select.Option>
+              </Select>
+            </Form.Item>
 
-            <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <span style={{ fontWeight: 600 }}>Mô tả chi tiết</span>
-              <textarea
-                rows={4}
+            <Form.Item label="Mô tả chi tiết & Bằng chứng">
+              <TextArea
+                rows={5}
                 value={disputeDesc}
                 onChange={(e) => setDisputeDesc(e.target.value)}
-                placeholder="Mô tả vấn đề cụ thể (điều kiện xe, bằng chứng, …)"
-                style={{
-                  padding: "9px 12px",
-                  borderRadius: 8,
-                  border: "1px solid #fecdca",
-                  fontSize: 14,
-                  resize: "vertical",
-                }}
+                placeholder="Mô tả cụ thể vấn đề (ví dụ: vết xước không có trong ảnh, phụ kiện thiếu, ...)"
               />
-            </label>
+            </Form.Item>
+          </Form>
 
-            <div style={{ display: "flex", gap: 8 }}>
-              <button
-                type="button"
-                onClick={handleSubmitDispute}
-                disabled={submittingDispute || !disputeReason}
-                style={{
-                  background: submittingDispute || !disputeReason ? "#d1d5db" : "#b42318",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 8,
-                  padding: "10px 20px",
-                  fontWeight: 700,
-                  cursor: submittingDispute || !disputeReason ? "not-allowed" : "pointer",
-                }}
-              >
-                {submittingDispute ? "Đang gửi..." : "Gửi tranh chấp"}
-              </button>
-              <button
-                type="button"
-                onClick={() => { setDisputeOrder(null); setError(""); }}
-                style={{
-                  background: "#fff",
-                  border: "1px solid #fecdca",
-                  borderRadius: 8,
-                  padding: "10px 20px",
-                  cursor: "pointer",
-                }}
-              >
-                Hủy
-              </button>
-            </div>
-          </div>
-        </section>
-      )}
+          <Alert
+            message="Hãy giữ lại các bằng chứng (hình ảnh, video, tin nhắn) để hỗ trợ quá trình đối soát."
+            type="warning"
+            showIcon
+            style={{ marginTop: 8 }}
+          />
+        </div>
+      </Modal>
     </main>
   );
 }
