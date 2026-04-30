@@ -19,3 +19,6 @@ export const resolveDispute = (id, data) => api.put(`/disputes/${id}/resolve`, d
 
 // Admin: đóng
 export const closeDispute = (id) => api.put(`/disputes/${id}/close`);
+
+// Buyer: lấy danh sách ID các đơn hàng đã tranh chấp
+export const getMyDisputedOrderIds = () => api.get("/disputes/mine");

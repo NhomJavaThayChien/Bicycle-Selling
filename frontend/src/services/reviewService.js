@@ -10,3 +10,5 @@ export const getReviewsBySeller = (sellerId, params = {}) =>
 			size: params.size ?? 10,
 		},
 	});
+
+export const getMyReviewedOrderIds = () => api.get("/reviews/mine");

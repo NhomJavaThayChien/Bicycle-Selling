@@ -32,7 +32,6 @@ public class ReviewController {
         return reviewService.createReview(user.getId(), orderId, request);
     }
 
-    // get seller reviews
     @GetMapping("/sellers/{sellerId}")
     public List<ReviewResponse> getReviewsBySeller(
             @PathVariable Long sellerId,
@@ -40,5 +39,13 @@ public class ReviewController {
             @RequestParam(defaultValue = "10") Integer size
     ) {
         return reviewService.getReviewsBySellerId(sellerId, page, size);
+    }
+
+    /**
+     * Lấy danh sách ID các đơn hàng mà người dùng hiện tại đã đánh giá.
+     */
+    @GetMapping("/mine")
+    public List<Long> getMyReviewedOrderIds(@AuthenticationPrincipal UserDetailsImpl user) {
+        return reviewService.getReviewedOrderIds(user.getId());
     }
 }

@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { getListingById } from "../services/bikeService";
-import { createDispute } from "../services/disputeService";
+import { createDispute, getMyDisputedOrderIds } from "../services/disputeService";
 import { completeOrder, getBuyerOrders } from "../services/orderService";
-import { createReview } from "../services/reviewService";
+import { createReview, getMyReviewedOrderIds } from "../services/reviewService";
 import { formatPrice } from "../utils/formatPrice";
 
 const statusStyleMap = {
@@ -45,40 +45,60 @@ function OrderHistoryPage() {
   const [disputedOrderIds, setDisputedOrderIds] = useState([]);
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      setLoading(true);
-      setError("");
-
-      try {
-        const response = await getBuyerOrders();
-        const orderData = Array.isArray(response.data) ? response.data : [];
-        setOrders(orderData);
-
-        const uniqueListingIds = [...new Set(orderData.map((order) => order.listingId))];
-
-        const listingEntries = await Promise.all(
-          uniqueListingIds.map(async (listingId) => {
-            try {
-              const listingResponse = await getListingById(listingId);
-              return [listingId, listingResponse.data];
-            } catch {
-              return [listingId, null];
-            }
-          }),
-        );
-
-        setListingLookup(Object.fromEntries(listingEntries));
-      } catch (err) {
-        const serverError = err?.response?.data?.error || err?.response?.data?.message;
-        setError(serverError || "Không tải được lịch sử đơn hàng.");
-        setOrders([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchOrders();
+    fetchReviewStates();
+    fetchDisputeStates();
   }, []);
+
+  const fetchOrders = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await getBuyerOrders();
+      const orderData = Array.isArray(response.data) ? response.data : [];
+      setOrders(orderData);
+
+      const uniqueListingIds = [...new Set(orderData.map((order) => order.listingId))];
+
+      const listingEntries = await Promise.all(
+        uniqueListingIds.map(async (listingId) => {
+          try {
+            const listingResponse = await getListingById(listingId);
+            return [listingId, listingResponse.data];
+          } catch {
+            return [listingId, null];
+          }
+        }),
+      );
+
+      setListingLookup(Object.fromEntries(listingEntries));
+    } catch (err) {
+      const serverError = err?.response?.data?.error || err?.response?.data?.message;
+      setError(serverError || "Không tải được lịch sử đơn hàng.");
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchReviewStates = async () => {
+    try {
+      const res = await getMyReviewedOrderIds();
+      setReviewedOrderIds(res.data || []);
+    } catch (err) {
+      console.error("Lỗi khi tải trạng thái đánh giá:", err);
+    }
+  };
+
+  const fetchDisputeStates = async () => {
+    try {
+      const res = await getMyDisputedOrderIds();
+      setDisputedOrderIds(res.data || []);
+    } catch (err) {
+      console.error("Lỗi khi tải trạng thái tranh chấp:", err);
+    }
+  };
 
   const sortedOrders = useMemo(
     () => [...orders].sort((a, b) => Number(b.id) - Number(a.id)),

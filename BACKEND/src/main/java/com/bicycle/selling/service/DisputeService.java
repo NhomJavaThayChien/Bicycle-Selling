@@ -51,6 +51,10 @@ public class DisputeService {
                 .status(DisputeStatus.OPEN)
                 .build();
 
+        // Cập nhật trạng thái đơn hàng sang DISPUTED
+        order.setStatus(com.bicycle.selling.model.enums.OrderStatus.DISPUTED);
+        orderRepository.save(order);
+
         return mapToResponse(disputeRepository.save(dispute));
     }
 
@@ -124,6 +128,17 @@ public class DisputeService {
         return disputeRepository.findAll()
                 .stream()
                 .map(this::mapToResponse)
+                .toList();
+    }
+
+    /**
+     * Lấy danh sách ID các đơn hàng mà người dùng hiện tại đã mở tranh chấp.
+     */
+    @Transactional(readOnly = true)
+    public List<Long> getDisputedOrderIdsByBuyer(Long buyerId) {
+        return disputeRepository.findByOpenedById(buyerId)
+                .stream()
+                .map(d -> d.getOrder().getId())
                 .toList();
     }
 

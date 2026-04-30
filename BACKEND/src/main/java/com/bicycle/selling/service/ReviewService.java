@@ -70,13 +70,13 @@ public class ReviewService {
 
         Review saved = reviewRepository.save(review);
 
-        // 7. Update seller rating
-        final double currentAvg = seller.getReputationScore();
+        // 7. Update seller rating (null-safe)
+        final double currentAvg = seller.getReputationScore() != null ? seller.getReputationScore() : 0.0;
         long currentCount = seller.getTotalReviews() != null ? seller.getTotalReviews() : 0;
         System.out.println("Current Avg: " + currentAvg + ", Current Count: " + currentCount);
         final double newAvg = (currentAvg * currentCount + request.getRating()) / (currentCount + 1);
         seller.setReputationScore(newAvg);
-        seller.setTotalReviews(seller.getTotalReviews() + 1);
+        seller.setTotalReviews((int) (currentCount + 1)); // sử dụng currentCount đã null-safe
         userRepository.save(seller);
 
         CreateReviewResponse reslut = new CreateReviewResponse(saved.getId(), saved.getRating(), saved.getComment());
@@ -91,6 +91,14 @@ public class ReviewService {
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
+    }
+
+    /**
+     * Trả về danh sách order ID mà buyer đã đánh giá — dùng để khởi tạo trạng thái frontend.
+     */
+    @Transactional(readOnly = true)
+    public List<Long> getReviewedOrderIds(Long reviewerId) {
+        return reviewRepository.findReviewedOrderIdsByReviewerId(reviewerId);
     }
 
     private ReviewResponse mapToResponse(Review review) {

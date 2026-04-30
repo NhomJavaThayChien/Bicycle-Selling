@@ -79,4 +79,15 @@ public class DisputeController {
                 disputeService.getAll()
         );
     }
+
+    /**
+     * Lấy danh sách ID các đơn hàng mà người dùng hiện tại đã mở tranh chấp.
+     */
+    @GetMapping("/mine")
+    @PreAuthorize("hasAnyRole('BUYER', 'ADMIN')")
+    public ResponseEntity<List<Long>> getMyDisputedOrderIds(@AuthenticationPrincipal UserDetailsImpl user) {
+        return ResponseEntity.ok(
+                disputeService.getDisputedOrderIdsByBuyer(user.getId())
+        );
+    }
 }
