@@ -388,7 +388,7 @@ export default function CheckoutPage() {
                       getFieldValue("paymentMethod") === "STRIPE" ? (
                         <div style={{ background: "#e6f7ff", border: "1px solid #91d5ff", borderRadius: 8, padding: "10px 14px", marginBottom: 16 }}>
                           <Text style={{ fontSize: 13, color: "#096dd9" }}>
-                            💳 Stripe sẽ thu <strong>{formatPrice(totalAmount)}</strong> (toàn bộ: giá xe + phí ship). Thanh toán 100% an toàn, có thể hoàn tiền nếu tranh chấp.
+                            💳 Stripe sẽ thu <strong>{formatPrice(listing.price)}</strong> Tiền giá xe còn phí ship sẽ do bên thứ 3 thu. Thanh toán 100% an toàn, có thể hoàn tiền nếu tranh chấp.
                           </Text>
                         </div>
                       ) : null
