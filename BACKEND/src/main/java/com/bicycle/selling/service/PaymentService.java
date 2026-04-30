@@ -146,8 +146,8 @@ public class PaymentService {
                 throw new IllegalArgumentException("Số tiền còn lại không hợp lệ");
             }
 
-            if (order.getStatus() != OrderStatus.DEPOSIT_PAID) {
-                throw new IllegalStateException("Đơn hàng phải ở trạng thái ĐÃ ĐẶT CỌC mới có thể thanh toán phần còn lại");
+            if (order.getStatus() != OrderStatus.PENDING) {
+                throw new IllegalStateException("Order is not in a valid state for full payment");
             }
 
             Session checkoutSession = stripeService.createCheckoutSession(amount, currency, orderId, false);
