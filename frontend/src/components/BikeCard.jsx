@@ -7,7 +7,12 @@ function BikeCard({ bike, linkTo }) {
   const price = Number(bike?.price || 0);
   
   const defaultImage = "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?w=800";
-  const initialImage = bike?.primaryImageUrl || bike?.image || defaultImage;
+  let initialImage = bike?.primaryImageUrl || bike?.image || defaultImage;
+  
+  // Prepend backend URL if the image path is relative
+  if (initialImage && initialImage.startsWith("/uploads")) {
+    initialImage = `http://localhost:8080${initialImage}`;
+  }
   
   const [imgSrc, setImgSrc] = useState(initialImage);
   const targetLink = linkTo || (bike?.id ? `/bikes/${bike.id}` : null);

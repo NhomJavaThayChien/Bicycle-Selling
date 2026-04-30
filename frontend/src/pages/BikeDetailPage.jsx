@@ -55,7 +55,10 @@ function BikeDetailPage() {
         const response = await getListingById(id);
         const data = response.data;
         setListing(data);
-        const initialImg = data?.primaryImageUrl || data?.imageUrls?.[0] || defaultImage;
+        let initialImg = data?.primaryImageUrl || data?.imageUrls?.[0] || defaultImage;
+        if (initialImg && initialImg.startsWith("/uploads")) {
+          initialImg = `http://localhost:8080${initialImg}`;
+        }
         setSelectedImage(initialImg);
         const wishlistItems = await fetchWishlist();
         setWishlisted(
@@ -100,11 +103,14 @@ function BikeDetailPage() {
     }
 
     const source = listing.imageUrls?.length ? listing.imageUrls : [];
-    if (source.length > 0) {
-      return source;
-    }
-
-    return listing.primaryImageUrl ? [listing.primaryImageUrl] : [];
+    const images = source.length > 0 ? source : (listing.primaryImageUrl ? [listing.primaryImageUrl] : []);
+    
+    return images.map(img => {
+      if (img && img.startsWith("/uploads")) {
+        return `http://localhost:8080${img}`;
+      }
+      return img;
+    });
   }, [listing]);
 
   const handleToggleWishlist = async () => {

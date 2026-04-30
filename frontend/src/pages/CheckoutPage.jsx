@@ -348,7 +348,7 @@ export default function CheckoutPage() {
                   
                   <div style={{ display: "flex", gap: 16, marginBottom: 24 }}>
                     <img
-                      src={listing.primaryImageUrl || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' rx='12' fill='%23f0f5ff'/%3E%3Ctext x='40' y='48' text-anchor='middle' font-size='32' fill='%231890ff'%3E🚲%3C/text%3E%3C/svg%3E`}
+                      src={listing.primaryImageUrl?.startsWith("/uploads") ? `http://localhost:8080${listing.primaryImageUrl}` : (listing.primaryImageUrl || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' rx='12' fill='%23f0f5ff'/%3E%3Ctext x='40' y='48' text-anchor='middle' font-size='32' fill='%231890ff'%3E🚲%3C/text%3E%3C/svg%3E`)}
                       alt="bike"
                       style={{ width: 80, height: 80, borderRadius: 12, objectFit: "cover" }}
                       onError={(e) => { e.target.onerror = null; e.target.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' rx='12' fill='%23f0f5ff'/%3E%3Ctext x='40' y='48' text-anchor='middle' font-size='32' fill='%231890ff'%3E🚲%3C/text%3E%3C/svg%3E`; }}
