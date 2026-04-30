@@ -131,6 +131,16 @@ public class DisputeService {
                 .toList();
     }
 
+    // ==============================
+    // Get by order id
+    // ==============================
+    @Transactional(readOnly = true)
+    public DisputeResponse getByOrderId(Long orderId) {
+        Dispute dispute = disputeRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new RuntimeException("Dispute not found for order: " + orderId));
+        return mapToResponse(dispute);
+    }
+
     /**
      * Lấy danh sách ID các đơn hàng mà người dùng hiện tại đã mở tranh chấp.
      */

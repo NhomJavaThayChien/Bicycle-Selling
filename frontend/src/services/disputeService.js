@@ -22,3 +22,6 @@ export const closeDispute = (id) => api.put(`/disputes/${id}/close`);
 
 // Buyer: lấy danh sách ID các đơn hàng đã tranh chấp
 export const getMyDisputedOrderIds = () => api.get("/disputes/mine");
+
+// Lấy tranh chấp theo Order ID (dùng cho cả Seller và Buyer)
+export const getDisputeByOrderId = (orderId) => api.get(`/disputes/order/${orderId}`);

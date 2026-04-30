@@ -72,6 +72,17 @@ public class DisputeController {
         );
     }
 
+    /**
+     * Lấy tranh chấp theo Order ID. 
+     * Dùng cho cả Buyer và Seller để xem tiến trình/phán quyết.
+     */
+    @GetMapping("/order/{orderId}")
+    public ResponseEntity<DisputeResponse> getByOrderId(@PathVariable Long orderId) {
+        return ResponseEntity.ok(
+                disputeService.getByOrderId(orderId)
+        );
+    }
+
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<DisputeResponse>> getAll() {

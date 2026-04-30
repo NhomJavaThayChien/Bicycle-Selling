@@ -7,13 +7,17 @@ import {
 import { formatPrice } from "../utils/formatPrice";
 import { inspectionService } from "../services/inspectionService";
 import { getSellerOrders, confirmOrder, rejectOrder } from "../services/orderService";
-import { message } from "antd"; // Use antd for better feedback
+import { getDisputeByOrderId } from "../services/disputeService";
+import { message, Modal, Typography, Tag, Space, Button } from "antd"; // Use antd for better feedback
+
+const { Text } = Typography;
 
 const statusStyleMap = {
   ACTIVE: { backgroundColor: "#ecfdf3", color: "#067647", border: "#abefc6" },
   SOLD: { backgroundColor: "#f2f4f7", color: "#344054", border: "#d0d5dd" },
   PENDING: { backgroundColor: "#fff4ed", color: "#b54708", border: "#fedf89" },
   REJECTED: { backgroundColor: "#fef3f2", color: "#b42318", border: "#fecdca" },
+  DISPUTED: { backgroundColor: "#f4f3ff", color: "#5925dc", border: "#d9d6fe" },
 };
 
 const inspectionStatusStyleMap = {
@@ -34,6 +38,11 @@ function SellerDashboardPage() {
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [processingOrderId, setProcessingOrderId] = useState(null);
+
+  // Dispute viewing state
+  const [viewDisputeTarget, setViewDisputeTarget] = useState(null);
+  const [disputeData, setDisputeData] = useState(null);
+  const [loadingDispute, setLoadingDispute] = useState(false);
 
   const sortedListings = useMemo(
     () =>
@@ -135,6 +144,20 @@ function SellerDashboardPage() {
       message.error(err?.response?.data?.error || "Không thể từ chối đơn hàng.");
     } finally {
       setProcessingOrderId(null);
+    }
+  };
+
+  const handleViewDispute = async (orderId) => {
+    setLoadingDispute(true);
+    setViewDisputeTarget(orderId);
+    try {
+      const res = await getDisputeByOrderId(orderId);
+      setDisputeData(res.data);
+    } catch (err) {
+      message.error("Không thể tải thông tin tranh chấp.");
+      setViewDisputeTarget(null);
+    } finally {
+      setLoadingDispute(false);
     }
   };
 
@@ -450,6 +473,14 @@ function SellerDashboardPage() {
                         {order.status === "CANCELLED" && (
                            <span style={{ color: "#b42318", fontSize: "0.85rem" }}>Đã hủy</span>
                         )}
+                        {order.status === "DISPUTED" && (
+                           <button
+                             onClick={() => handleViewDispute(order.id)}
+                             style={{ ...secondaryBtnStyle, backgroundColor: "#f4f3ff", color: "#5925dc", borderColor: "#d9d6fe" }}
+                           >
+                             Xem phán quyết
+                           </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -459,6 +490,66 @@ function SellerDashboardPage() {
           </div>
         )
       )}
+
+      {/* Dispute Details Modal */}
+      <Modal
+        title={`Chi tiết tranh chấp — Đơn hàng #${viewDisputeTarget}`}
+        open={!!viewDisputeTarget}
+        onCancel={() => { setViewDisputeTarget(null); setDisputeData(null); }}
+        footer={<Button onClick={() => setViewDisputeTarget(null)}>Đóng</Button>}
+        loading={loadingDispute}
+        centered
+      >
+        {disputeData ? (
+          <div style={{ display: "grid", gap: 12, padding: "10px 0" }}>
+            <div style={{ padding: "12px", backgroundColor: "#f9fafb", borderRadius: "8px", border: "1px solid #eaecf0" }}>
+              <Text type="secondary" style={{ fontSize: "0.85rem", display: "block", marginBottom: 4 }}>Trạng thái tranh chấp</Text>
+              <Tag color={disputeData.status === "RESOLVED" ? "green" : disputeData.status === "OPEN" ? "red" : "blue"}>
+                {disputeData.status === "RESOLVED" ? "Đã giải quyết" : disputeData.status === "OPEN" ? "Đang chờ" : "Đang xử lý"}
+              </Tag>
+            </div>
+
+            <div>
+              <Text strong style={{ display: "block", marginBottom: 4 }}>Lý do tranh chấp từ người mua:</Text>
+              <div style={{ padding: "10px", backgroundColor: "#fff5f5", borderRadius: "6px", border: "1px solid #febca0" }}>
+                <Text style={{ fontWeight: 600, color: "#c0392b" }}>{disputeData.reason}</Text>
+                {disputeData.description && (
+                  <Text style={{ display: "block", marginTop: 6, fontSize: "0.9rem" }}>{disputeData.description}</Text>
+                )}
+              </div>
+            </div>
+
+            {disputeData.resolution ? (
+              <div style={{ marginTop: 8 }}>
+                <Text strong style={{ display: "block", marginBottom: 4 }}>Phán quyết của Admin:</Text>
+                <div style={{ padding: "12px", backgroundColor: "#f0fdf4", borderRadius: "8px", border: "1px solid #bcf0da" }}>
+                  <Text style={{ color: "#166534", fontWeight: 500 }}>{disputeData.resolution}</Text>
+                  {disputeData.resolvedAt && (
+                    <Text type="secondary" style={{ display: "block", marginTop: 8, fontSize: "0.75rem" }}>
+                      Thời gian: {new Date(disputeData.resolvedAt).toLocaleString("vi-VN")}
+                    </Text>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div style={{ marginTop: 8, padding: "12px", backgroundColor: "#eff8ff", borderRadius: "8px", border: "1px solid #b2ddff" }}>
+                <Text style={{ color: "#175cd3" }}>Admin đang xem xét bằng chứng và sẽ đưa ra phán quyết sớm nhất.</Text>
+              </div>
+            )}
+            
+            {disputeData.evidenceUrls && (
+              <div style={{ marginTop: 4 }}>
+                <Text strong style={{ display: "block", marginBottom: 4 }}>Bằng chứng:</Text>
+                <a href={disputeData.evidenceUrls} target="_blank" rel="noreferrer" style={{ color: "#0c6cf2", fontSize: "0.9rem" }}>
+                  Xem tài liệu/hình ảnh đính kèm
+                </a>
+              </div>
+            )}
+          </div>
+        ) : !loadingDispute && (
+          <p>Không tìm thấy dữ liệu tranh chấp.</p>
+        )}
+      </Modal>
     </main>
   );
 }
