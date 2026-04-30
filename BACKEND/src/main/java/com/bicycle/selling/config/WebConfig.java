@@ -17,14 +17,21 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         Path uploadPath = Paths.get(uploadDir);
+        
+        // Ensure the directory exists when the application starts
+        if (!java.nio.file.Files.exists(uploadPath)) {
+            try {
+                java.nio.file.Files.createDirectories(uploadPath);
+            } catch (java.io.IOException e) {
+                System.err.println("Could not create upload directory: " + e.getMessage());
+            }
+        }
+        
         String fullPath = uploadPath.toFile().getAbsolutePath();
         
-        // Map /uploads/** to the actual file system path
-        registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:" + fullPath + "/");
-                
-        // Optional: Also map /uploads/images/** explicitly if needed
+        // Map /uploads/images/** to the actual file system path
+        // For example: URL /uploads/images/abc.jpg -> looks in fullPath/abc.jpg
         registry.addResourceHandler("/uploads/images/**")
-                .addResourceLocations("file:" + fullPath + "/");
+                .addResourceLocations("file:///" + fullPath + "/");
     }
 }

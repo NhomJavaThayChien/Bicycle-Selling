@@ -86,6 +86,19 @@ function CreateListingPage() {
           yearOfManufacture: listing.yearOfManufacture,
           weight: listing.weight,
         });
+
+        // Hien thi anh da co san
+        if (listing.imageUrls && listing.imageUrls.length > 0) {
+          const fullUrls = listing.imageUrls.map(url => 
+            url.startsWith("/uploads") ? `http://localhost:8080${url}` : url
+          );
+          setPreviewUrls(fullUrls);
+        } else if (listing.primaryImageUrl) {
+          const url = listing.primaryImageUrl.startsWith("/uploads") 
+            ? `http://localhost:8080${listing.primaryImageUrl}` 
+            : listing.primaryImageUrl;
+          setPreviewUrls([url]);
+        }
       } catch (err) {
         message.error("Không thể tải thông tin bài đăng.");
       } finally {

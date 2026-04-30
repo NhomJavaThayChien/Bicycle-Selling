@@ -60,13 +60,19 @@ export default function CarApproval() {
     {
       title: "Ảnh",
       dataIndex: "primaryImageUrl",
-      render: (url) => (
-        <img
-          src={url || "https://via.placeholder.com/50"}
-          alt="bike"
-          style={{ width: 50, height: 50, objectFit: "cover" }}
-        />
-      ),
+      render: (url) => {
+        let displayUrl = url || "https://via.placeholder.com/50";
+        if (displayUrl.startsWith("/uploads")) {
+          displayUrl = `http://localhost:8080${displayUrl}`;
+        }
+        return (
+          <img
+            src={displayUrl}
+            alt="bike"
+            style={{ width: 50, height: 50, objectFit: "cover" }}
+          />
+        );
+      },
     },
     { title: "Tiêu đề", dataIndex: "title" },
     {

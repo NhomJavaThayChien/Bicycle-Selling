@@ -120,16 +120,22 @@ export default function Dashboard() {
       title: "Sản phẩm",
       dataIndex: "title",
       key: "title",
-      render: (text, record) => (
-        <Space>
-          <img 
-            src={record.primaryImageUrl || "https://via.placeholder.com/40"} 
-            alt="bike" 
-            style={{ width: 40, height: 40, borderRadius: 4, objectFit: "cover" }} 
-          />
-          <Text strong>{text}</Text>
-        </Space>
-      )
+      render: (text, record) => {
+        let displayUrl = record.primaryImageUrl || "https://via.placeholder.com/40";
+        if (displayUrl.startsWith("/uploads")) {
+          displayUrl = `http://localhost:8080${displayUrl}`;
+        }
+        return (
+          <Space>
+            <img 
+              src={displayUrl} 
+              alt="bike" 
+              style={{ width: 40, height: 40, borderRadius: 4, objectFit: "cover" }} 
+            />
+            <Text strong>{text}</Text>
+          </Space>
+        );
+      }
     },
     {
       title: "Người bán",

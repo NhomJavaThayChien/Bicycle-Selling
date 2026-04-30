@@ -94,7 +94,7 @@ function SellerProfilePage() {
             {listings.map((item) => (
               <article key={item.id} style={cardStyle}>
                 {item.primaryImageUrl && (
-                  <img src={item.primaryImageUrl} alt={item.title} style={cardImageStyle} />
+                  <img src={item.primaryImageUrl.startsWith("/uploads") ? `http://localhost:8080${item.primaryImageUrl}` : item.primaryImageUrl} alt={item.title} style={cardImageStyle} />
                 )}
                 <div style={{ padding: "12px" }}>
                   <h3 style={{ marginTop: 0 }}>{item.title}</h3>

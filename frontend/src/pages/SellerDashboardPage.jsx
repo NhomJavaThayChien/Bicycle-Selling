@@ -261,6 +261,7 @@ function SellerDashboardPage() {
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "760px" }}>
               <thead style={{ backgroundColor: "#f9fafb" }}>
                 <tr>
+                  <th style={thStyle}>Ảnh</th>
                   <th style={thStyle}>Title</th>
                   <th style={thStyle}>Price</th>
                   <th style={thStyle}>Status</th>
@@ -280,7 +281,17 @@ function SellerDashboardPage() {
                   return (
                     <tr key={listing.id} style={{ borderTop: "1px solid #eaecf0" }}>
                       <td style={tdStyle}>
-                        <div>{listing.title}</div>
+                        <img 
+                          src={listing.primaryImageUrl?.startsWith("/uploads") 
+                            ? `http://localhost:8080${listing.primaryImageUrl}` 
+                            : (listing.primaryImageUrl || "https://via.placeholder.com/60x40?text=No+Img")} 
+                          alt="thumb" 
+                          style={{ width: "60px", height: "40px", objectFit: "cover", borderRadius: "4px", border: "1px solid #eee" }}
+                          onError={(e) => { e.target.src = "https://via.placeholder.com/60x40?text=Error"; }}
+                        />
+                      </td>
+                      <td style={tdStyle}>
+                        <div style={{ fontWeight: 600 }}>{listing.title}</div>
                         {listing.status === 'REJECTED' && listing.rejectionReason && (
                           <div style={{ color: '#b42318', fontSize: '0.8rem', marginTop: '4px' }}>
                             Lý do: {listing.rejectionReason}
